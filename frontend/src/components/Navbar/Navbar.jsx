@@ -29,7 +29,7 @@ function Navbar() {
               <NavLink className="nav-join" to="/register"><UserRoundPlus size={16} /> Join Conduit</NavLink>
             </>
           )}
-          <a className="github-action" href="https://github.com/TonyMckes/conduit-realworld-example-app" aria-label="View source on GitHub"><Code2 size={18} /></a>
+          <a className="github-action" href="https://github.com/lemeshevmikolay/conduit-testing-app" aria-label="View source on GitHub"><Code2 size={18} /></a>
         </div>
       </div>
     </nav>
