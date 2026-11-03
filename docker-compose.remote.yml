@@ -2,7 +2,7 @@ name: conduit-remote
 
 services:
   db:
-    image: ghcr.io/${CONDUIT_OWNER:?Set CONDUIT_OWNER in .env}/conduit-db-snapshot:latest
+    image: ${DOCKERHUB_USERNAME:?Set DOCKERHUB_USERNAME in .env}/conduit-db-snapshot:latest
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-conduit_local_dev}
@@ -18,11 +18,56 @@ services:
       retries: 30
       start_period: 20s
 
-  app:
-    image: ghcr.io/${CONDUIT_OWNER:?Set CONDUIT_OWNER in .env}/conduit-app:latest
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.5
     restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ports:
+      - "127.0.0.1:${ELASTICSEARCH_PORT:-9200}:9200"
+    volumes:
+      - conduit_elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health?wait_for_status=yellow >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.5.5
+    restart: unless-stopped
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      XPACK_SECURITY_ENABLED: "false"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${KIBANA_PORT:-5601}:5601"
+
+  db-view-setup:
+    image: ${DOCKERHUB_USERNAME:?Set DOCKERHUB_USERNAME in .env}/conduit-app:latest
+    restart: "no"
+    working_dir: /app
+    command: ["node", "/app/scripts/setup-kibana.js"]
+    environment:
+      KIBANA_URL: http://kibana:5601
+    depends_on:
+      kibana:
+        condition: service_started
+
+  app:
+    image: ${DOCKERHUB_USERNAME:?Set DOCKERHUB_USERNAME in .env}/conduit-app:latest
+    restart: unless-stopped
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
     depends_on:
       db:
+        condition: service_healthy
+      elasticsearch:
         condition: service_healthy
     environment:
       NODE_ENV: production
@@ -35,8 +80,20 @@ services:
       PROD_DB_PORT: 3306
       PROD_DB_DIALECT: mysql
       PROD_DB_LOGGING: "false"
+      ELASTICSEARCH_URL: http://elasticsearch:9200
     ports:
       - "${APP_PORT:-8080}:3001"
 
+  image-updater:
+    image: nickfedor/watchtower:latest
+    restart: unless-stopped
+    environment:
+      WATCHTOWER_LABEL_ENABLE: "true"
+      WATCHTOWER_POLL_INTERVAL: ${IMAGE_CHECK_INTERVAL_SECONDS:-60}
+      WATCHTOWER_CLEANUP: "true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
 volumes:
   conduit_mysql_data:
+  conduit_elasticsearch_data:

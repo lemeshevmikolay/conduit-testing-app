@@ -9,6 +9,7 @@ RUN npm ci
 COPY backend ./backend
 COPY frontend ./frontend
 COPY docs ./docs
+COPY scripts ./scripts
 RUN npm run build --workspace frontend && npm prune --omit=dev
 
 WORKDIR /app/backend
