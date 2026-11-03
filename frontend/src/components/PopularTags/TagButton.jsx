@@ -7,9 +7,9 @@ function TagButton({ tagsList }) {
     changeTab(e, "tag");
   };
 
-  return tagsList.slice(0, 50).map((name) => (
+  return tagsList.map((name) => (
     <button className="tag-pill tag-default" key={name} onClick={handleClick}>
-      {name}
+      {name.startsWith("#") ? name : `#${name}`}
     </button>
   ));
 }

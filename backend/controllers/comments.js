@@ -69,7 +69,9 @@ const deleteComment = async (req, res, next) => {
 
     const { slug, commentId } = req.params;
 
-    const comment = await Comment.findByPk(commentId);
+    const article = await Article.findOne({ where: { slug } });
+    if (!article) throw new NotFoundError("Article");
+    const comment = await Comment.findOne({ where: { id: commentId, articleId: article.id } });
     if (!comment) throw new NotFoundError("Comment");
 
     if (loggedUser.id !== comment.userId) {

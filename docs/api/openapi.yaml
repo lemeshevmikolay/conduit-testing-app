@@ -1,0 +1,842 @@
+openapi: 3.0.3
+info:
+  title: Conduit API
+  version: 1.0.0
+  description: >-
+    OpenAPI опис поточного REST API Conduit. Endpoint-специфічні відмінності
+    від вимог продукту зазначені в системній специфікації. API додає кожній
+    JSON-відповіді поле requestId та повертає UUID у заголовку X-Request-Id.
+  contact:
+    name: Conduit project
+servers:
+  - url: http://localhost:3001/api
+    description: Local development API
+tags:
+  - name: Authentication
+  - name: Current user
+  - name: Profiles
+  - name: Articles
+  - name: Comments
+  - name: Tags
+  - name: Health
+security: []
+paths:
+  /users:
+    post:
+      tags: [Authentication]
+      summary: Register a user
+      description: Creates a pending account. In this test build, verification uses mock code 123456 and no email is sent.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user]
+              properties:
+                user:
+                  $ref: '#/components/schemas/RegisterUserRequest'
+            example:
+              user:
+                username: alex
+                email: alex@example.com
+                password: "Example!234"
+      responses:
+        '201':
+          description: User registered
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [user]
+                properties:
+                  requestId: { type: string, format: uuid }
+                  user:
+                    $ref: '#/components/schemas/PendingUser'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /users/login:
+    post:
+      tags: [Authentication]
+      summary: Sign in with username or email and password
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user]
+              properties:
+                user:
+                  type: object
+                  required: [password]
+                  anyOf:
+                    - required: [email]
+                    - required: [username]
+                  properties:
+                    email:
+                      type: string
+                      format: email
+                    username:
+                      type: string
+                    password:
+                      type: string
+                      format: password
+            example:
+              user:
+                email: alex@example.com
+                password: "Example!234"
+      responses:
+        '200':
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [user]
+                properties:
+                  requestId: { type: string, format: uuid }
+                  user:
+                    $ref: '#/components/schemas/AuthenticatedUser'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /users/verify-email:
+    post:
+      tags: [Authentication]
+      summary: Verify a new account
+      description: In this test build, submit code 123456. A JWT is returned after verification.
+      operationId: verifyEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, code]
+              properties:
+                email: { type: string, format: email }
+                code: { type: string, minLength: 6, maxLength: 6, example: "123456" }
+      responses:
+        '200':
+          description: Email verified and user authenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId: { type: string, format: uuid }
+                  user: { $ref: '#/components/schemas/AuthenticatedUser' }
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /users/forgot-password:
+    post:
+      tags: [Authentication]
+      summary: Request a password reset code
+      description: No mail provider is configured; response is generic. The mock code in this test build is 123456.
+      operationId: requestPasswordReset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        '200':
+          description: Generic reset request response
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MessageResponse' }
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /users/reset-password:
+    post:
+      tags: [Authentication]
+      summary: Reset a password with the mock code
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, code, password]
+              properties:
+                email: { type: string, format: email }
+                code: { type: string, minLength: 6, maxLength: 6, example: "123456" }
+                password: { type: string, format: password, minLength: 8, maxLength: 30 }
+      responses:
+        '200':
+          description: Password updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MessageResponse' }
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /user:
+    get:
+      tags: [Current user]
+      summary: Get current authenticated user
+      operationId: getCurrentUser
+      security:
+        - TokenAuth: []
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId: { type: string, format: uuid }
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    put:
+      tags: [Current user]
+      summary: Update current user
+      operationId: updateCurrentUser
+      security:
+        - TokenAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user]
+              properties:
+                user:
+                  $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId: { type: string, format: uuid }
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /profiles/{username}:
+    parameters:
+      - $ref: '#/components/parameters/Username'
+    get:
+      tags: [Profiles]
+      summary: Get a public profile
+      operationId: getProfile
+      security:
+        - TokenAuth: []
+        - {}
+      responses:
+        '200':
+          description: Profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId: { type: string, format: uuid }
+                  profile:
+                    $ref: '#/components/schemas/Profile'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    post:
+      tags: [Profiles]
+      summary: Follow a user
+      operationId: followProfile
+      security:
+        - TokenAuth: []
+      responses:
+        '200':
+          description: Followed profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId: { type: string, format: uuid }
+                  profile:
+                    $ref: '#/components/schemas/Profile'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    delete:
+      tags: [Profiles]
+      summary: Unfollow a user
+      operationId: unfollowProfile
+      security:
+        - TokenAuth: []
+      responses:
+        '200':
+          description: Unfollowed profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId: { type: string, format: uuid }
+                  profile:
+                    $ref: '#/components/schemas/Profile'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /articles:
+    get:
+      tags: [Articles]
+      summary: List and filter articles
+      operationId: listArticles
+      security:
+        - TokenAuth: []
+        - {}
+      parameters:
+        - name: tag
+          in: query
+          schema: { type: string }
+        - name: author
+          in: query
+          schema: { type: string }
+        - name: favorited
+          in: query
+          description: Username whose favorited articles should be listed.
+          schema: { type: string }
+        - name: limit
+          in: query
+          description: Page size; defaults to 10 and is clamped to 1–50.
+          schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+        - name: offset
+          in: query
+          description: Zero-based page index (multiplied by limit), not a row offset.
+          schema: { type: integer, minimum: 0, default: 0 }
+      responses:
+        '200':
+          description: Page of articles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleListResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      tags: [Articles]
+      summary: Create an article
+      operationId: createArticle
+      security:
+        - TokenAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [article]
+              properties:
+                article:
+                  $ref: '#/components/schemas/CreateArticleRequest'
+      responses:
+        '201':
+          description: Article created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId: { type: string, format: uuid }
+                  article:
+                    $ref: '#/components/schemas/Article'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          description: Similar article slug exists; retry with allowDuplicateTitle=true after user confirmation.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+  /articles/feed:
+    get:
+      tags: [Articles]
+      summary: Get articles from followed authors
+      operationId: getFeed
+      security:
+        - TokenAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/PageOffset'
+      responses:
+        '200':
+          description: Personalized article feed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleListResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /articles/{slug}:
+    parameters:
+      - $ref: '#/components/parameters/Slug'
+    get:
+      tags: [Articles]
+      summary: Get an article by slug
+      operationId: getArticle
+      security:
+        - TokenAuth: []
+        - {}
+      responses:
+        '200':
+          description: Article
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId: { type: string, format: uuid }
+                  article:
+                    $ref: '#/components/schemas/Article'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    put:
+      tags: [Articles]
+      summary: Update an article owned by the current user
+      operationId: updateArticle
+      security:
+        - TokenAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [article]
+              properties:
+                article:
+                  $ref: '#/components/schemas/UpdateArticleRequest'
+      responses:
+        '200':
+          description: Updated article
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  article:
+                    $ref: '#/components/schemas/Article'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    delete:
+      tags: [Articles]
+      summary: Delete an article owned by the current user
+      operationId: deleteArticle
+      security:
+        - TokenAuth: []
+      responses:
+        '200':
+          description: Deletion confirmation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId: { type: string, format: uuid }
+                  message:
+                    $ref: '#/components/schemas/MessageBody'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /articles/{slug}/favorite:
+    parameters:
+      - $ref: '#/components/parameters/Slug'
+    post:
+      tags: [Articles]
+      summary: Favorite an article
+      operationId: favoriteArticle
+      security:
+        - TokenAuth: []
+      responses:
+        '200':
+          description: Article with updated favorite state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId: { type: string, format: uuid }
+                  article:
+                    $ref: '#/components/schemas/Article'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    delete:
+      tags: [Articles]
+      summary: Remove an article from favorites
+      operationId: unfavoriteArticle
+      security:
+        - TokenAuth: []
+      responses:
+        '200':
+          description: Article with updated favorite state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId: { type: string, format: uuid }
+                  article:
+                    $ref: '#/components/schemas/Article'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /articles/{slug}/comments:
+    parameters:
+      - $ref: '#/components/parameters/Slug'
+    get:
+      tags: [Comments]
+      summary: List comments for an article
+      operationId: listComments
+      security:
+        - TokenAuth: []
+        - {}
+      responses:
+        '200':
+          description: Article comments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId: { type: string, format: uuid }
+                  comments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Comment'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    post:
+      tags: [Comments]
+      summary: Add a comment to an article
+      operationId: createComment
+      security:
+        - TokenAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [comment]
+              properties:
+                comment:
+                  type: object
+                  required: [body]
+                  properties:
+                    body: { type: string, minLength: 1 }
+      responses:
+        '201':
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId: { type: string, format: uuid }
+                  comment:
+                    $ref: '#/components/schemas/Comment'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /articles/{slug}/comments/{commentId}:
+    parameters:
+      - $ref: '#/components/parameters/Slug'
+      - name: commentId
+        in: path
+        required: true
+        schema: { type: integer }
+    delete:
+      tags: [Comments]
+      summary: Delete a comment owned by the current user
+      operationId: deleteComment
+      security:
+        - TokenAuth: []
+      responses:
+        '200':
+          description: Deletion confirmation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId: { type: string, format: uuid }
+                  message:
+                    $ref: '#/components/schemas/MessageBody'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /tags:
+    get:
+      tags: [Tags]
+      summary: List tags
+      operationId: listTags
+      responses:
+        '200':
+          description: Tags available for article filtering
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId: { type: string, format: uuid }
+                  tags:
+                    type: array
+                    items: { type: string }
+  /health:
+    get:
+      tags: [Health]
+      summary: Check API and database readiness
+      operationId: healthCheck
+      servers:
+        - url: http://localhost:3001
+      responses:
+        '200':
+          description: API and database are available
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId: { type: string, format: uuid }
+                  status: { type: string, example: ok }
+                  database: { type: string, example: ok }
+        '503':
+          description: Database is unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId: { type: string, format: uuid }
+                  status: { type: string, example: error }
+                  database: { type: string, example: unavailable }
+components:
+  securitySchemes:
+    TokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: 'Use the current API format: `Token <JWT>`.'
+  parameters:
+    Username:
+      name: username
+      in: path
+      required: true
+      schema: { type: string }
+    Slug:
+      name: slug
+      in: path
+      required: true
+      schema: { type: string }
+    Limit:
+      name: limit
+      in: query
+      description: Page size; defaults to 10 and is clamped to 1–50.
+      schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+    PageOffset:
+      name: offset
+      in: query
+      description: Zero-based page index, multiplied by limit.
+      schema: { type: integer, minimum: 0, default: 0 }
+  schemas:
+    RegisterUserRequest:
+      type: object
+      required: [username, email, password]
+      properties:
+        username: { type: string, example: alex }
+        email: { type: string, format: email, example: alex@example.com }
+        password: { type: string, format: password, example: "Example!234" }
+        bio: { type: string, nullable: true }
+        image: { type: string, nullable: true, description: Profile image URL or data URI as currently accepted by the application. }
+    UpdateUserRequest:
+      type: object
+      properties:
+        username: { type: string }
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+        bio: { type: string, nullable: true }
+        image: { type: string, nullable: true }
+    User:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        username: { type: string }
+        bio: { type: string, nullable: true }
+        image: { type: string, nullable: true }
+        token: { type: string }
+    AuthenticatedUser:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          required: [token]
+    PendingUser:
+      type: object
+      required: [email, username, verificationRequired]
+      properties:
+        email: { type: string, format: email }
+        username: { type: string }
+        verificationRequired: { type: boolean, example: true }
+    MessageResponse:
+      type: object
+      properties:
+        requestId: { type: string, format: uuid }
+        message: { type: string }
+    Profile:
+      type: object
+      properties:
+        username: { type: string }
+        bio: { type: string, nullable: true }
+        image: { type: string, nullable: true }
+        following: { type: boolean }
+        followersCount: { type: integer }
+    Author:
+      allOf:
+        - $ref: '#/components/schemas/Profile'
+        - type: object
+          properties:
+            email: { type: string, description: May be omitted in article responses. }
+    Article:
+      type: object
+      properties:
+        slug: { type: string }
+        title: { type: string }
+        description: { type: string }
+        body: { type: string }
+        sourceUrl: { type: string, nullable: true }
+        tagList:
+          type: array
+          items: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        favorited: { type: boolean }
+        favoritesCount: { type: integer, nullable: true, description: Hidden from anonymous users. }
+        author:
+          $ref: '#/components/schemas/Author'
+    ArticleListResponse:
+      type: object
+      required: [articles, articlesCount, requestId]
+      properties:
+        requestId: { type: string, format: uuid }
+        articles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Article'
+        articlesCount: { type: integer }
+    CreateArticleRequest:
+      type: object
+      required: [title, description, body]
+      properties:
+        title: { type: string }
+        description: { type: string }
+        body: { type: string }
+        tagList:
+          type: array
+          items: { type: string }
+          maxItems: 10
+        allowDuplicateTitle:
+          type: boolean
+          description: Set after user confirms the duplicate-title prompt; API creates a unique slug.
+    UpdateArticleRequest:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string }
+        body: { type: string }
+    Comment:
+      type: object
+      properties:
+        id: { type: integer }
+        body: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        author:
+          $ref: '#/components/schemas/Author'
+    MessageBody:
+      type: object
+      properties:
+        body:
+          type: array
+          items: { type: string }
+    ErrorResponse:
+      type: object
+      properties:
+        requestId: { type: string, format: uuid }
+        errors:
+          type: object
+          properties:
+            body:
+              type: array
+              items: { type: string }
+    ErrorEnvelope:
+      type: object
+      properties:
+        errors:
+          type: array
+          items: { type: string }
+  responses:
+    UnauthorizedError:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    ForbiddenError:
+      description: The authenticated user does not own this resource
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    NotFoundError:
+      description: Requested resource was not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    ValidationError:
+      description: Invalid request or domain validation failure
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    ServerError:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }

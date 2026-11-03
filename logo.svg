@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 96">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff6275"/><stop offset="1" stop-color="#d91f3a"/></linearGradient></defs>
+  <rect x="4" y="4" width="88" height="88" rx="26" fill="#202026"/>
+  <path d="M38 22h-6a7 7 0 0 0-7 7v9a7 7 0 0 1-7 7 7 7 0 0 1 7 7v9a7 7 0 0 0 7 7h6m20-46h6a7 7 0 0 1 7 7v9a7 7 0 0 0 7 7 7 7 0 0 0-7 7v9a7 7 0 0 1-7 7h-6" fill="none" stroke="url(#g)" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M45 34v24m10-24v24" stroke="#fff" stroke-linecap="round" stroke-width="6"/>
+  <text x="116" y="66" fill="#f4f4f5" font-family="Arial,sans-serif" font-size="54" font-weight="700" letter-spacing="-3">conduit</text>
+</svg>

@@ -1,40 +1,39 @@
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
+import { Braces, Code2, Compass, PenLine, UserRoundPlus } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import NavItem from "../NavItem";
-import SourceCodeLink from "../SourceCodeLink";
 import DropdownMenu from "./DropdownMenu";
 
 function Navbar() {
   const { isAuth } = useAuth();
 
   return (
-    <nav className="navbar navbar-light">
-      <div className="container">
-        <Link className="navbar-brand" to="/">
-          conduit
+    <nav className="app-navbar" aria-label="Main navigation">
+      <div className="navbar-inner">
+        <Link className="brand-mark" to="/" aria-label="Conduit home">
+          <span className="brand-icon"><Braces size={21} strokeWidth={2.5} /></span>
+          <span>conduit</span>
         </Link>
 
-        <SourceCodeLink left />
-
-        <ul className="nav navbar-nav pull-xs-right">
-          <NavItem text="Home" icon="ion-compose" url="/" />
-
-          {isAuth && (
+        <div className="navbar-links">
+          <NavLink className={({ isActive }) => `nav-action ${isActive ? "is-active" : ""}`} end to="/">
+            <Compass size={18} /> <span>Home</span>
+          </NavLink>
+          {isAuth ? (
             <>
-              <NavItem text="New Article" icon="ion-compose" url="/editor" />
+              <NavLink className="nav-action create-action" to="/editor"><PenLine size={17} /><span>Write</span></NavLink>
               <DropdownMenu />
             </>
-          )}
-
-          {!isAuth && (
+          ) : (
             <>
-              <NavItem text="Login" icon="ion-log-in" url="/login" />
-              <NavItem text="Sign up" url="/register" />
+              <NavLink className="nav-action" to="/login">Sign in</NavLink>
+              <NavLink className="nav-join" to="/register"><UserRoundPlus size={16} /> Join Conduit</NavLink>
             </>
           )}
-        </ul>
+          <a className="github-action" href="https://github.com/TonyMckes/conduit-realworld-example-app" aria-label="View source on GitHub"><Code2 size={18} /></a>
+        </div>
       </div>
     </nav>
   );
 }
+
 export default Navbar;

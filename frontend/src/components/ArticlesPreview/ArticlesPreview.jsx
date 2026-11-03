@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import ArticleMeta from "../ArticleMeta";
 import ArticleTags from "../ArticleTags";
 import FavButton from "../FavButton";
@@ -17,7 +18,14 @@ function ArticlesPreview({ articles, loading, updateArticles }) {
   return articles?.length > 0 ? (
     articles.map((article) => {
       return (
-        <div className="article-preview" key={article.slug}>
+        <motion.article
+          className="article-preview"
+          key={article.slug}
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.32, ease: "easeOut" }}
+          layout
+        >
           <ArticleMeta author={article.author} createdAt={article.createdAt}>
             <FavButton
               favorited={article.favorited}
@@ -37,7 +45,7 @@ function ArticlesPreview({ articles, loading, updateArticles }) {
             <span>Read more...</span>
             <ArticleTags tagList={article.tagList} />
           </Link>
-        </div>
+        </motion.article>
       );
     })
   ) : loading ? (

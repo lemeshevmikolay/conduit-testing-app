@@ -8,9 +8,7 @@ function Footer() {
         conduit
       </Link>
       <span className="attribution">
-        An interactive learning project from{" "}
-        <a href="https://thinkster.io">Thinkster</a>. Code &amp; design licensed
-        under MIT.
+        Українська ІТ-спільнота · Code &amp; design licensed under MIT.
       </span>
 
       <SourceCodeLink right />

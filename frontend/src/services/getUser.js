@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from "./api";
 import errorHandler from "../helpers/errorHandler";
 
 async function getUser({ headers }) {

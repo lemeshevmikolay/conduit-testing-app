@@ -8,10 +8,10 @@ function FavButton({ favorited, favoritesCount, handler, right, slug, text }) {
 
   const buttonPosition = right ? "pull-xs-right" : "";
   const buttonStyle = favorited ? "active" : "";
-  const buttonText = text ? "Favorite" : !isAuth ? "" : "";
+  const buttonText = text ? (favorited ? "Favorited" : "Favorite") : "Like";
 
   const handleClick = () => {
-    if (!isAuth) return alert("You need to login first");
+    if (!isAuth) return;
 
     setLoading(true);
 
@@ -24,11 +24,13 @@ function FavButton({ favorited, favoritesCount, handler, right, slug, text }) {
   return (
     <button
       className={`btn btn-sm btn-outline-primary ${buttonPosition} ${buttonStyle}`}
-      disabled={loading}
+      aria-label={isAuth ? `${favorited ? "Unlike" : "Like"} article` : "Sign in to like this article"}
+      disabled={loading || !isAuth}
       onClick={handleClick}
+      title={!isAuth ? "Sign in to like this article" : undefined}
     >
       <i className="ion-heart"></i> {buttonText}
-      <span className="counter"> ( {favoritesCount} )</span>
+      {isAuth && <span className="counter"> ( {favoritesCount} )</span>}
     </button>
   );
 }

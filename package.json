@@ -16,14 +16,24 @@
     "frontend"
   ],
   "scripts": {
-    "dev": "concurrently --names 'Node,Vite' -c 'green,blue' 'npm run dev -w backend' 'npm run dev -w frontend'",
+    "dev": "npm run db:up && npm run observability:up && node scripts/dev.js",
+    "dev:api": "npm run dev -w backend",
+    "dev:web": "npm run dev -w frontend",
+    "db:up": "docker compose up -d --wait db",
+    "db:down": "docker compose stop db",
+    "observability:up": "docker compose up -d --wait elasticsearch kibana && node scripts/setup-kibana.js",
+    "observability:down": "docker compose stop kibana elasticsearch",
+    "db:seed": "npm run seed -w backend",
     "sqlz": "npx -w backend sequelize-cli",
     "start": "npm run build -w frontend && npm run start -w backend",
     "test": "vitest"
   },
   "devDependencies": {
     "@vitejs/plugin-react-swc": "^4.2.3",
-    "concurrently": "^9.2.1",
+    "jsdom": "^29.1.1",
     "vitest": "^4.0.18"
+  },
+  "dependencies": {
+    "sequelize": "^6.37.8"
   }
 }

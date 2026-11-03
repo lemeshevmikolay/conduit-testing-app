@@ -11,8 +11,8 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
 
       // Comments
-      this.belongsTo(Article, { foreignKey: "articleId" });
-      this.belongsTo(User, { as: "author", foreignKey: "userId" });
+      this.belongsTo(Article, { foreignKey: "articleId", onDelete: "CASCADE" });
+      this.belongsTo(User, { as: "author", foreignKey: "userId", onDelete: "CASCADE" });
     }
 
     toJSON() {
@@ -36,6 +36,7 @@ module.exports = (sequelize, DataTypes) => {
     {
       sequelize,
       modelName: "Comment",
+      indexes: [{ fields: ["articleId", "createdAt"] }],
     },
   );
   return Comment;

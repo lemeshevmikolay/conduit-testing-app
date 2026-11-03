@@ -11,7 +11,7 @@ import getArticle from "../../services/getArticle";
 function Article() {
   const { state } = useLocation();
   const [article, setArticle] = useState(state || {});
-  const { title, body, tagList, createdAt, author } = article || {};
+  const { title, body, tagList, createdAt, author, sourceUrl } = article || {};
   const { headers, isAuth } = useAuth();
   const navigate = useNavigate();
   const { slug } = useParams();
@@ -40,6 +40,13 @@ function Article() {
         <div className="row article-content">
           <div className="col-md-12">
             {body && <Markdown options={{ forceBlock: true }}>{body}</Markdown>}
+            {sourceUrl && (
+              <p className="article-source">
+                <a href={sourceUrl} target="_blank" rel="noreferrer">
+                  Читати джерело на Habr ↗
+                </a>
+              </p>
+            )}
             <ArticleTags tagList={tagList} />
           </div>
         </div>

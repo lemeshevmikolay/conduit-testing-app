@@ -19,7 +19,7 @@ function FeedProvider({ children }) {
   }, [isAuth]);
 
   const changeTab = async (e, tabName) => {
-    const tagName = e.target.innerText.trim();
+    const tagName = e.target.innerText.trim().replace(/^#/, "");
 
     setTab({ tabName, tagName });
   };

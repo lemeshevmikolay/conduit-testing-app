@@ -47,10 +47,12 @@ module.exports = (sequelize, DataTypes) => {
       title: DataTypes.STRING,
       description: DataTypes.TEXT,
       body: DataTypes.TEXT,
+      sourceUrl: DataTypes.STRING,
     },
     {
       sequelize,
       modelName: "Article",
+      indexes: [{ unique: true, fields: ["slug"] }, { fields: ["createdAt"] }],
     },
   );
   return Article;

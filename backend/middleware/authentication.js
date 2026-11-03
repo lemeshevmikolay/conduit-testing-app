@@ -7,18 +7,23 @@ const verifyToken = async (req, res, next) => {
     const { headers } = req;
     if (!headers.authorization) return next();
 
-    const token = headers.authorization.split(" ")[1];
-    if (!token) throw new SyntaxError("Token missing or malformed");
+    const [scheme, token, ...extra] = headers.authorization.trim().split(/\s+/);
+    if (scheme !== "Token" || !token || extra.length) throw new UnauthorizedError();
 
-    const userVerified = await jwtVerify(token);
-    if (!userVerified) throw new Error("Invalid Token");
+    let userVerified;
+    try {
+      userVerified = await jwtVerify(token);
+    } catch {
+      throw new UnauthorizedError();
+    }
+    if (!userVerified) throw new UnauthorizedError();
 
     req.loggedUser = await User.findOne({
       attributes: { exclude: ["email"] },
       where: { email: userVerified.email },
     });
 
-    if (!req.loggedUser) next(new NotFoundError("User"));
+    if (!req.loggedUser) return next(new NotFoundError("User"));
 
     headers.email = userVerified.email;
     req.loggedUser.dataValues.token = token;

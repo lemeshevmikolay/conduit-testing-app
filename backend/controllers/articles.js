@@ -1,16 +1,19 @@
 const {
-  AlreadyTakenError,
+  ConflictError,
   FieldRequiredError,
   ForbiddenError,
   NotFoundError,
   UnauthorizedError,
+  ValidationError,
 } = require("../helper/customErrors");
 const {
   appendFollowers,
   appendFavorites,
   appendTagList,
   slugify,
+  appendArticleMetrics,
 } = require("../helper/helpers");
+const { normalizeTags, validateArticleField } = require("../helper/validation");
 const { Article, Tag, User } = require("../models");
 
 const includeOptions = [
@@ -23,7 +26,9 @@ const allArticles = async (req, res, next) => {
   try {
     const { loggedUser } = req;
 
-    const { author, tag, favorited, limit = 3, offset = 0 } = req.query;
+    const { author, tag, favorited } = req.query;
+    const limit = Math.min(50, Math.max(1, Number.parseInt(req.query.limit, 10) || 10));
+    const offset = Math.max(0, Number.parseInt(req.query.offset, 10) || 0);
     const searchOptions = {
       include: [
         {
@@ -42,11 +47,13 @@ const allArticles = async (req, res, next) => {
       limit: parseInt(limit),
       offset: offset * limit,
       order: [["createdAt", "DESC"]],
+      distinct: true,
     };
 
     let articles = { rows: [], count: 0 };
     if (favorited) {
       const user = await User.findOne({ where: { username: favorited } });
+      if (!user) throw new NotFoundError("User profile");
 
       articles.rows = await user.getFavorites(searchOptions);
       articles.count = await user.countFavorites();
@@ -54,14 +61,8 @@ const allArticles = async (req, res, next) => {
       articles = await Article.findAndCountAll(searchOptions);
     }
 
-    for (let article of articles.rows) {
-      const articleTags = await article.getTagList();
-
-      appendTagList(articleTags, article);
-      await appendFollowers(loggedUser, article);
-      await appendFavorites(loggedUser, article);
-
-      delete article.dataValues.Favorites;
+    if (articles.rows.length) {
+      await appendArticleMetrics(loggedUser, articles.rows, Article.sequelize);
     }
 
     res.json({ articles: articles.rows, articlesCount: articles.count });
@@ -76,14 +77,24 @@ const createArticle = async (req, res, next) => {
     const { loggedUser } = req;
     if (!loggedUser) throw new UnauthorizedError();
 
-    const { title, description, body, tagList } = req.body.article;
-    if (!title) throw new FieldRequiredError("A title");
-    if (!description) throw new FieldRequiredError("A description");
-    if (!body) throw new FieldRequiredError("An article body");
+    const input = req.body?.article;
+    if (!input || typeof input !== "object") throw new FieldRequiredError("Article details");
+    const title = validateArticleField(input.title, "title", 5, 240);
+    const description = validateArticleField(input.description, "description", 5, 240);
+    const body = validateArticleField(input.body, "body", 20, 9000);
+    const tagList = normalizeTags(input.tagList);
 
-    const slug = slugify(title);
-    const slugInDB = await Article.findOne({ where: { slug: slug } });
-    if (slugInDB) throw new AlreadyTakenError("Title");
+    const baseSlug = slugify(title) || "article";
+    let slug = baseSlug;
+    const slugInDB = await Article.findOne({ where: { slug } });
+    if (slugInDB && input.allowDuplicateTitle !== true) {
+      throw new ConflictError("Article with a similar Title already exists. Do you want to continue?");
+    }
+    if (slugInDB) {
+      let suffix = 2;
+      while (await Article.findOne({ where: { slug: `${baseSlug}-${suffix}` } })) suffix += 1;
+      slug = `${baseSlug}-${suffix}`;
+    }
 
     const article = await Article.create({
       slug: slug,
@@ -92,16 +103,9 @@ const createArticle = async (req, res, next) => {
       body: body,
     });
 
-    for (const tag of tagList) {
-      const tagInDB = await Tag.findByPk(tag.trim());
-
-      if (tagInDB) {
-        await article.addTagList(tagInDB);
-      } else if (tag.length > 2) {
-        const newTag = await Tag.create({ name: tag.trim() });
-
-        await article.addTagList(newTag);
-      }
+    for (const name of tagList) {
+      const [tag] = await Tag.findOrCreate({ where: { name } });
+      await article.addTagList(tag);
     }
 
     delete loggedUser.dataValues.token;
@@ -124,7 +128,8 @@ const articlesFeed = async (req, res, next) => {
     const { loggedUser } = req;
     if (!loggedUser) throw new UnauthorizedError();
 
-    const { limit = 3, offset = 0 } = req.query;
+    const limit = Math.min(50, Math.max(1, Number.parseInt(req.query.limit, 10) || 10));
+    const offset = Math.max(0, Number.parseInt(req.query.offset, 10) || 0);
     const authors = await loggedUser.getFollowing();
 
     const articles = await Article.findAndCountAll({
@@ -133,14 +138,10 @@ const articlesFeed = async (req, res, next) => {
       offset: offset * limit,
       order: [["createdAt", "DESC"]],
       where: { userId: authors.map((author) => author.id) },
+      distinct: true,
     });
-
-    for (const article of articles.rows) {
-      const articleTags = await article.getTagList();
-
-      appendTagList(articleTags, article);
-      await appendFollowers(loggedUser, article);
-      await appendFavorites(loggedUser, article);
+    if (articles.rows.length) {
+      await appendArticleMetrics(loggedUser, articles.rows, Article.sequelize);
     }
 
     res.json({ articles: articles.rows, articlesCount: articles.count });
@@ -188,9 +189,19 @@ const updateArticle = async (req, res, next) => {
       throw new ForbiddenError("article");
     }
 
-    const { title, description, body } = req.body.article;
+    const input = req.body?.article;
+    if (!input || typeof input !== "object") throw new FieldRequiredError("Article details");
+    const { title: rawTitle, description: rawDescription, body: rawBody } = input;
+    const title = rawTitle === undefined ? undefined : validateArticleField(rawTitle, "title", 5, 240);
+    const description = rawDescription === undefined ? undefined : validateArticleField(rawDescription, "description", 5, 240);
+    const body = rawBody === undefined ? undefined : validateArticleField(rawBody, "body", 20, 9000);
     if (title) {
-      article.slug = slugify(title);
+      const nextSlug = slugify(title) || "article";
+      const duplicateSlug = await Article.findOne({ where: { slug: nextSlug } });
+      if (duplicateSlug && duplicateSlug.id !== article.id) {
+        throw new ConflictError("Article with a similar Title already exists.");
+      }
+      article.slug = nextSlug;
       article.title = title;
     }
     if (description) article.description = description;

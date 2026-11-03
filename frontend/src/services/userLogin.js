@@ -1,10 +1,10 @@
-import axios from "axios";
-import errorHandler from "../helpers/errorHandler";
+import axios from "./api";
+import handleApiError from "../helpers/handleApiError";
 
-async function userLogin({ email, password }) {
+async function userLogin({ identifier, email, password }) {
   try {
     const { data } = await axios({
-      data: { user: { email, password } },
+      data: { user: { email: identifier ?? email, password } },
       method: "POST",
       url: "api/users/login",
     });
@@ -18,7 +18,7 @@ async function userLogin({ email, password }) {
 
     return loggedIn;
   } catch (error) {
-    errorHandler(error);
+    throw handleApiError(error);
   }
 }
 

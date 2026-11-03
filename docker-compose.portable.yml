@@ -1,0 +1,47 @@
+name: conduit-portable
+
+services:
+  db:
+    image: conduit-db-snapshot:local
+    build:
+      context: ./db-snapshot
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-conduit_local_dev}
+      MYSQL_DATABASE: ${DEV_DB_NAME:-conduit_development}
+      MYSQL_USER: ${DEV_DB_USERNAME:-conduit}
+      MYSQL_PASSWORD: ${DEV_DB_PASSWORD:-conduit_local_dev}
+    volumes:
+      - conduit_portable_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-conduit_local_dev}"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+
+  app:
+    image: conduit-app:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      JWT_KEY: ${JWT_KEY:-local-test-only-change-before-sharing}
+      PROD_DB_USERNAME: ${DEV_DB_USERNAME:-conduit}
+      PROD_DB_PASSWORD: ${DEV_DB_PASSWORD:-conduit_local_dev}
+      PROD_DB_NAME: ${DEV_DB_NAME:-conduit_development}
+      PROD_DB_HOSTNAME: db
+      PROD_DB_PORT: 3306
+      PROD_DB_DIALECT: mysql
+      PROD_DB_LOGGING: "false"
+    ports:
+      - "${APP_PORT:-8080}:3001"
+
+volumes:
+  conduit_portable_mysql_data:

@@ -1,34 +1,33 @@
 const {
+  ConflictError,
   ForbiddenError,
   NotFoundError,
   UnauthorizedError,
   ValidationError,
 } = require("../helper/customErrors");
+const logger = require("../observability/logger");
 
 const errorHandler = (error, req, res, next) => {
-  console.log("\x1b[31m%s\x1b[0m", "▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼");
+  let status = 500;
+  if (error.status === 400) status = 400;
+  else if (error instanceof UnauthorizedError) status = 401;
+  else if (error instanceof ForbiddenError) status = 403;
+  else if (error instanceof ConflictError) status = 409;
+  else if (error instanceof NotFoundError) status = 404;
+  else if (error instanceof ValidationError) status = 422;
 
-  if (error instanceof UnauthorizedError) {
-    console.log(error);
-
-    res.status(401).json({ errors: { body: [error.message] } });
-  } else if (error instanceof ForbiddenError) {
-    console.log(error);
-
-    res.status(403).json({ errors: { body: [error.message] } });
-  } else if (error instanceof NotFoundError) {
-    console.log(error);
-
-    res.status(404).json({ errors: { body: [error.message] } });
-  } else if (error instanceof ValidationError) {
-    console.log(error);
-    res.status(422).json({ errors: { body: [error.message] } });
-  } else {
-    console.log(error);
-    res.status(500).json({ errors: { body: [error.message] } });
-  }
-
-  console.log("\x1b[31m%s\x1b[0m", "▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲");
+  logger[status >= 500 ? "error" : "warn"]("http.error", {
+    "http.request.id": req.id,
+    "http.request.method": req.method,
+    "url.path": req.path,
+    "http.response.status_code": status,
+    error: {
+      type: error.name,
+      message: error.message,
+      ...(status >= 500 ? { stack: error.stack } : {}),
+    },
+  });
+  res.status(status).json({ errors: { body: [error.message] } });
 };
 
 module.exports = errorHandler;

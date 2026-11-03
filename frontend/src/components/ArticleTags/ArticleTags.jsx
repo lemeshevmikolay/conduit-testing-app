@@ -4,7 +4,7 @@ function ArticleTags({ tagList }) {
       <ul className="tag-list">
         {tagList.map((tag) => (
           <li key={tag} className="tag-default tag-pill tag-outline">
-            {tag}
+            {tag.startsWith("#") ? tag : `#${tag}`}
           </li>
         ))}
       </ul>

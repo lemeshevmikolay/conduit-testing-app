@@ -1,8 +1,8 @@
-import axios from "axios";
+import axios from "./api";
 import errorHandler from "../helpers/errorHandler";
 
 // prettier-ignore
-async function getArticles({ headers, limit = 3, location, page = 0, tagName, username }) {
+async function getArticles({ headers, limit = 10, location, page = 0, tagName, username }) {
   try {
     const url = {
       favorites: `api/articles?favorited=${username}&&limit=${limit}&&offset=${page}`,

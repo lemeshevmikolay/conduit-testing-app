@@ -1,5 +1,5 @@
-import axios from "axios";
-import errorHandler from "../helpers/errorHandler";
+import axios from "./api";
+import handleApiError from "../helpers/handleApiError";
 
 async function userUpdate({ headers, bio, email, image, password, username }) {
   try {
@@ -11,14 +11,15 @@ async function userUpdate({ headers, bio, email, image, password, username }) {
     });
 
     const { user } = data;
+    const updatedHeaders = { Authorization: `Token ${user.token}` };
 
-    const loggedIn = { headers, isAuth: true, loggedUser: user };
+    const loggedIn = { headers: updatedHeaders, isAuth: true, loggedUser: user };
 
     localStorage.setItem("loggedUser", JSON.stringify(loggedIn));
 
     return loggedIn;
   } catch (error) {
-    errorHandler(error);
+    throw handleApiError(error);
   }
 }
 

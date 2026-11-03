@@ -10,9 +10,10 @@ class ForbiddenError extends MyError {
     super(`You are not the author of this ${message}`);
   }
 }
+class ConflictError extends MyError {}
 class NotFoundError extends MyError {
   constructor(property, message = "") {
-    super(`${property} not found ${message}`);
+    super(message ? `${property} ${message}` : `${property} not found`);
   }
 }
 class UnauthorizedError extends MyError {
@@ -37,6 +38,7 @@ class AlreadyTakenError extends ValidationError {
 
 module.exports = {
   AlreadyTakenError,
+  ConflictError,
   FieldRequiredError,
   ForbiddenError,
   NotFoundError,

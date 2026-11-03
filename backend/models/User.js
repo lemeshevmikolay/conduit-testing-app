@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       this.hasMany(Article, { foreignKey: "userId", onDelete: "CASCADE" });
 
       // Comments
-      this.hasMany(Comment, { foreignKey: "articleId" });
+      this.hasMany(Comment, { foreignKey: "userId", onDelete: "CASCADE" });
 
       // Favorites
       this.belongsToMany(Article, {
@@ -40,8 +40,9 @@ module.exports = (sequelize, DataTypes) => {
     }
 
     toJSON() {
+      const { emailVerified, ...user } = this.get();
       return {
-        ...this.get(),
+        ...user,
         id: undefined,
         password: undefined,
         updatedAt: undefined,
@@ -56,10 +57,12 @@ module.exports = (sequelize, DataTypes) => {
       bio: DataTypes.TEXT,
       image: DataTypes.TEXT,
       password: DataTypes.STRING,
+      emailVerified: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     },
     {
       sequelize,
       modelName: "User",
+      indexes: [{ unique: true, fields: ["email"] }, { unique: true, fields: ["username"] }],
     },
   );
   return User;

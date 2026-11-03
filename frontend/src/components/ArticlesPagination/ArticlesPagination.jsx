@@ -9,7 +9,7 @@ function ArticlesPagination({
   updateArticles,
   username,
 }) {
-  const totalPages = Math.ceil(articlesCount / 3);
+  const totalPages = Math.min(50, Math.ceil(articlesCount / 10));
   const { headers } = useAuth();
 
   const handlePageChange = ({ selected: page }) => {
