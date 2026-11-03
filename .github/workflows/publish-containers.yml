@@ -33,3 +33,7 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/conduit-db-snapshot:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/conduit-db-snapshot:${{ github.sha }}
+      - name: Publish Compose stack artifact
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: docker compose -f docker-compose.remote.yml publish --yes "${DOCKERHUB_USERNAME}/conduit-stack:latest"
