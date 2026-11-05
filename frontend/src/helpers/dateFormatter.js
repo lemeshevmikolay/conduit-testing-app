@@ -1,7 +1,7 @@
 export default function dateFormatter(date) {
-  return new Date(date).toLocaleDateString("uk-UA", {
-    day: "2-digit",
-    month: "2-digit",
+  return new Date(date).toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "long",
     year: "numeric",
   });
 }

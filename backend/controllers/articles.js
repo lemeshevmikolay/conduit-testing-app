@@ -195,6 +195,7 @@ const updateArticle = async (req, res, next) => {
     const title = rawTitle === undefined ? undefined : validateArticleField(rawTitle, "title", 5, 240);
     const description = rawDescription === undefined ? undefined : validateArticleField(rawDescription, "description", 5, 240);
     const body = rawBody === undefined ? undefined : validateArticleField(rawBody, "body", 20, 9000);
+    const tagList = input.tagList === undefined ? undefined : normalizeTags(input.tagList);
     if (title) {
       const nextSlug = slugify(title) || "article";
       const duplicateSlug = await Article.findOne({ where: { slug: nextSlug } });
@@ -207,6 +208,15 @@ const updateArticle = async (req, res, next) => {
     if (description) article.description = description;
     if (body) article.body = body;
     await article.save();
+
+    if (tagList !== undefined) {
+      const tags = await Promise.all(tagList.map(async (name) => {
+        const [tag] = await Tag.findOrCreate({ where: { name } });
+        return tag;
+      }));
+      await article.setTagList(tags);
+      article.tagList = tags;
+    }
 
     appendTagList(article.tagList, article);
     await appendFollowers(loggedUser, article);

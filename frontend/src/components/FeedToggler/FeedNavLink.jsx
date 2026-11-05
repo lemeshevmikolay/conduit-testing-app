@@ -11,6 +11,7 @@ function FeedNavLink({ icon, name, text }) {
     <li className="nav-item">
       <button
         className={`nav-link ${tabName === name ? "active" : ""}`}
+        data-testid={`feed-tab-${name}`}
         onClick={handleClick}
       >
         {icon && <i className="ion-pound"></i>} {text}

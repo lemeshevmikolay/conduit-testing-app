@@ -25,6 +25,7 @@ function FollowButton({ followersCount, following, handler, username }) {
     <>
       <button
         className={`btn btn-sm action-btn ${buttonStyle}`}
+        data-testid="follow-button"
         disabled={loading}
         onClick={handleClick}
         style={{ color: "#777" }}

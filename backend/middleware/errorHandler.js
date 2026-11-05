@@ -5,7 +5,7 @@ const {
   UnauthorizedError,
   ValidationError,
 } = require("../helper/customErrors");
-const logger = require("../observability/logger");
+const requestContext = require("../observability/requestContext");
 
 const errorHandler = (error, req, res, next) => {
   let status = 500;
@@ -16,17 +16,16 @@ const errorHandler = (error, req, res, next) => {
   else if (error instanceof NotFoundError) status = 404;
   else if (error instanceof ValidationError) status = 422;
 
-  logger[status >= 500 ? "error" : "warn"]("http.error", {
-    "http.request.id": req.id,
-    "http.request.method": req.method,
-    "url.path": req.path,
-    "http.response.status_code": status,
-    error: {
+  const requestLog = requestContext.getStore();
+  if (requestLog) {
+    requestLog.error = {
       type: error.name,
       message: error.message,
-      ...(status >= 500 ? { stack: error.stack } : {}),
-    },
-  });
+      ...(status >= 500 && process.env.LOG_ERROR_STACKS === "true"
+        ? { stack: error.stack }
+        : {}),
+    };
+  }
   res.status(status).json({ errors: { body: [error.message] } });
 };
 

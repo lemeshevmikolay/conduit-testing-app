@@ -82,10 +82,10 @@ function SettingsForm() {
 
   if (!isAuth) return null;
   return (
-    <form onSubmit={formSubmit} noValidate>
+    <form data-testid="settings-form" onSubmit={formSubmit} noValidate>
       <fieldset disabled={saving}>
         {errors.form && <p className="error-messages" role="alert">{errors.form}</p>}
-        {success && <p role="status">{success}</p>}
+        {success && <p data-testid="settings-success" role="status">{success}</p>}
         <FormFieldset placeholder="URL of profile picture" name="image" maxLength={2048} value={form.image} handler={inputHandler} error={errors.image} />
         <FormFieldset placeholder="Your Name" name="username" required maxLength={40} autoComplete="username" value={form.username} handler={inputHandler} error={errors.username} />
         <fieldset className="form-group">
@@ -94,7 +94,7 @@ function SettingsForm() {
         </fieldset>
         <FormFieldset type="email" placeholder="Email" name="email" required maxLength={254} autoComplete="email" value={form.email} handler={inputHandler} error={errors.email} />
         <FormFieldset type="password" name="password" value={form.password} placeholder="New password" autoComplete="new-password" minLength={8} maxLength={30} preventCopy handler={inputHandler} error={errors.password} />
-        <button type="submit" className="btn btn-lg btn-primary pull-xs-right">{saving ? "Saving…" : "Update Settings"}</button>
+        <button data-testid="save-settings" type="submit" className="btn btn-lg btn-primary pull-xs-right">{saving ? "Saving…" : "Update Settings"}</button>
         <button type="button" className="btn btn-outline-danger" onClick={logout}>Or click here to logout</button>
       </fieldset>
     </form>

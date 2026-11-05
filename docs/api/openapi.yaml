@@ -783,6 +783,10 @@ components:
         title: { type: string }
         description: { type: string }
         body: { type: string }
+        tagList:
+          type: array
+          items: { type: string }
+          maxItems: 10
     Comment:
       type: object
       properties:

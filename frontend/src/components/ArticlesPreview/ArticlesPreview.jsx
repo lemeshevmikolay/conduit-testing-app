@@ -20,6 +20,8 @@ function ArticlesPreview({ articles, loading, updateArticles }) {
       return (
         <motion.article
           className="article-preview"
+          data-testid="article-preview"
+          data-article-slug={article.slug}
           key={article.slug}
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}

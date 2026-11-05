@@ -1,5 +1,4 @@
 const envBoolean = (value) => value === "true";
-const logger = require("../observability/logger");
 const requestContext = require("../observability/requestContext");
 const dbConfig = (prefix) => ({
   username: process.env[`${prefix}_DB_USERNAME`],
@@ -15,21 +14,28 @@ const dbConfig = (prefix) => ({
     ? { storage: process.env[`${prefix}_DB_STORAGE`] || process.env[`${prefix}_DB_NAME`] }
     : {}),
   benchmark: true,
-  logging: envBoolean(process.env[`${prefix}_DB_LOGGING`])
-    ? (sql, durationMs) => {
-        const statement = sql.replace(/^Executing \([^)]*\):\s*/i, "");
-        const fields = {
-          "http.request.id": requestContext.getStore()?.requestId,
-          "db.system": process.env[`${prefix}_DB_DIALECT`],
-          "event.duration": Math.round(durationMs * 1e6),
-          "db.operation": (statement.match(/^\s*(\w+)/) || [])[1]?.toLowerCase() || "unknown",
-        };
-        logger.info("db.query", fields);
-        if (durationMs >= Number(process.env.DB_SLOW_QUERY_MS || 500)) {
-          logger.warn("db.slow_query", fields);
-        }
-      }
-    : false,
+  logging: (sql, durationMs) => {
+    const request = requestContext.getStore();
+    if (!request?.dbQueries) return;
+
+    const statement = sql
+      .replace(/^Execut(?:ing|ed) \([^)]*\):\s*/i, "")
+      .replace(/'(?:\\.|''|[^'\\])*'/g, "'?'" )
+      .replace(/\s+/g, " ")
+      .trim();
+    const query = {
+      "db.system": process.env[`${prefix}_DB_DIALECT`],
+      sql: statement,
+      duration_ms: Math.round(Number(durationMs || 0) * 100) / 100,
+    };
+    if (
+      envBoolean(process.env[`${prefix}_DB_LOGGING`]) &&
+      durationMs >= Number(process.env.DB_SLOW_QUERY_MS || 500)
+    ) {
+      query.slow = true;
+    }
+    request.dbQueries.push(query);
+  },
 });
 
 /** @type {import('sequelize').Options} */

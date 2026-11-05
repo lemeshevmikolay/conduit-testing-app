@@ -29,7 +29,7 @@ function CommentList({ triggerUpdate, updateComments }) {
   return comments?.length > 0 ? (
     comments.map(({ author, author: { username }, body, createdAt, id }) => {
       return (
-        <div className="card" key={id}>
+        <div className="card" data-testid="comment-card" key={id}>
           <div className="card-block">
             <p className="card-text">{body}</p>
           </div>
@@ -39,6 +39,8 @@ function CommentList({ triggerUpdate, updateComments }) {
             {isAuth && loggedUser.username === username && (
               <button
                 className="btn btn-sm btn-outline-secondary pull-xs-right"
+                aria-label="Delete comment"
+                data-testid="delete-comment"
                 onClick={() => handleClick(id)}
               >
                 <i className="ion-trash-a"></i>

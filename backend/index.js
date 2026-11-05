@@ -13,7 +13,6 @@ const { ApiAuditLog } = require("./models");
 const seedDemoData = require("./seed/demo");
 const errorHandler = require("./middleware/errorHandler");
 const requestLogger = require("./middleware/requestLogger");
-const attachDbAudit = require("./observability/dbAudit");
 
 const usersRoutes = require("./routes/users");
 const userRoutes = require("./routes/user");
@@ -43,7 +42,6 @@ app.use(
 
 async function start() {
   try {
-    attachDbAudit(sequelize);
     await sequelize.authenticate();
     await sequelize.sync({ alter: env === "development" });
     const userTable = User.getTableName();

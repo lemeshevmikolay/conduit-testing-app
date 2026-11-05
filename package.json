@@ -26,10 +26,15 @@
     "db:seed": "npm run seed -w backend",
     "sqlz": "npx -w backend sequelize-cli",
     "start": "npm run build -w frontend && npm run start -w backend",
-    "test": "vitest"
+    "test": "vitest",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "node tests/scripts/run-integration.cjs",
+    "test:e2e": "node tests/scripts/run-e2e.cjs",
+    "test:e2e:open": "node tests/scripts/run-e2e.cjs --open"
   },
   "devDependencies": {
     "@vitejs/plugin-react-swc": "^4.2.3",
+    "cypress": "^15.21.1",
     "jsdom": "^29.1.1",
     "vitest": "^4.0.18"
   },
