@@ -1,5 +1,5 @@
 export const USERNAME_PATTERN = /^[A-Za-z][A-Za-z0-9]{2,39}$/;
-export const EMAIL_PATTERN = /^[A-Za-z0-9._+-]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$/;
+export const EMAIL_PATTERN = /^(?!.*[._+-]{2})[A-Za-z0-9._+-]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$/;
 
 export function validateUsername(value) {
   if (!USERNAME_PATTERN.test(value || "")) {
@@ -9,7 +9,7 @@ export function validateUsername(value) {
 }
 
 export function validateEmail(value) {
-  if (!EMAIL_PATTERN.test(value || "")) return "This email does not seem valid.";
+  if (typeof value !== "string" || value.length > 254 || !EMAIL_PATTERN.test(value)) return "This email does not seem valid.";
   return "";
 }
 
@@ -45,13 +45,13 @@ export function validateArticleText(value, field, min, max) {
 
 export function normalizeTagInput(value) {
   if (!value.trim()) return [];
-  return [...new Set(value.split(/[\s,]+/).filter(Boolean).map((tag) => `#${tag.replace(/^#+/, "")}`))];
+  return [...new Set(value.split(/[\s,]+/).filter(Boolean).map((tag) => tag.replace(/^#+/, "").toLowerCase()))];
 }
 
 export function validateTagInput(tags) {
   if (tags.length > 10) return "An article can contain no more than 10 tags.";
-  if (tags.some((tag) => !/^#[A-Za-z0-9]{1,29}$/.test(tag))) {
-    return "Tags must start with # and contain 2–30 letters or numbers.";
+  if (tags.some((tag) => !/^[A-Za-z0-9_-]{1,30}$/.test(tag))) {
+    return "Each tag must be 1–30 characters and use only letters, numbers, underscores, or hyphens.";
   }
   return "";
 }

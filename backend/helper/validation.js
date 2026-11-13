@@ -1,7 +1,7 @@
 const { ValidationError } = require("./customErrors");
 
 const usernamePattern = /^[A-Za-z][A-Za-z0-9]{2,39}$/;
-const emailPattern = /^[A-Za-z0-9._+-]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$/;
+const emailPattern = /^(?!.*[._+-]{2})[A-Za-z0-9._+-]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$/;
 
 function validateUsername(value) {
   if (typeof value !== "string" || !usernamePattern.test(value)) {
@@ -51,18 +51,18 @@ function validateArticleField(value, field, min, max) {
 }
 
 function normalizeTags(tagList) {
-  if (tagList === undefined || tagList === null || tagList.length === 0) return [];
+  if (tagList === undefined || tagList === null || (Array.isArray(tagList) && tagList.length === 0)) return [];
   if (!Array.isArray(tagList) || tagList.length > 10) {
     throw new ValidationError("An article can contain no more than 10 tags.");
   }
 
   const tags = tagList.map((value) => {
     if (typeof value !== "string") throw new ValidationError("Each tag must be text.");
-    const normalized = `#${value.trim().replace(/^#+/, "")}`;
-    if (!/^#[A-Za-z0-9]{1,29}$/.test(normalized)) {
-      throw new ValidationError("Tags must start with # and contain 2–30 letters or numbers.");
+    const normalized = value.trim().replace(/^#+/, "");
+    if (!/^[A-Za-z0-9_-]{1,30}$/.test(normalized)) {
+      throw new ValidationError("Each tag must be 1–30 characters and use only letters, numbers, underscores, or hyphens.");
     }
-    return normalized.slice(1).toLowerCase();
+    return normalized.toLowerCase();
   });
 
   if (new Set(tags).size !== tags.length) {
@@ -73,7 +73,7 @@ function normalizeTags(tagList) {
 
 function validateImageUrl(value) {
   if (!value) return value;
-  if (typeof value !== "string") throw new ValidationError("URL of profile picture is invalid");
+  if (typeof value !== "string" || value.length > 2048) throw new ValidationError("URL of profile picture is invalid");
   try {
     const url = new URL(value);
     if (!["http:", "https:"].includes(url.protocol) && !/^data:image\//i.test(value)) {

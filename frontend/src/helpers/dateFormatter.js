@@ -1,7 +1,6 @@
 export default function dateFormatter(date) {
-  return new Date(date).toLocaleDateString("en-US", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const value = new Date(date);
+  if (Number.isNaN(value.getTime())) return "";
+  const part = (number) => String(number).padStart(2, "0");
+  return `${part(value.getUTCDate())}.${part(value.getUTCMonth() + 1)}.${value.getUTCFullYear()} ${part(value.getUTCHours())}:${part(value.getUTCMinutes())}:${part(value.getUTCSeconds())}`;
 }

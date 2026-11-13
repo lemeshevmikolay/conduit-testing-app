@@ -30,6 +30,7 @@ function CommentEditor({ updateComments }) {
       <div className="card-block">
         <textarea
           className="form-control"
+          maxLength={9000}
           onChange={handleChange}
           placeholder="Write a comment..."
           rows="3"

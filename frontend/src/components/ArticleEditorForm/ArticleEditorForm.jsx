@@ -10,7 +10,7 @@ const emptyForm = { title: "", description: "", body: "", tagList: "" };
 const initialForm = (value) => ({
   ...emptyForm,
   ...value,
-  tagList: Array.isArray(value?.tagList) ? value.tagList.map((tag) => `#${tag.replace(/^#+/, "")}`).join(" ") : value?.tagList || "",
+  tagList: Array.isArray(value?.tagList) ? value.tagList.map((tag) => tag.replace(/^#+/, "")).join(" ") : value?.tagList || "",
 });
 
 function ArticleEditorForm() {

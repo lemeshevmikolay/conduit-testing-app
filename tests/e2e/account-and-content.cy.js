@@ -113,7 +113,11 @@ describe("Conduit smoke: account and content", () => {
 
   it("follows and unfollows an author", () => {
     signIn();
+    cy.intercept("GET", "**/api/articles?author=feedauthor**").as("authorArticles");
     cy.visit("/#/profile/feedauthor");
+    cy.location("hash").should("eq", "#/profile/feedauthor");
+    cy.contains("h4", "feedauthor").should("be.visible");
+    cy.wait("@authorArticles").its("response.statusCode").should("eq", 200);
     cy.contains('[data-testid="article-preview"]', "Feed seed article").should("be.visible");
     cy.get('[data-testid="follow-button"]').then(($button) => {
       if ($button.text().includes("Unfollow")) cy.wrap($button).click();

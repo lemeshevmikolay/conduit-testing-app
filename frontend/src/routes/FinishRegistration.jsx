@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import verifyEmail from "../services/verifyEmail";
 import FormFieldset from "../components/FormFieldset";
+import { validateEmail } from "../helpers/validation";
 
 function FinishRegistration() {
   const { state } = useLocation();
@@ -15,7 +16,8 @@ function FinishRegistration() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!email.trim()) return setError("Email can't be blank.");
+    const emailError = validateEmail(email.trim());
+    if (emailError) return setError(emailError);
     if (!/^\d{6}$/.test(code)) return setError("Enter the 6-digit verification code.");
     setLoading(true);
     setError("");
@@ -37,7 +39,7 @@ function FinishRegistration() {
         <p className="text-xs-center">Enter the 6-digit code sent to your email. This test build uses mock code <strong>123456</strong>.</p>
         {error && <p className="error-messages" role="alert">{error}</p>}
         <form onSubmit={handleSubmit} noValidate>
-          <FormFieldset type="email" name="email" required placeholder="Email" autoComplete="email" value={email} handler={(event) => setEmail(event.target.value)} />
+          <FormFieldset type="email" name="email" required maxLength={254} placeholder="Email" autoComplete="email" value={email} handler={(event) => setEmail(event.target.value)} />
           <FormFieldset autoFocus name="code" required placeholder="6-digit verification code" maxLength={6} value={code} handler={(event) => setCode(event.target.value.replace(/\D/g, ""))} />
           <button className="btn btn-lg btn-primary pull-xs-right" disabled={loading} type="submit">{loading ? "Verifying…" : "Verify email"}</button>
         </form>

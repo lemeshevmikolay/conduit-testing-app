@@ -12,12 +12,12 @@ import {
 } from "../../../../frontend/src/helpers/validation";
 
 describe("01. Format dates", () => {
-  it("formats an ISO date string", () => {
-    expect(dateFormatter("2020-01-01T12:11:08.212Z")).toBe("January 1, 2020");
+  it("formats an ISO date string with date and time", () => {
+    expect(dateFormatter("2020-01-01T12:11:08.212Z")).toBe("01.01.2020 12:11:08");
   });
 
-  it("formats a Date object", () => {
-    expect(dateFormatter(new Date("2024-05-18T12:00:00.000Z"))).toBe("May 18, 2024");
+  it("formats a Date object with date and time", () => {
+    expect(dateFormatter(new Date("2024-05-18T12:00:00.000Z"))).toBe("18.05.2024 12:00:00");
   });
 });
 
@@ -90,30 +90,34 @@ describe("06. Normalize tag input", () => {
     expect(normalizeTagInput("  ")).toEqual([]);
   });
 
-  it("adds a hash and splits tags on spaces and commas", () => {
-    expect(normalizeTagInput("react, testing basics")).toEqual(["#react", "#testing", "#basics"]);
+  it("splits tags on spaces and commas and normalizes their casing", () => {
+    expect(normalizeTagInput("React, testing BASICS")).toEqual(["react", "testing", "basics"]);
   });
 
-  it("removes repeated leading hashes and exact duplicates", () => {
-    expect(normalizeTagInput("#React #React ##testing")).toEqual(["#React", "#testing"]);
+  it("removes leading hashes and duplicate tags", () => {
+    expect(normalizeTagInput("#React React ##testing")).toEqual(["react", "testing"]);
   });
 });
 
-describe("07. Validate normalized tags", () => {
+describe("07. Validate tags", () => {
   it("accepts an empty tag list", () => {
     expect(validateTagInput([])).toBe("");
   });
 
-  it("accepts hash-prefixed letters and digits", () => {
-    expect(validateTagInput(["#React7"])).toBe("");
+  it("accepts letters, digits, underscores, and hyphens", () => {
+    expect(validateTagInput(["react7", "test_tag", "test-tag"])).toBe("");
   });
 
-  it("rejects punctuation in a tag", () => {
-    expect(validateTagInput(["#two-words"])).toContain("Tags must start with #");
+  it("rejects punctuation outside the supported tag characters", () => {
+    expect(validateTagInput(["two.words"])).toContain("use only letters, numbers, underscores, or hyphens");
+  });
+
+  it("rejects tags longer than thirty characters", () => {
+    expect(validateTagInput(["a".repeat(31)])).toContain("1–30 characters");
   });
 
   it("allows no more than ten tags", () => {
-    const tags = Array.from({ length: 11 }, (_, index) => `#tag${index}`);
+    const tags = Array.from({ length: 11 }, (_, index) => `tag${index}`);
     expect(validateTagInput(tags)).toContain("no more than 10");
   });
 });
