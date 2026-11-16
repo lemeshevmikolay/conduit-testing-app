@@ -11,7 +11,7 @@ function App() {
       <main>
         <Outlet />
       </main>
-      <footer>
+      <footer className="community-footer">
         <Footer />
       </footer>
     </>

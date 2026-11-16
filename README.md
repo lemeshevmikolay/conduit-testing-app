@@ -78,6 +78,7 @@ npm run test
 
 - [System requirements, acceptance criteria, implementation traceability, and diagrams](docs/requirements/system-requirements.md)
 - [OpenAPI specification](docs/api/openapi.yaml)
+- [Footer UI specification for QA (Ukrainian)](docs/qa/footer-specification.md)
 - Interactive Swagger UI: [`http://localhost:3001/api-docs`](http://localhost:3001/api-docs) while the backend is running.
 
 #### Production

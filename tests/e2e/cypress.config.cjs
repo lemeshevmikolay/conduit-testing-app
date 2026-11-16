@@ -23,6 +23,7 @@ module.exports = {
       const reportPath = path.join(outputDir, "report.json");
       fs.mkdirSync(baselineDir, { recursive: true });
       fs.mkdirSync(path.join(outputDir, "diff"), { recursive: true });
+      fs.mkdirSync(path.join(outputDir, "previous"), { recursive: true });
       fs.mkdirSync(config.screenshotsFolder, { recursive: true });
       fs.writeFileSync(reportPath, JSON.stringify({ generatedAt: new Date().toISOString(), results: [] }, null, 2));
 
@@ -48,7 +49,14 @@ module.exports = {
           } else {
             const baseline = PNG.sync.read(fs.readFileSync(baselineFile));
             if (actual.width !== baseline.width || actual.height !== baseline.height) {
-              result = { name, status: "dimension-mismatch", actual: actualFile, baseline: baselineFile, actualSize: `${actual.width}x${actual.height}`, baselineSize: `${baseline.width}x${baseline.height}` };
+              if (updateBaselines) {
+                const previousFile = path.join(outputDir, "previous", `${name}.png`);
+                fs.copyFileSync(baselineFile, previousFile);
+                fs.copyFileSync(actualFile, baselineFile);
+                result = { name, status: "baseline-updated", actual: actualFile, baseline: baselineFile, previousBaseline: previousFile, actualSize: `${actual.width}x${actual.height}`, baselineSize: `${baseline.width}x${baseline.height}` };
+              } else {
+                result = { name, status: "dimension-mismatch", actual: actualFile, baseline: baselineFile, actualSize: `${actual.width}x${actual.height}`, baselineSize: `${baseline.width}x${baseline.height}` };
+              }
             } else {
               const diff = new PNG({ width: actual.width, height: actual.height });
               const diffPixels = pixelmatch(baseline.data, actual.data, diff.data, actual.width, actual.height, { threshold: 0.2, includeAA: false });
@@ -57,8 +65,10 @@ module.exports = {
               if (diffPixels) fs.writeFileSync(diffFile, PNG.sync.write(diff));
               else if (fs.existsSync(diffFile)) fs.unlinkSync(diffFile);
               if (updateBaselines && ratio > Number(process.env.VISUAL_DIFF_THRESHOLD || 0.001)) {
+                const previousFile = path.join(outputDir, "previous", `${name}.png`);
+                fs.copyFileSync(baselineFile, previousFile);
                 fs.copyFileSync(actualFile, baselineFile);
-                result = { name, status: "baseline-updated", actual: actualFile, baseline: baselineFile, diff: diffFile, diffPixels, totalPixels, ratio };
+                result = { name, status: "baseline-updated", actual: actualFile, baseline: baselineFile, previousBaseline: previousFile, diff: diffFile, diffPixels, totalPixels, ratio };
               } else {
                 result = { name, status: ratio > Number(process.env.VISUAL_DIFF_THRESHOLD || 0.001) ? "changed" : "passed", actual: actualFile, baseline: baselineFile, diff: diffPixels ? diffFile : null, diffPixels, totalPixels, ratio };
               }
