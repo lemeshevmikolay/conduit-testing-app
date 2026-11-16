@@ -44,11 +44,13 @@ function SignUpForm({ onError }) {
 
   return (
     <form onSubmit={handleSubmit} noValidate>
+      <fieldset disabled={loading}>
       <FormFieldset name="username" required placeholder="Username" autoComplete="username" maxLength={40} value={form.username} handler={inputHandler} error={errors.username} />
       <FormFieldset name="email" type="email" required placeholder="Email" autoComplete="email" maxLength={254} value={form.email} handler={inputHandler} error={errors.email} />
       <FormFieldset name="password" type="password" required placeholder="Password" autoComplete="new-password" minLength={8} maxLength={30} preventCopy value={form.password} handler={inputHandler} error={errors.password} />
       <FormFieldset name="confirmPassword" type="password" required placeholder="Confirm password" autoComplete="new-password" minLength={8} maxLength={30} preventCopy value={form.confirmPassword} handler={inputHandler} error={errors.confirmPassword} />
       <button className="btn btn-lg btn-primary pull-xs-right" disabled={loading} type="submit">{loading ? "Creating account…" : "Sign up"}</button>
+      </fieldset>
     </form>
   );
 }

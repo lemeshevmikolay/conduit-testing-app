@@ -11,6 +11,7 @@ import getArticle from "../../services/getArticle";
 function Article() {
   const { state } = useLocation();
   const [article, setArticle] = useState(state || {});
+  const [loading, setLoading] = useState(!state);
   const { title, body, tagList, createdAt, author, sourceUrl } = article || {};
   const { headers, isAuth } = useAuth();
   const navigate = useNavigate();
@@ -18,22 +19,27 @@ function Article() {
 
   useEffect(() => {
     if (state) return;
-
+    let active = true;
+    setLoading(true);
     getArticle({ slug, headers })
-      .then(setArticle)
+      .then((result) => { if (active) setArticle(result); })
       .catch((error) => {
         console.error(error);
-        navigate("/not-found", { replace: true });
-      });
+        if (active) navigate("/not-found", { replace: true });
+      })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, [isAuth, slug, headers, state, navigate]);
 
   return (
     <div className="article-page">
       <BannerContainer>
-        <h1>{title}</h1>
-        <ArticleMeta author={author} createdAt={createdAt}>
-          <ArticlesButtons article={article} setArticle={setArticle} />
-        </ArticleMeta>
+        {loading ? <p className="interaction-status" role="status" aria-live="polite">Loading article…</p> : <>
+          <h1>{title}</h1>
+          <ArticleMeta author={author} createdAt={createdAt}>
+            <ArticlesButtons article={article} setArticle={setArticle} />
+          </ArticleMeta>
+        </>}
       </BannerContainer>
 
       <div className="container page">

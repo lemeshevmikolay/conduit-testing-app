@@ -6,15 +6,17 @@ import useArticleList from "../../hooks/useArticles";
 function ProfileArticles() {
   const { username } = useParams();
 
-  const { articles, articlesCount, loading, setArticlesData } = useArticleList({
+  const { articles, articlesCount, loading, error, setArticlesData } = useArticleList({
     location: "profile",
     username,
   });
 
   return loading ? (
-    <div className="article-preview">
+    <div className="article-preview" role="status" aria-live="polite" aria-busy="true">
       <em>Loading {username} articles...</em>
     </div>
+  ) : error ? (
+    <p className="interaction-error" role="alert">{error}</p>
   ) : articles.length > 0 ? (
     <>
       <ArticlesPreview

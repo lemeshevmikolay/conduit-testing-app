@@ -2,10 +2,10 @@ openapi: 3.0.3
 info:
   title: Conduit API
   version: 1.0.0
-  description: OpenAPI опис поточного REST API Conduit. Endpoint-специфічні
-    відмінності від вимог продукту зазначені в системній специфікації. API додає
-    кожній JSON-відповіді поле requestId та повертає UUID у заголовку
-    X-Request-Id.
+  description: "REST API Conduit. All JSON responses include requestId. X-Request-Id accepts a UUID correlation
+    ID (invalid values are replaced); X-System-Code is optional and defaults to front. Protected routes
+    require Authorization: Token <JWT>. Unknown JSON and query fields are rejected where validation is
+    applied."
   contact:
     name: Conduit project
 servers:
@@ -13,12 +13,19 @@ servers:
     description: Local development API
 tags:
   - name: Authentication
+    description: Registration, sign-in, email verification, and password reset.
   - name: Current user
+    description: Read and update the authenticated account.
   - name: Profiles
+    description: Public profiles and follow relationships.
   - name: Articles
+    description: Article listing, feed, CRUD, and favorites.
   - name: Comments
+    description: Article comments.
   - name: Tags
+    description: Popular article tags.
   - name: Health
+    description: API and database readiness.
 security: []
 paths:
   /users:
@@ -26,8 +33,7 @@ paths:
       tags:
         - Authentication
       summary: Register a user
-      description: Creates a pending account. In this test build, verification uses
-        mock code 123456 and no email is sent.
+      description: Creates a pending account. In this test build, verification uses mock code 123456 and no email is sent.
       operationId: registerUser
       requestBody:
         required: true
@@ -60,27 +66,18 @@ paths:
                     format: uuid
                   user:
                     $ref: "#/components/schemas/PendingUser"
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "422":
           $ref: "#/components/responses/ValidationError"
         "500":
           $ref: "#/components/responses/ServerError"
     parameters:
-      - name: Host
-        in: header
-        required: true
-        description: API host selected from the configured server.
-        schema:
-          type: string
-          example: localhost:3001
-      - name: X-System-Code
-        in: header
-        required: true
-        description: Calling system; defaults to front. Other supplied values are
-          accepted and logged.
-        schema:
-          type: string
-          default: front
-          example: front
+      - $ref: "#/components/parameters/RequestId"
+      - $ref: "#/components/parameters/SystemCode"
   /users/login:
     post:
       tags:
@@ -133,34 +130,24 @@ paths:
                     format: uuid
                   user:
                     $ref: "#/components/schemas/AuthenticatedUser"
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "404":
           $ref: "#/components/responses/NotFoundError"
         "422":
           $ref: "#/components/responses/ValidationError"
     parameters:
-      - name: Host
-        in: header
-        required: true
-        description: API host selected from the configured server.
-        schema:
-          type: string
-          example: localhost:3001
-      - name: X-System-Code
-        in: header
-        required: true
-        description: Calling system; defaults to front. Other supplied values are
-          accepted and logged.
-        schema:
-          type: string
-          default: front
-          example: front
+      - $ref: "#/components/parameters/RequestId"
+      - $ref: "#/components/parameters/SystemCode"
   /users/verify-email:
     post:
       tags:
         - Authentication
       summary: Verify a new account
-      description: In this test build, submit code 123456. A JWT is returned after
-        verification.
+      description: In this test build, submit code 123456. A JWT is returned after verification.
       operationId: verifyEmail
       requestBody:
         required: true
@@ -177,6 +164,7 @@ paths:
                   format: email
                 code:
                   type: string
+                  pattern: ^\d{6}$
                   minLength: 6
                   maxLength: 6
                   example: "123456"
@@ -193,34 +181,24 @@ paths:
                     format: uuid
                   user:
                     $ref: "#/components/schemas/AuthenticatedUser"
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "404":
           $ref: "#/components/responses/NotFoundError"
         "422":
           $ref: "#/components/responses/ValidationError"
     parameters:
-      - name: Host
-        in: header
-        required: true
-        description: API host selected from the configured server.
-        schema:
-          type: string
-          example: localhost:3001
-      - name: X-System-Code
-        in: header
-        required: true
-        description: Calling system; defaults to front. Other supplied values are
-          accepted and logged.
-        schema:
-          type: string
-          default: front
-          example: front
+      - $ref: "#/components/parameters/RequestId"
+      - $ref: "#/components/parameters/SystemCode"
   /users/forgot-password:
     post:
       tags:
         - Authentication
       summary: Request a password reset code
-      description: No mail provider is configured; response is generic. The mock code
-        in this test build is 123456.
+      description: No mail provider is configured; response is generic. The mock code in this test build is 123456.
       operationId: requestPasswordReset
       requestBody:
         required: true
@@ -241,25 +219,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MessageResponse"
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "422":
           $ref: "#/components/responses/ValidationError"
     parameters:
-      - name: Host
-        in: header
-        required: true
-        description: API host selected from the configured server.
-        schema:
-          type: string
-          example: localhost:3001
-      - name: X-System-Code
-        in: header
-        required: true
-        description: Calling system; defaults to front. Other supplied values are
-          accepted and logged.
-        schema:
-          type: string
-          default: front
-          example: front
+      - $ref: "#/components/parameters/RequestId"
+      - $ref: "#/components/parameters/SystemCode"
   /users/reset-password:
     post:
       tags:
@@ -282,6 +251,7 @@ paths:
                   format: email
                 code:
                   type: string
+                  pattern: ^\d{6}$
                   minLength: 6
                   maxLength: 6
                   example: "123456"
@@ -290,6 +260,10 @@ paths:
                   format: password
                   minLength: 8
                   maxLength: 30
+                  pattern: ^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9\s])[\x20-\x7E]{8,30}$
+                  description: 8–30 printable ASCII characters, including an uppercase letter, a digit, and a non-alphanumeric
+                    non-whitespace character.
+                  example: Example!234
       responses:
         "200":
           description: Password updated
@@ -297,27 +271,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MessageResponse"
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "404":
           $ref: "#/components/responses/NotFoundError"
         "422":
           $ref: "#/components/responses/ValidationError"
     parameters:
-      - name: Host
-        in: header
-        required: true
-        description: API host selected from the configured server.
-        schema:
-          type: string
-          example: localhost:3001
-      - name: X-System-Code
-        in: header
-        required: true
-        description: Calling system; defaults to front. Other supplied values are
-          accepted and logged.
-        schema:
-          type: string
-          default: front
-          example: front
+      - $ref: "#/components/parameters/RequestId"
+      - $ref: "#/components/parameters/SystemCode"
   /user:
     get:
       tags:
@@ -339,6 +304,11 @@ paths:
                     format: uuid
                   user:
                     $ref: "#/components/schemas/User"
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
     put:
@@ -372,46 +342,23 @@ paths:
                     format: uuid
                   user:
                     $ref: "#/components/schemas/User"
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "422":
           $ref: "#/components/responses/ValidationError"
     parameters:
-      - name: Host
-        in: header
-        required: true
-        description: API host selected from the configured server.
-        schema:
-          type: string
-          example: localhost:3001
-      - name: X-System-Code
-        in: header
-        required: true
-        description: Calling system; defaults to front. Other supplied values are
-          accepted and logged.
-        schema:
-          type: string
-          default: front
-          example: front
+      - $ref: "#/components/parameters/RequestId"
+      - $ref: "#/components/parameters/SystemCode"
   /profiles/{username}:
     parameters:
       - $ref: "#/components/parameters/Username"
-      - name: Host
-        in: header
-        required: true
-        description: API host selected from the configured server.
-        schema:
-          type: string
-          example: localhost:3001
-      - name: X-System-Code
-        in: header
-        required: true
-        description: Calling system; defaults to front. Other supplied values are
-          accepted and logged.
-        schema:
-          type: string
-          default: front
-          example: front
+      - $ref: "#/components/parameters/RequestId"
+      - $ref: "#/components/parameters/SystemCode"
     get:
       tags:
         - Profiles
@@ -433,6 +380,11 @@ paths:
                     format: uuid
                   profile:
                     $ref: "#/components/schemas/Profile"
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "404":
           $ref: "#/components/responses/NotFoundError"
     post:
@@ -455,6 +407,11 @@ paths:
                     format: uuid
                   profile:
                     $ref: "#/components/schemas/Profile"
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "404":
@@ -479,6 +436,11 @@ paths:
                     format: uuid
                   profile:
                     $ref: "#/components/schemas/Profile"
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "404":
@@ -495,32 +457,44 @@ paths:
       parameters:
         - name: tag
           in: query
+          required: false
+          description: Exact tag name filter.
           schema:
             type: string
+            example: writing
         - name: author
           in: query
+          required: false
+          description: Exact author username filter.
           schema:
             type: string
+            example: alex
         - name: favorited
           in: query
+          required: false
           description: Username whose favorited articles should be listed.
           schema:
             type: string
+            example: alex
         - name: limit
           in: query
-          description: Page size; defaults to 10 and is clamped to 1–50.
+          required: false
+          description: Page size. Defaults to 10; must be an integer from 1 through 50.
           schema:
             type: integer
             minimum: 1
             maximum: 50
             default: 10
+            example: 10
         - name: offset
           in: query
-          description: Zero-based page index (multiplied by limit), not a row offset.
+          required: false
+          description: Zero-based page index (multiplied by limit), not a row offset. Must be a nonnegative integer.
           schema:
             type: integer
             minimum: 0
             default: 0
+            example: 0
       responses:
         "200":
           description: Page of articles
@@ -528,8 +502,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ArticleListResponse"
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "500":
           $ref: "#/components/responses/ServerError"
+      description: " Unknown query keys are rejected on GET /articles; GET /articles/feed does not strictly validate
+        query keys."
     post:
       tags:
         - Articles
@@ -548,6 +529,15 @@ paths:
               properties:
                 article:
                   $ref: "#/components/schemas/CreateArticleRequest"
+            example:
+              article:
+                title: How to write clearly
+                description: A practical guide to clear writing
+                body: Clear writing starts with a clear idea. This example body is longer than twenty characters.
+                tagList:
+                  - writing
+                  - guide
+                allowDuplicateTitle: false
       responses:
         "201":
           description: Article created
@@ -561,34 +551,29 @@ paths:
                     format: uuid
                   article:
                     $ref: "#/components/schemas/Article"
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "409":
-          description: Similar article slug exists; retry with allowDuplicateTitle=true
-            after user confirmation.
+          description: Similar article slug exists; retry with allowDuplicateTitle=true after user confirmation.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "422":
           $ref: "#/components/responses/ValidationError"
     parameters:
-      - name: Host
-        in: header
-        required: true
-        description: API host selected from the configured server.
-        schema:
-          type: string
-          example: localhost:3001
-      - name: X-System-Code
-        in: header
-        required: true
-        description: Calling system; defaults to front. Other supplied values are
-          accepted and logged.
-        schema:
-          type: string
-          default: front
-          example: front
+      - $ref: "#/components/parameters/RequestId"
+      - $ref: "#/components/parameters/SystemCode"
   /articles/feed:
     get:
       tags:
@@ -598,8 +583,23 @@ paths:
       security:
         - Authorization: []
       parameters:
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/PageOffset"
+        - name: limit
+          in: query
+          required: false
+          description: Requested page size; defaults to 10 and is clamped to 1–50. Non-numeric values fall back to 10.
+          schema:
+            type: integer
+            default: 10
+            example: 10
+        - name: offset
+          in: query
+          required: false
+          description: Zero-based page index multiplied by limit; defaults to 0. The handler parses this with parseInt
+            and clamps negative values to 0.
+          schema:
+            type: integer
+            default: 0
+            example: 0
       responses:
         "200":
           description: Personalized article feed
@@ -607,44 +607,23 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ArticleListResponse"
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
+      description: " Unknown query keys are rejected on GET /articles; GET /articles/feed does not strictly validate
+        query keys."
     parameters:
-      - name: Host
-        in: header
-        required: true
-        description: API host selected from the configured server.
-        schema:
-          type: string
-          example: localhost:3001
-      - name: X-System-Code
-        in: header
-        required: true
-        description: Calling system; defaults to front. Other supplied values are
-          accepted and logged.
-        schema:
-          type: string
-          default: front
-          example: front
+      - $ref: "#/components/parameters/RequestId"
+      - $ref: "#/components/parameters/SystemCode"
   /articles/{slug}:
     parameters:
       - $ref: "#/components/parameters/Slug"
-      - name: Host
-        in: header
-        required: true
-        description: API host selected from the configured server.
-        schema:
-          type: string
-          example: localhost:3001
-      - name: X-System-Code
-        in: header
-        required: true
-        description: Calling system; defaults to front. Other supplied values are
-          accepted and logged.
-        schema:
-          type: string
-          default: front
-          example: front
+      - $ref: "#/components/parameters/RequestId"
+      - $ref: "#/components/parameters/SystemCode"
     get:
       tags:
         - Articles
@@ -666,6 +645,11 @@ paths:
                     format: uuid
                   article:
                     $ref: "#/components/schemas/Article"
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "404":
           $ref: "#/components/responses/NotFoundError"
     put:
@@ -696,6 +680,11 @@ paths:
                 properties:
                   article:
                     $ref: "#/components/schemas/Article"
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "403":
@@ -722,6 +711,11 @@ paths:
                     format: uuid
                   message:
                     $ref: "#/components/schemas/MessageBody"
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "403":
@@ -731,22 +725,8 @@ paths:
   /articles/{slug}/favorite:
     parameters:
       - $ref: "#/components/parameters/Slug"
-      - name: Host
-        in: header
-        required: true
-        description: API host selected from the configured server.
-        schema:
-          type: string
-          example: localhost:3001
-      - name: X-System-Code
-        in: header
-        required: true
-        description: Calling system; defaults to front. Other supplied values are
-          accepted and logged.
-        schema:
-          type: string
-          default: front
-          example: front
+      - $ref: "#/components/parameters/RequestId"
+      - $ref: "#/components/parameters/SystemCode"
     post:
       tags:
         - Articles
@@ -767,6 +747,11 @@ paths:
                     format: uuid
                   article:
                     $ref: "#/components/schemas/Article"
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "404":
@@ -791,6 +776,11 @@ paths:
                     format: uuid
                   article:
                     $ref: "#/components/schemas/Article"
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "404":
@@ -798,22 +788,8 @@ paths:
   /articles/{slug}/comments:
     parameters:
       - $ref: "#/components/parameters/Slug"
-      - name: Host
-        in: header
-        required: true
-        description: API host selected from the configured server.
-        schema:
-          type: string
-          example: localhost:3001
-      - name: X-System-Code
-        in: header
-        required: true
-        description: Calling system; defaults to front. Other supplied values are
-          accepted and logged.
-        schema:
-          type: string
-          default: front
-          example: front
+      - $ref: "#/components/parameters/RequestId"
+      - $ref: "#/components/parameters/SystemCode"
     get:
       tags:
         - Comments
@@ -837,6 +813,11 @@ paths:
                     type: array
                     items:
                       $ref: "#/components/schemas/Comment"
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "404":
           $ref: "#/components/responses/NotFoundError"
     post:
@@ -863,6 +844,9 @@ paths:
                     body:
                       type: string
                       minLength: 1
+            example:
+              comment:
+                body: A useful comment.
       responses:
         "201":
           description: Comment created
@@ -876,6 +860,11 @@ paths:
                     format: uuid
                   comment:
                     $ref: "#/components/schemas/Comment"
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "404":
@@ -885,27 +874,9 @@ paths:
   /articles/{slug}/comments/{commentId}:
     parameters:
       - $ref: "#/components/parameters/Slug"
-      - name: commentId
-        in: path
-        required: true
-        schema:
-          type: integer
-      - name: Host
-        in: header
-        required: true
-        description: API host selected from the configured server.
-        schema:
-          type: string
-          example: localhost:3001
-      - name: X-System-Code
-        in: header
-        required: true
-        description: Calling system; defaults to front. Other supplied values are
-          accepted and logged.
-        schema:
-          type: string
-          default: front
-          example: front
+      - $ref: "#/components/parameters/CommentId"
+      - $ref: "#/components/parameters/RequestId"
+      - $ref: "#/components/parameters/SystemCode"
     delete:
       tags:
         - Comments
@@ -926,6 +897,11 @@ paths:
                     format: uuid
                   message:
                     $ref: "#/components/schemas/MessageBody"
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "403":
@@ -953,23 +929,14 @@ paths:
                     type: array
                     items:
                       type: string
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
     parameters:
-      - name: Host
-        in: header
-        required: true
-        description: API host selected from the configured server.
-        schema:
-          type: string
-          example: localhost:3001
-      - name: X-System-Code
-        in: header
-        required: true
-        description: Calling system; defaults to front. Other supplied values are
-          accepted and logged.
-        schema:
-          type: string
-          default: front
-          example: front
+      - $ref: "#/components/parameters/RequestId"
+      - $ref: "#/components/parameters/SystemCode"
   /health:
     get:
       tags:
@@ -995,6 +962,11 @@ paths:
                   database:
                     type: string
                     example: ok
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
         "503":
           description: Database is unavailable
           content:
@@ -1011,23 +983,14 @@ paths:
                   database:
                     type: string
                     example: unavailable
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-System-Code:
+              $ref: "#/components/headers/X-System-Code"
     parameters:
-      - name: Host
-        in: header
-        required: true
-        description: API host selected from the configured server.
-        schema:
-          type: string
-          example: localhost:3001
-      - name: X-System-Code
-        in: header
-        required: true
-        description: Calling system; defaults to front. Other supplied values are
-          accepted and logged.
-        schema:
-          type: string
-          default: front
-          example: front
+      - $ref: "#/components/parameters/RequestId"
+      - $ref: "#/components/parameters/SystemCode"
 components:
   securitySchemes:
     Authorization:
@@ -1042,12 +1005,18 @@ components:
       required: true
       schema:
         type: string
+        minLength: 3
+        maxLength: 40
+        pattern: ^[A-Za-z][A-Za-z0-9]{2,39}$
+        example: alex
     Slug:
       name: slug
       in: path
       required: true
       schema:
         type: string
+        minLength: 1
+        example: how-to-write-clearly
     Limit:
       name: limit
       in: query
@@ -1065,6 +1034,36 @@ components:
         type: integer
         minimum: 0
         default: 0
+    RequestId:
+      name: X-Request-Id
+      in: header
+      required: false
+      description: Optional caller correlation ID. A valid UUID is echoed; otherwise the server generates one. The
+        response always includes the generated or accepted ID.
+      schema:
+        type: string
+        format: uuid
+        pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+        example: 550e8400-e29b-41d4-a716-446655440000
+    SystemCode:
+      name: X-System-Code
+      in: header
+      required: false
+      description: Calling system identifier used for request logging and audit records. Defaults to front when
+        omitted; arbitrary string values are accepted.
+      schema:
+        type: string
+        default: front
+        example: front
+    CommentId:
+      name: commentId
+      in: path
+      required: true
+      description: Numeric comment identifier.
+      schema:
+        type: integer
+        minimum: 1
+        example: 42
   schemas:
     RegisterUserRequest:
       type: object
@@ -1075,40 +1074,77 @@ components:
       properties:
         username:
           type: string
+          minLength: 3
+          maxLength: 40
+          pattern: ^[A-Za-z][A-Za-z0-9]{2,39}$
+          description: 3–40 ASCII letters or digits; must begin with a letter. Stored in lowercase.
           example: alex
         email:
           type: string
           format: email
+          maxLength: 254
+          pattern: ^(?!.*[._+-]{2})[A-Za-z0-9._+-]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$
+          description: ASCII email address with at least one dotted domain segment; adjacent punctuation from ._+- is
+            rejected. Stored lowercase.
           example: alex@example.com
         password:
           type: string
           format: password
+          minLength: 8
+          maxLength: 30
+          pattern: ^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9\s])[\x20-\x7E]{8,30}$
+          description: 8–30 printable ASCII characters, including an uppercase letter, a digit, and a non-alphanumeric
+            non-whitespace character.
           example: Example!234
         bio:
           type: string
           nullable: true
+          maxLength: 9000
+          description: Optional short bio, up to 9000 characters.
         image:
           type: string
           nullable: true
-          description: Profile image URL or data URI as currently accepted by the
-            application.
+          maxLength: 2048
+          description: Optional HTTP(S) URL or data:image/* URI, at most 2048 characters.
+          example: https://example.com/alex.png
     UpdateUserRequest:
       type: object
       properties:
         username:
           type: string
+          minLength: 3
+          maxLength: 40
+          pattern: ^[A-Za-z][A-Za-z0-9]{2,39}$
+          description: 3–40 ASCII letters or digits; must begin with a letter. Stored in lowercase.
+          example: alex
         email:
           type: string
           format: email
+          maxLength: 254
+          pattern: ^(?!.*[._+-]{2})[A-Za-z0-9._+-]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$
+          description: ASCII email address with at least one dotted domain segment; adjacent punctuation from ._+- is
+            rejected. Stored lowercase.
+          example: alex@example.com
         password:
           type: string
           format: password
+          minLength: 8
+          maxLength: 30
+          pattern: ^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9\s])[\x20-\x7E]{8,30}$
+          description: 8–30 printable ASCII characters, including an uppercase letter, a digit, and a non-alphanumeric
+            non-whitespace character.
+          example: Example!234
         bio:
           type: string
           nullable: true
+          maxLength: 9000
+          description: Optional short bio, up to 9000 characters.
         image:
           type: string
           nullable: true
+          maxLength: 2048
+          description: Optional HTTP(S) URL or data:image/* URI, at most 2048 characters.
+          example: https://example.com/alex.png
     User:
       type: object
       properties:
@@ -1143,6 +1179,11 @@ components:
           format: email
         username:
           type: string
+          minLength: 3
+          maxLength: 40
+          pattern: ^[A-Za-z][A-Za-z0-9]{2,39}$
+          description: 3–40 ASCII letters or digits; must begin with a letter. Stored in lowercase.
+          example: alex
         verificationRequired:
           type: boolean
           example: true
@@ -1234,33 +1275,70 @@ components:
       properties:
         title:
           type: string
+          minLength: 5
+          maxLength: 240
+          pattern: ^(?!\s)(?!.*\s$)(?!.* {2,}).+$
+          description: Trimmed length 5–240; no leading/trailing spaces or repeated consecutive spaces.
         description:
           type: string
+          minLength: 5
+          maxLength: 240
+          pattern: ^(?!\s)(?!.*\s$)(?!.* {2,}).+$
+          description: Trimmed length 5–240; no leading/trailing spaces or repeated consecutive spaces.
         body:
           type: string
+          minLength: 20
+          maxLength: 9000
+          pattern: ^(?!\s)(?!.*\s$)(?!.* {2,}).+$
+          description: Trimmed length 20–9000; no leading/trailing spaces or repeated consecutive spaces.
         tagList:
           type: array
+          maxItems: 10
+          uniqueItems: true
+          description: "Tags are trimmed, leading # characters are removed, and values are lowercased. Each normalized
+            tag has 1–30 ASCII letters, digits, underscores, or hyphens; duplicates ignoring case are
+            rejected."
           items:
             type: string
-          maxItems: 10
+            pattern: ^#*[A-Za-z0-9_-]{1,30}$
+            example: writing
         allowDuplicateTitle:
           type: boolean
-          description: Set after user confirms the duplicate-title prompt; API creates a
-            unique slug.
+          description: Set after user confirms the duplicate-title prompt; API creates a unique slug.
     UpdateArticleRequest:
       type: object
       properties:
         title:
           type: string
+          minLength: 5
+          maxLength: 240
+          pattern: ^(?!\s)(?!.*\s$)(?!.* {2,}).+$
+          description: Trimmed length 5–240; no leading/trailing spaces or repeated consecutive spaces.
         description:
           type: string
+          minLength: 5
+          maxLength: 240
+          pattern: ^(?!\s)(?!.*\s$)(?!.* {2,}).+$
+          description: Trimmed length 5–240; no leading/trailing spaces or repeated consecutive spaces.
         body:
           type: string
+          minLength: 20
+          maxLength: 9000
+          pattern: ^(?!\s)(?!.*\s$)(?!.* {2,}).+$
+          description: Trimmed length 20–9000; no leading/trailing spaces or repeated consecutive spaces.
         tagList:
           type: array
+          maxItems: 10
+          uniqueItems: true
+          description: "Tags are trimmed, leading # characters are removed, and values are lowercased. Each normalized
+            tag has 1–30 ASCII letters, digits, underscores, or hyphens; duplicates ignoring case are
+            rejected."
           items:
             type: string
-          maxItems: 10
+            pattern: ^#*[A-Za-z0-9_-]{1,30}$
+            example: writing
+      description: All fields are optional; send at least one field to make a meaningful update. The article wrapper
+        is required.
     Comment:
       type: object
       properties:
@@ -1268,6 +1346,8 @@ components:
           type: integer
         body:
           type: string
+          maxLength: 9000
+          description: Comment body. Must be a non-empty string; maximum 9000 characters.
         createdAt:
           type: string
           format: date-time
@@ -1310,27 +1390,63 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
+      headers:
+        X-Request-Id:
+          $ref: "#/components/headers/X-Request-Id"
+        X-System-Code:
+          $ref: "#/components/headers/X-System-Code"
     ForbiddenError:
       description: The authenticated user does not own this resource
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
+      headers:
+        X-Request-Id:
+          $ref: "#/components/headers/X-Request-Id"
+        X-System-Code:
+          $ref: "#/components/headers/X-System-Code"
     NotFoundError:
       description: Requested resource was not found
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
+      headers:
+        X-Request-Id:
+          $ref: "#/components/headers/X-Request-Id"
+        X-System-Code:
+          $ref: "#/components/headers/X-System-Code"
     ValidationError:
       description: Invalid request or domain validation failure
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
+      headers:
+        X-Request-Id:
+          $ref: "#/components/headers/X-Request-Id"
+        X-System-Code:
+          $ref: "#/components/headers/X-System-Code"
     ServerError:
       description: Unexpected server error
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
+      headers:
+        X-Request-Id:
+          $ref: "#/components/headers/X-Request-Id"
+        X-System-Code:
+          $ref: "#/components/headers/X-System-Code"
+  headers:
+    X-Request-Id:
+      description: Correlation identifier for this request.
+      schema:
+        type: string
+        format: uuid
+    X-System-Code:
+      description: Calling system identifier, defaulting to front.
+      schema:
+        type: string
+        example: front

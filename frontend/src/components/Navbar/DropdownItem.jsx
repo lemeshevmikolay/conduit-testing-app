@@ -8,7 +8,7 @@ function DropdownItem({ handler, icon, text, url, state }) {
       to={url || "#"}
       state={state}
     >
-      {icon && <i className={icon}></i>} {text}
+      {icon && <i aria-hidden="true" className={icon}></i>} {text}
     </Link>
   );
 }

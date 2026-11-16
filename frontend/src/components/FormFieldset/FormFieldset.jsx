@@ -15,14 +15,17 @@ function FormFieldset({
   autoComplete,
 }) {
   const errorId = `${name}-error`;
+  const labelId = `${name}-label`;
   return (
-    <fieldset className="form-group">
+    <div className="form-group">
+      <label className="visually-hidden" htmlFor={name} id={labelId}>{placeholder}</label>
       <input
         aria-describedby={error ? errorId : undefined}
         aria-invalid={error ? "true" : undefined}
         autoComplete={autoComplete}
         autoFocus={autoFocus}
         className={`form-control ${normal ? "" : "form-control-lg"}`}
+        id={name}
         maxLength={maxLength}
         minLength={minLength}
         name={name}
@@ -36,7 +39,7 @@ function FormFieldset({
       />
       {children}
       {error && <small className="error-messages" id={errorId} role="alert">{error}</small>}
-    </fieldset>
+    </div>
   );
 }
 

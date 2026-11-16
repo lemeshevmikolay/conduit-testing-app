@@ -12,6 +12,7 @@ describe("Conduit smoke: account and content", () => {
     cy.get('input[name="password"]').type(seededPassword);
     cy.contains("button", "Sign in").click();
     cy.get(".dropdown-toggle").should("be.visible");
+    cy.location("hash").should("eq", "#/profile/e2ereader");
   };
 
   it("registers an account and verifies its email", () => {

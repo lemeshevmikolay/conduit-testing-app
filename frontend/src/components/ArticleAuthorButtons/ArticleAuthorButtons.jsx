@@ -1,9 +1,13 @@
 import { Link, useNavigate } from "react-router-dom";
+import { Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import deleteArticle from "../../services/deleteArticle";
+import { useState } from "react";
 
 function ArticleAuthorButtons({ body, description, slug, tagList, title }) {
   const { headers, isAuth } = useAuth();
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleClick = () => {
@@ -12,29 +16,35 @@ function ArticleAuthorButtons({ body, description, slug, tagList, title }) {
     const confirmation = window.confirm("Want to delete the article?");
     if (!confirmation) return;
 
+    setDeleting(true);
+    setError("");
     deleteArticle({ headers, slug })
       .then(() => navigate("/"))
-      .catch(console.error);
+      .catch((requestError) => {
+        setError(requestError.message || "Unable to delete article.");
+        setDeleting(false);
+      });
   };
 
   return (
     <>
+      {error && <span className="interaction-error" role="alert">{error}</span>}
       <button
-        className="btn btn-sm"
-        style={{ color: "#d00" }}
+        className="btn btn-sm btn-outline-danger"
+        aria-busy={deleting}
+        disabled={deleting}
         onClick={handleClick}
+        type="button"
       >
-        <i className="ion-trash-a"></i> Delete Article
+        <Trash2 aria-hidden="true" size={15} /> {deleting ? "Deleting…" : "Delete Article"}
       </button>{" "}
-      <button className="btn btn-sm" style={{ color: "#777" }}>
-        <Link
-          className="nav-link"
-          state={{ body, description, tagList, title }}
-          to={`/editor/${slug}`}
-        >
-          <i className="ion-edit"></i> Edit Article
-        </Link>
-      </button>{" "}
+      <Link
+        className="btn btn-sm btn-outline-secondary"
+        state={{ body, description, tagList, title }}
+        to={`/editor/${slug}`}
+      >
+        <Pencil aria-hidden="true" size={15} /> Edit Article
+      </Link>{" "}
     </>
   );
 }

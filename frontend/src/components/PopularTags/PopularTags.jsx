@@ -19,11 +19,11 @@ function PopularTags() {
     <aside className="col-md-3">
       <div className="sidebar">
         <h6>Popular Tags</h6>
-        <div className="tag-list">
+        <div className="tag-list" aria-busy={loading}>
           {tags.length > 0 ? (
             <TagButton tagsList={tags} />
           ) : loading ? (
-            <p>Loading tags...</p>
+            <p className="interaction-status" role="status" aria-live="polite">Loading tags...</p>
           ) : (
             <p>Tags list not available</p>
           )}

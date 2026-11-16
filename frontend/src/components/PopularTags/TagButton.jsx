@@ -8,7 +8,7 @@ function TagButton({ tagsList }) {
   };
 
   return tagsList.map((name) => (
-    <button className="tag-pill tag-default" data-testid="popular-tag" key={name} onClick={handleClick}>
+    <button className="tag-pill tag-default" data-testid="popular-tag" key={name} onClick={handleClick} type="button">
       {name.startsWith("#") ? name : `#${name}`}
     </button>
   ));

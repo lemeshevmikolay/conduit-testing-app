@@ -90,6 +90,7 @@ function ArticleEditorForm() {
         <FormFieldset normal placeholder="What's this article about?" name="description" required minLength={5} maxLength={240} value={form.description} handler={inputHandler} error={errors.description} />
         <fieldset className="form-group">
           <textarea
+            aria-label="Article body in Markdown"
             aria-describedby={errors.body ? "body-error" : undefined}
             aria-invalid={errors.body ? "true" : undefined}
             className="form-control"
@@ -109,7 +110,7 @@ function ArticleEditorForm() {
           setForm((current) => ({ ...current, tagList: event.target.value }));
           setErrors((current) => ({ ...current, tagList: "" }));
         }} error={errors.tagList} />
-        <button className="btn btn-lg pull-xs-right btn-primary" type="submit">
+        <button className="btn btn-lg pull-xs-right btn-primary" aria-busy={loading} disabled={loading} type="submit">
           {loading ? "Saving…" : slug ? "Update Article" : "Publish Article"}
         </button>
       </fieldset>

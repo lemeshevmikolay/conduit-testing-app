@@ -10,11 +10,13 @@ function FeedNavLink({ icon, name, text }) {
   return (
     <li className="nav-item">
       <button
+        aria-pressed={tabName === name}
         className={`nav-link ${tabName === name ? "active" : ""}`}
         data-testid={`feed-tab-${name}`}
         onClick={handleClick}
+        type="button"
       >
-        {icon && <i className="ion-pound"></i>} {text}
+        {icon && <i aria-hidden="true" className="ion-pound"></i>} {text}
       </button>
     </li>
   );

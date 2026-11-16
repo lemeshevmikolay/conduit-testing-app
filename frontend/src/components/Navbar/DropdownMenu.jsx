@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import userLogout from "../../services/userLogout";
 import Avatar from "../Avatar";
@@ -6,6 +6,7 @@ import DropdownItem from "./DropdownItem";
 
 function DropdownMenu() {
   const [dropdown, setDropdown] = useState(false);
+  const toggleRef = useRef(null);
   const { loggedUser, setAuthState } = useAuth();
   const { username, image } = loggedUser || {};
 
@@ -18,20 +19,25 @@ function DropdownMenu() {
   };
 
   return (
-    <li className="nav-item dropdown">
-      <div
+    <li className="nav-item dropdown" onKeyDown={(event) => {
+      if (event.key === "Escape" && dropdown) {
+        setDropdown(false);
+        toggleRef.current?.focus();
+      }
+    }}>
+      <button
+        aria-expanded={dropdown}
+        aria-label={`Account menu for ${username}`}
         className="nav-link dropdown-toggle cursor-pointer"
         onClick={handleClick}
+        ref={toggleRef}
+        type="button"
       >
         <Avatar alt={username} className="user-pic" src={image} />
         {username}
-      </div>
+      </button>
 
-      <div
-        className="dropdown-menu"
-        style={{ display: dropdown ? "block" : "none" }}
-        onMouseLeave={handleClick}
-      >
+      {dropdown && <div className="dropdown-menu">
         <DropdownItem
           icon="ion-person"
           text="Profile"
@@ -41,7 +47,7 @@ function DropdownMenu() {
         <DropdownItem icon="ion-gear-a" text="Settings" url="/settings" />
         <div className="dropdown-divider"></div>
         <DropdownItem icon="ion-log-out" text="Logout" handler={logout} />
-      </div>
+      </div>}
     </li>
   );
 }

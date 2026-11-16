@@ -45,9 +45,11 @@ function LoginForm({ onError }) {
   return (
     <>
       <form onSubmit={handleSubmit} noValidate>
+        <fieldset disabled={loading}>
         <FormFieldset autoFocus name="identifier" required placeholder="Enter your username or email" autoComplete="username" value={identifier} handler={inputHandler} error={errors.identifier} />
         <FormFieldset name="password" type="password" required placeholder="Password" autoComplete="current-password" preventCopy value={password} handler={inputHandler} error={errors.password} />
         <button className="btn btn-lg btn-primary pull-xs-right" disabled={loading} type="submit">{loading ? "Signing in…" : "Sign in"}</button>
+        </fieldset>
       </form>
       <p className="text-xs-center"><Link to="/forgot-password">Forgot the password?</Link></p>
     </>

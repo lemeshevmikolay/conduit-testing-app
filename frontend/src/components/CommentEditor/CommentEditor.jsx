@@ -6,19 +6,26 @@ import Avatar from "../Avatar";
 
 function CommentEditor({ updateComments }) {
   const [{ body }, setForm] = useState({ body: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
   const { headers, isAuth, loggedUser } = useAuth();
   const { username, image } = loggedUser || {};
   const { slug } = useParams();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (body.trim() === "") return;
-
-    postComment({ body, headers, slug })
-      .then(updateComments)
-      .then(setForm({ body: "" }))
-      .catch(console.error);
+    if (body.trim() === "" || submitting) return;
+    setSubmitting(true);
+    setError("");
+    try {
+      const result = await postComment({ body, headers, slug });
+      await updateComments(result);
+      setForm({ body: "" });
+    } catch (submitError) {
+      setError(submitError.message || "Unable to post comment. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -27,8 +34,13 @@ function CommentEditor({ updateComments }) {
 
   return isAuth ? (
     <form className="card comment-form" onSubmit={handleSubmit}>
+      {error && <p className="interaction-error" id="comment-submit-error" role="alert">{error}</p>}
       <div className="card-block">
         <textarea
+          aria-label="Write a comment"
+          aria-describedby={error ? "comment-submit-error" : undefined}
+          aria-invalid={error ? "true" : undefined}
+          disabled={submitting}
           className="form-control"
           maxLength={9000}
           onChange={handleChange}
@@ -38,9 +50,11 @@ function CommentEditor({ updateComments }) {
         ></textarea>
       </div>
 
-      <div className="card-footer">
+      <div className="card-footer" aria-busy={submitting}>
         <Avatar alt={username} className="comment-author-img" src={image} />
-        <button className="btn btn-sm btn-primary">Post Comment</button>
+        <button className="btn btn-sm btn-primary" disabled={submitting || !body.trim()} type="submit">
+          {submitting ? "Posting…" : "Post Comment"}
+        </button>
       </div>
     </form>
   ) : (

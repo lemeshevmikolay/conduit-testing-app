@@ -26,14 +26,15 @@ function ArticlesPagination({
       breakLinkClassName="page-link"
       containerClassName="pagination pagination-sm"
       nextClassName="page-item"
-      nextLabel={<i className="ion-arrow-right-b"></i>}
+      nextLabel={<><span className="visually-hidden">Next page</span><i aria-hidden="true" className="ion-arrow-right-b"></i></>}
       nextLinkClassName="page-link"
       onPageChange={handlePageChange}
       pageClassName="page-item"
       pageCount={totalPages}
       pageLinkClassName="page-link"
+      ariaLabelBuilder={(page) => `Go to page ${page}`}
       previousClassName="page-item"
-      previousLabel={<i className="ion-arrow-left-b"></i>}
+      previousLabel={<><span className="visually-hidden">Previous page</span><i aria-hidden="true" className="ion-arrow-left-b"></i></>}
       previousLinkClassName="page-link"
       renderOnZeroPageCount={null}
     />
