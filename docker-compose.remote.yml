@@ -9,6 +9,8 @@ services:
       MYSQL_DATABASE: ${DEV_DB_NAME:-conduit_development}
       MYSQL_USER: ${DEV_DB_USERNAME:-conduit}
       MYSQL_PASSWORD: ${DEV_DB_PASSWORD:-conduit_local_dev}
+    ports:
+      - "127.0.0.1:3306:3306"
     volumes:
       - conduit_mysql_data:/var/lib/mysql
     healthcheck:
