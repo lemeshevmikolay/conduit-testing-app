@@ -11,6 +11,8 @@ const {
   validateEmail,
   validatePassword,
   validateUsername,
+  validateObject,
+  validateOptionalString,
 } = require("../helper/validation");
 
 const MOCK_EMAIL_CODE = "123456";
@@ -30,8 +32,8 @@ const findByEmailOrUsername = (identifier) => {
 
 const signUp = async (req, res, next) => {
   try {
-    const details = req.body?.user;
-    if (!details || typeof details !== "object") throw new ValidationError("User details are required.");
+    const details = validateObject(req.body, "request", ["user"]).user;
+    validateObject(details, "user", ["username", "email", "password", "bio", "image"]);
     if (!details.username) throw new FieldRequiredError("Username");
     if (!details.email) throw new FieldRequiredError("Email");
     if (!details.password) throw new FieldRequiredError("Password");
@@ -39,6 +41,9 @@ const signUp = async (req, res, next) => {
     const username = validateUsername(details.username);
     const email = validateEmail(details.email);
     const password = validatePassword(details.password);
+    validateOptionalString(details.bio, "Bio");
+    validateOptionalString(details.image, "Image", 2048);
+    if (details.image) require("../helper/validation").validateImageUrl(details.image);
     if (!process.env.JWT_KEY) throw new Error("JWT_KEY must be set in the root .env file");
 
     const existingUser = await findByEmailOrUsername(email);
@@ -49,8 +54,8 @@ const signUp = async (req, res, next) => {
     const newUser = await User.create({
       username,
       email,
-      bio: details.bio || null,
-      image: details.image || null,
+      bio: details.bio ?? null,
+      image: details.image ?? null,
       password: await bcryptHash(password),
       emailVerified: false,
     });
@@ -65,7 +70,9 @@ const signUp = async (req, res, next) => {
 
 const verifyEmail = async (req, res, next) => {
   try {
+    validateObject(req.body, "request", ["email", "code"]);
     const email = validateEmail(req.body?.email);
+    if (typeof req.body?.code !== "string" || !/^\d{6}$/.test(req.body.code)) throw new ValidationError("Verification code must be a six-digit string.");
     if (req.body?.code !== MOCK_EMAIL_CODE) throw new ValidationError("The verification code is invalid.");
     const user = await findByEmailOrUsername(email);
     if (!user) throw new NotFoundError("User", "with such email or username not registered.");
@@ -79,6 +86,7 @@ const verifyEmail = async (req, res, next) => {
 
 const requestPasswordReset = async (req, res, next) => {
   try {
+    validateObject(req.body, "request", ["email"]);
     validateEmail(req.body?.email);
     // The test application has no mail provider; keep this response generic.
     res.json({ message: MOCK_EMAIL_MESSAGE });
@@ -89,7 +97,9 @@ const requestPasswordReset = async (req, res, next) => {
 
 const resetPassword = async (req, res, next) => {
   try {
+    validateObject(req.body, "request", ["email", "code", "password"]);
     const email = validateEmail(req.body?.email);
+    if (typeof req.body?.code !== "string" || !/^\d{6}$/.test(req.body.code)) throw new ValidationError("Verification code must be a six-digit string.");
     if (req.body?.code !== MOCK_EMAIL_CODE) throw new ValidationError("The verification code is invalid.");
     const password = validatePassword(req.body?.password);
     const user = await findByEmailOrUsername(email);
@@ -106,7 +116,12 @@ const resetPassword = async (req, res, next) => {
 
 const signIn = async (req, res, next) => {
   try {
-    const user = req.body?.user;
+    const user = validateObject(req.body, "request", ["user"]).user;
+    validateObject(user, "user", ["email", "username", "password"]);
+    if (user.email !== undefined && user.username !== undefined) throw new ValidationError("Provide either email or username, not both.");
+    if (user.email !== undefined && typeof user.email !== "string") throw new ValidationError("Email must be a string.");
+    if (user.username !== undefined && typeof user.username !== "string") throw new ValidationError("Username must be a string.");
+    if (user.password !== undefined && typeof user.password !== "string") throw new ValidationError("Password must be a string.");
     const identifier = user?.email ?? user?.username;
     if (!identifier) throw new FieldRequiredError("Email or Username");
     if (!user?.password) throw new FieldRequiredError("Password");

@@ -24,6 +24,7 @@ const dbConfig = (prefix) => ({
       .replace(/\s+/g, " ")
       .trim();
     const query = {
+      "system.code": "db",
       "db.system": process.env[`${prefix}_DB_DIALECT`],
       sql: statement,
       duration_ms: Math.round(Number(durationMs || 0) * 100) / 100,

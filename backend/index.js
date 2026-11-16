@@ -53,6 +53,13 @@ async function start() {
         defaultValue: true,
       });
     }
+    const auditColumns = await sequelize.getQueryInterface().describeTable("ApiAuditLogs");
+    if (!auditColumns.systemCode) {
+      await sequelize.getQueryInterface().addColumn("ApiAuditLogs", "systemCode", {
+        type: DataTypes.STRING(100), allowNull: false, defaultValue: "front",
+      });
+    }
+    require("./observability/dbAudit")(sequelize);
     if (env === "development" && process.env.SEED_DEMO_DATA !== "false") {
       await seedDemoData();
     }

@@ -7,6 +7,7 @@ module.exports = (sequelize) => {
       const key = instance.constructor.primaryKeyAttribute;
       logger.info(`db.record.${action.toLowerCase()}`, {
         "http.request.id": requestContext.getStore()?.requestId,
+        "system.code": "db",
         "db.system": sequelize.getDialect(),
         "db.collection.name": instance.constructor.tableName,
         "db.operation": action.toLowerCase(),

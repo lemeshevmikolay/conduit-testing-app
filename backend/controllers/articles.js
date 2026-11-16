@@ -13,7 +13,7 @@ const {
   slugify,
   appendArticleMetrics,
 } = require("../helper/helpers");
-const { normalizeTags, validateArticleField } = require("../helper/validation");
+const { normalizeTags, validateArticleField, validateObject, validateArticleQuery } = require("../helper/validation");
 const { Article, Tag, User } = require("../models");
 
 const includeOptions = [
@@ -25,6 +25,7 @@ const includeOptions = [
 const allArticles = async (req, res, next) => {
   try {
     const { loggedUser } = req;
+    validateArticleQuery(req.query);
 
     const { author, tag, favorited } = req.query;
     const limit = Math.min(50, Math.max(1, Number.parseInt(req.query.limit, 10) || 10));
@@ -77,8 +78,11 @@ const createArticle = async (req, res, next) => {
     const { loggedUser } = req;
     if (!loggedUser) throw new UnauthorizedError();
 
-    const input = req.body?.article;
-    if (!input || typeof input !== "object") throw new FieldRequiredError("Article details");
+    validateArticleQuery(req.query);
+
+    const input = validateObject(req.body, "request", ["article"]).article;
+    validateObject(input, "article", ["title", "description", "body", "tagList", "allowDuplicateTitle"]);
+    if (input.allowDuplicateTitle !== undefined && typeof input.allowDuplicateTitle !== "boolean") throw new ValidationError("allowDuplicateTitle must be a boolean.");
     const title = validateArticleField(input.title, "title", 5, 240);
     const description = validateArticleField(input.description, "description", 5, 240);
     const body = validateArticleField(input.body, "body", 20, 9000);
@@ -189,8 +193,8 @@ const updateArticle = async (req, res, next) => {
       throw new ForbiddenError("article");
     }
 
-    const input = req.body?.article;
-    if (!input || typeof input !== "object") throw new FieldRequiredError("Article details");
+    const input = validateObject(req.body, "request", ["article"]).article;
+    validateObject(input, "article", ["title", "description", "body", "tagList"]);
     const { title: rawTitle, description: rawDescription, body: rawBody } = input;
     const title = rawTitle === undefined ? undefined : validateArticleField(rawTitle, "title", 5, 240);
     const description = rawDescription === undefined ? undefined : validateArticleField(rawDescription, "description", 5, 240);

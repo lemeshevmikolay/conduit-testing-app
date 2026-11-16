@@ -13,6 +13,7 @@ module.exports = (sequelize, DataTypes) => {
       payload: { type: DataTypes.JSON, allowNull: true },
       datetime: { type: DataTypes.DATE, allowNull: false },
       uuid: { type: DataTypes.UUID, allowNull: false },
+      systemCode: { type: DataTypes.STRING(100), allowNull: false, defaultValue: "front" },
       statusCode: { type: DataTypes.INTEGER, allowNull: false },
     },
     {

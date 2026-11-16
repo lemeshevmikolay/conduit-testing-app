@@ -41,8 +41,11 @@ module.exports = (ApiAuditLog) => (req, res, next) => {
     ? clientRequestId
     : randomUUID();
   const requestLog = { requestId: req.id, dbQueries: [] };
+  requestLog.systemCode = req.get("X-System-Code") || "front";
+  req.systemCode = requestLog.systemCode;
+  res.setHeader("X-System-Code", requestLog.systemCode);
   res.setHeader("X-Request-Id", req.id);
-  res.setHeader("Access-Control-Expose-Headers", "X-Request-Id");
+  res.setHeader("Access-Control-Expose-Headers", "X-Request-Id, X-System-Code");
   const sendJson = res.json.bind(res);
   res.json = (body) => {
     const responseBody = body && typeof body === "object" && !Array.isArray(body)
@@ -56,6 +59,7 @@ module.exports = (ApiAuditLog) => (req, res, next) => {
     const level = res.statusCode >= 500 ? "error" : res.statusCode >= 400 ? "warn" : "info";
     logger[level]("http.request", {
       "http.request.id": req.id,
+      "system.code": requestLog.systemCode,
       "http.request.method": req.method,
       "url.path": req.path,
       "url.query": toLogValue(req.query || {}),
@@ -77,6 +81,7 @@ module.exports = (ApiAuditLog) => (req, res, next) => {
         payload: redact(req.body ?? null),
         datetime: new Date(),
         uuid: req.id,
+        systemCode: requestLog.systemCode,
         statusCode: res.statusCode,
       }).catch((error) => {
         logger.error("db.api_audit.write_failed", {

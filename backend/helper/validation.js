@@ -1,5 +1,37 @@
 const { ValidationError } = require("./customErrors");
 
+function validateObject(value, label, allowedKeys) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new ValidationError(`${label} must be an object.`);
+  }
+  const unknown = Object.keys(value).filter((key) => !allowedKeys.includes(key));
+  if (unknown.length) throw new ValidationError(`Unsupported ${label} field: ${unknown[0]}.`);
+  return value;
+}
+
+function validateOptionalString(value, label, maxLength = 9000) {
+  if (value !== undefined && value !== null && (typeof value !== "string" || value.length > maxLength)) {
+    throw new ValidationError(`${label} must be a string of at most ${maxLength} characters.`);
+  }
+  return value;
+}
+
+function validateArticleQuery(query) {
+  const allowed = ["tag", "author", "favorited", "limit", "offset"];
+  const unknown = Object.keys(query).find((key) => !allowed.includes(key));
+  if (unknown) throw new ValidationError(`Unsupported query parameter: ${unknown}.`);
+  for (const key of ["tag", "author", "favorited"]) {
+    if (query[key] !== undefined && typeof query[key] !== "string") {
+      throw new ValidationError(`${key} must be a string.`);
+    }
+  }
+  for (const [key, min, max] of [["limit", 1, 50], ["offset", 0, Number.MAX_SAFE_INTEGER]]) {
+    if (query[key] !== undefined && (!/^\d+$/.test(query[key]) || !Number.isSafeInteger(Number(query[key])) || Number(query[key]) < min || Number(query[key]) > max)) {
+      throw new ValidationError(`${key} must be an integer between ${min} and ${max}.`);
+    }
+  }
+}
+
 const usernamePattern = /^[A-Za-z][A-Za-z0-9]{2,39}$/;
 const emailPattern = /^(?!.*[._+-]{2})[A-Za-z0-9._+-]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$/;
 
@@ -86,6 +118,9 @@ function validateImageUrl(value) {
 }
 
 module.exports = {
+  validateObject,
+  validateOptionalString,
+  validateArticleQuery,
   normalizeTags,
   validateArticleField,
   validateEmail,
