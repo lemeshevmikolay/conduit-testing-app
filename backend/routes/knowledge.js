@@ -124,7 +124,7 @@ router.get("/:slug", async (req, res, next) => {
   try {
     const item = await KnowledgeItem.findOne({ where: { slug: req.params.slug, published: true }, include: [
       { model: KnowledgeSource, as: "sourceRecords", attributes: ["title", "url", "type", "description"] },
-      { model: KnowledgeRelation, as: "outgoingRelations", attributes: ["relationType"], include: [{ model: KnowledgeItem, as: "targetArticle", attributes: ["slug", "title", "summary", "category", "orderIndex", "estimatedReadingTime"], where: { published: true }, required: true }] },
+      { model: KnowledgeRelation, as: "outgoingRelations", attributes: ["relationType"], required: false, include: [{ model: KnowledgeItem, as: "targetArticle", attributes: ["slug", "title", "summary", "category", "orderIndex", "estimatedReadingTime"], where: { published: true }, required: false }] },
     ] });
     if (!item) return res.status(404).json({ errors: { body: ["Knowledge item not found"] } });
     res.json({ item });
@@ -148,7 +148,7 @@ router.get("/", async (req, res, next) => {
       attributes: ["slug", "kind", "section", "category", "title", "summary", "body", "question", "answer", "difficulty", "questionType", "orderIndex", "estimatedReadingTime", "sourceName", "sourceUrl", "tags"],
       include: [
         { model: KnowledgeSource, as: "sourceRecords", attributes: ["title", "url", "type", "description"] },
-        { model: KnowledgeRelation, as: "outgoingRelations", attributes: ["relationType"], include: [{ model: KnowledgeItem, as: "targetArticle", attributes: ["slug", "title", "summary", "category", "orderIndex", "estimatedReadingTime"], where: { published: true }, required: true }] },
+        { model: KnowledgeRelation, as: "outgoingRelations", attributes: ["relationType"], required: false, include: [{ model: KnowledgeItem, as: "targetArticle", attributes: ["slug", "title", "summary", "category", "orderIndex", "estimatedReadingTime"], where: { published: true }, required: false }] },
       ],
       order: [["orderIndex", "ASC"], ["title", "ASC"]], limit: 500,
     });
