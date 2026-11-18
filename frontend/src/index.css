@@ -124,6 +124,10 @@ main { min-height: calc(100vh - 160px); }
 .home-page .banner::after { content: ""; position: absolute; width: 250px; height: 250px; right: 9%; top: -145px; border-radius: 50%; background: rgba(255,61,83,.17); filter: blur(8px); pointer-events: none; }
 .home-page .banner h1 { position: relative; color: white; font-size: clamp(2.4rem, 5vw, 3.5rem); letter-spacing: -.055em; }
 .home-page .banner p { color: #c9c0c3; font-size: 1.05rem; }
+.home-page .banner .home-commit { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin: -8px 0 13px; color: #a9a0a3; font-size: .76rem; }
+.home-page .banner .home-commit span { max-width: min(100%, 620px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home-page .banner .home-commit code { color: #e0b7bc; font-size: .7rem; }
+.home-page .banner .home-commit time { color: #91898c; }
 .home-page .banner p a { color: #ff7180; }
 .home-page .feed-toggle { margin: 0 0 18px; border-bottom: 1px solid rgba(255,255,255,.09); }
 .home-page .feed-toggle .nav-pills { gap: 7px; }

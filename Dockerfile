@@ -10,6 +10,12 @@ COPY backend ./backend
 COPY frontend ./frontend
 COPY docs ./docs
 COPY scripts ./scripts
+ARG VITE_COMMIT_SHA
+ARG VITE_COMMIT_SUBJECT
+ARG VITE_COMMIT_DATE
+ENV VITE_COMMIT_SHA=$VITE_COMMIT_SHA \
+    VITE_COMMIT_SUBJECT=$VITE_COMMIT_SUBJECT \
+    VITE_COMMIT_DATE=$VITE_COMMIT_DATE
 RUN npm run build --workspace frontend && npm prune --omit=dev
 
 WORKDIR /app/backend

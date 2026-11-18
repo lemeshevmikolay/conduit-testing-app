@@ -23,6 +23,10 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
+          build-args: |
+            VITE_COMMIT_SHA=${{ github.sha }}
+            VITE_COMMIT_SUBJECT=${{ github.event.head_commit.message || github.sha }}
+            VITE_COMMIT_DATE=${{ github.event.head_commit.timestamp || github.run_started_at }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/conduit-app:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/conduit-app:${{ github.sha }}
