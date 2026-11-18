@@ -24,6 +24,8 @@ tags:
     description: Article comments.
   - name: Tags
     description: Popular article tags.
+  - name: Knowledge Hub
+    description: Public learning content and allowlisted editor operations.
   - name: Health
     description: API and database readiness.
 security: []
@@ -937,6 +939,157 @@ paths:
     parameters:
       - $ref: "#/components/parameters/RequestId"
       - $ref: "#/components/parameters/SystemCode"
+  /knowledge:
+    get:
+      tags: [Knowledge Hub]
+      summary: List published QA Knowledge Hub materials
+      parameters:
+        - in: query
+          name: section
+          schema: { type: string, enum: [interview, architecture, tools] }
+        - in: query
+          name: category
+          schema: { type: string }
+        - in: query
+          name: difficulty
+          schema: { type: string, enum: [strong-junior, middle] }
+        - in: query
+          name: search
+          schema: { type: string, maxLength: 100 }
+      responses:
+        "200":
+          description: Published materials with normalized source records.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total: { type: integer }
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/KnowledgeItem" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    parameters:
+      - $ref: "#/components/parameters/RequestId"
+      - $ref: "#/components/parameters/SystemCode"
+  /knowledge/categories:
+    get:
+      tags: [Knowledge Hub]
+      summary: List categories by section
+      responses:
+        "200":
+          description: Categories grouped by knowledge section.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: object
+                    additionalProperties:
+                      type: array
+                      items: { type: string }
+    parameters:
+      - $ref: "#/components/parameters/RequestId"
+      - $ref: "#/components/parameters/SystemCode"
+  /knowledge/{slug}:
+    get:
+      tags: [Knowledge Hub]
+      summary: Read one published material
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Material with normalized sources.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  item: { $ref: "#/components/schemas/KnowledgeItem" }
+        "404": { $ref: "#/components/responses/NotFoundError" }
+    parameters:
+      - $ref: "#/components/parameters/RequestId"
+      - $ref: "#/components/parameters/SystemCode"
+  /knowledge/manage:
+    post:
+      tags: [Knowledge Hub]
+      summary: Create a material (allowlisted editor only)
+      security:
+        - Authorization: []
+      description: Requires the authenticated account email to be listed in KNOWLEDGE_ADMIN_EMAILS.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [slug, section, kind, category, title, summary, body, sourceName, sourceUrl]
+              properties:
+                slug: { type: string, maxLength: 180 }
+                section: { type: string, enum: [interview, architecture, tools] }
+                kind: { type: string, enum: [question, article, fact, tip] }
+                category: { type: string, maxLength: 80 }
+                title: { type: string, maxLength: 255 }
+                summary: { type: string, maxLength: 500 }
+                body: { type: string }
+                question: { type: string }
+                answer: { type: string }
+                difficulty: { type: string, enum: [strong-junior, middle] }
+                questionType: { type: string }
+                orderIndex: { type: integer }
+                sourceName: { type: string }
+                sourceUrl: { type: string, format: uri }
+                sources: { type: array, items: { $ref: "#/components/schemas/KnowledgeSource" } }
+                tags: { type: array, items: { type: string } }
+      responses:
+        "201": { description: Material created. }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/ForbiddenError" }
+    parameters:
+      - $ref: "#/components/parameters/RequestId"
+      - $ref: "#/components/parameters/SystemCode"
+  /knowledge/manage/{slug}:
+    put:
+      tags: [Knowledge Hub]
+      summary: Update a material (allowlisted editor only)
+      security:
+        - Authorization: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, description: Editable KnowledgeItem fields. }
+      responses:
+        "200": { description: Material updated. }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/ForbiddenError" }
+        "404": { $ref: "#/components/responses/NotFoundError" }
+    delete:
+      tags: [Knowledge Hub]
+      summary: Delete a material (allowlisted editor only)
+      security:
+        - Authorization: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: Material and source records deleted. }
+        "403": { $ref: "#/components/responses/ForbiddenError" }
+        "404": { $ref: "#/components/responses/NotFoundError" }
+    parameters:
+      - $ref: "#/components/parameters/RequestId"
+      - $ref: "#/components/parameters/SystemCode"
   /health:
     get:
       tags:
@@ -1065,6 +1218,35 @@ components:
         minimum: 1
         example: 42
   schemas:
+    KnowledgeSource:
+      type: object
+      required: [title, url, type, description]
+      properties:
+        title: { type: string }
+        url: { type: string, format: uri, maxLength: 700 }
+        type: { type: string }
+        description: { type: string }
+    KnowledgeItem:
+      type: object
+      properties:
+        slug: { type: string }
+        kind: { type: string, enum: [question, article, fact, tip] }
+        section: { type: string, enum: [interview, architecture, tools] }
+        category: { type: string }
+        title: { type: string }
+        summary: { type: string }
+        body: { type: string }
+        question: { type: string, nullable: true }
+        answer: { type: string, nullable: true }
+        difficulty: { type: string, enum: [strong-junior, middle] }
+        questionType: { type: string, nullable: true }
+        orderIndex: { type: integer }
+        sourceRecords:
+          type: array
+          items: { $ref: "#/components/schemas/KnowledgeSource" }
+        tags:
+          type: array
+          items: { type: string }
     RegisterUserRequest:
       type: object
       required:

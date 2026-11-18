@@ -1,130 +1,157 @@
-import { useMemo, useState } from "react";
-import { BookOpen, ChevronDown, ChevronRight, CircleHelp, Search, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Markdown from "markdown-to-jsx";
+import { BookOpen, Bookmark, Check, ChevronDown, CircleHelp, FileText, Layers3, LoaderCircle, Search, Shuffle, X } from "lucide-react";
+import getKnowledgeItems from "../../services/getKnowledgeItems";
 
-const topics = [
-  {
-    category: "Основи QA",
-    title: "QA, QC і тестування: у чому різниця?",
-    summary: "Три пов’язані поняття описують різні способи роботи з якістю.",
-    sections: [
-      { heading: "Пояснення", text: "Quality Assurance (QA, забезпечення якості) — проактивна робота з процесами, яка допомагає запобігати дефектам: аналіз вимог, узгодження критеріїв приймання, стандарти розробки та вдосконалення процесу. Quality Control (QC, контроль якості) — перевірка продукту, щоб оцінити його відповідність вимогам. Тестування — один зі способів контролю якості: дослідження продукту, зіставлення фактичної поведінки з очікуваною та збирання інформації про ризики." },
-      { heading: "Приклад", text: "QA залучається до обговорення вимоги «користувач може змінити пароль» і з’ясовує правила безпеки та критерії приймання. QC перевіряє реалізований процес. Тестувальник пробує валідний пароль, невірний поточний пароль, порожні поля, прострочене посилання та повторне використання токена." },
-      { heading: "Питання на співбесіді", text: "Чи може тестування гарантувати відсутність дефектів? Ні. Воно зменшує невизначеність і дає команді дані для рішення про ризик. Вичерпно поясніть різницю на прикладі процесу, перевірки продукту й конкретних тестів." },
-    ],
-    links: [{ label: "QALight: QA, QC і тестування", href: "https://qalight.ua/baza-znan/" }, { label: "USQB: глосарій і матеріали ISTQB українською", href: "https://usqb.org.ua/downloads" }],
-  },
-  {
-    category: "Основи QA",
-    title: "Тест-дизайн і граничні значення",
-    summary: "Як перетворити вимоги на компактний, але змістовний набір перевірок.",
-    sections: [
-      { heading: "Еквівалентні класи", text: "Розбийте вхідні дані на групи, для яких система має поводитися однаково, і візьміть представника кожної групи. Для віку 18–65 років це щонайменше класи: менше 18, від 18 до 65 включно, понад 65, а також нечислове чи відсутнє значення, якщо це дозволяє інтерфейс." },
-      { heading: "Аналіз граничних значень", text: "Дефекти часто з’являються на межах діапазонів. Для діапазону 18–65 перевірте 17, 18, 19, 64, 65 і 66. Уточніть, чи межі включні, як трактуються десяткові числа, пробіли, локальне форматування та переповнення." },
-      { heading: "Таблиці рішень і переходи станів", text: "Коли результат залежить від комбінації умов, таблиця рішень показує комбінації й очікувану дію. Для станів використовуйте діаграму переходів: наприклад, обліковий запис після кількох невдалих спроб входу блокується, а після успішного входу лічильник скидається." },
-      { heading: "Питання на співбесіді", text: "Як перевірити поле кількості товарів із допустимими значеннями 1–99? Назвіть класи та межі: 0, 1, 2, 98, 99, 100; також нечисловий ввід, дробове число, дуже довге число, порожнє значення та поведінку кнопок збільшення/зменшення." },
-    ],
-    links: [{ label: "USQB: український глосарій ISTQB", href: "https://usqb.org.ua/downloads" }, { label: "QALight: тест-дизайн", href: "https://qalight.ua/baza-znan/" }],
-  },
-  {
-    category: "SDLC та процеси",
-    title: "SDLC і STLC: життєві цикли розробки й тестування",
-    summary: "Де саме QA додає цінність упродовж розробки продукту.",
-    sections: [
-      { heading: "SDLC", text: "Software Development Life Cycle — життєвий цикл розробки програмного забезпечення. Він охоплює потребу й аналіз, планування, проєктування, реалізацію, перевірку, випуск, експлуатацію та супровід. Конкретні назви й порядок фаз залежать від моделі та команди; у гнучких процесах вони повторюються короткими ітераціями." },
-      { heading: "STLC", text: "Software Testing Life Cycle — цикл тестової роботи: аналіз тестованості вимог і ризиків, планування, розробка тестів та даних, підготовка середовища, виконання й звітування, завершення та аналіз результатів. Ці активності можуть перекриватися й повторюватися, а не йти лише послідовно." },
-      { heading: "Практична порада", text: "QA починає до появи готової функції: знаходить неоднозначності у вимогах, уточнює помилки й крайові випадки, домовляється про критерії приймання. Ранній зворотний зв’язок дешевший, бо помилкове припущення можна виправити до того, як воно стане кодом, даними й залежними функціями." },
-      { heading: "Питання на співбесіді", text: "Чим SDLC відрізняється від STLC? SDLC описує ширший життєвий цикл продукту, STLC — набір тестових активностей у його контексті. Наведіть приклад участі QA на етапі вимог, під час реалізації та перед випуском." },
-    ],
-    links: [{ label: "Силабус тестування ПЗ, КПІ", href: "https://syllabuses.ist.kpi.ua/uk/SyllabusContent?curriculumId=2824" }, { label: "Відео українською про SDLC", href: "https://www.youtube.com/watch?v=WVIBW5fvI8s" }],
-  },
-  {
-    category: "Клієнт–сервер",
-    title: "Як працює клієнт–серверна архітектура",
-    summary: "Запит проходить від інтерфейсу до сервера, даних і назад.",
-    sections: [
-      { heading: "Учасники", text: "Клієнт — програма користувача, наприклад браузер або мобільний застосунок. Сервер приймає запити, перевіряє автентифікацію та правила доступу, виконує бізнес-логіку, звертається до бази даних чи інших сервісів і формує відповідь. Клієнт відповідає за відображення стану й частину перевірок зручності, але сервер є авторитетним щодо прав і збереження даних." },
-      { heading: "Типовий шлях", text: "Користувач натискає кнопку → клієнт формує HTTP-запит → DNS знаходить адресу сервера → з’єднання захищається TLS (для HTTPS) → сервер маршрутизує запит, перевіряє токен і дані → сервіс читає або змінює сховище → відповідь повертається з кодом стану та тілом → клієнт оновлює інтерфейс." },
-      { heading: "Що тестувати", text: "Перевіряйте успішну та неуспішну відповідь, час очікування, повтор запиту, втрату мережі, порожні й некоректні дані, відсутній/прострочений токен, заборонений доступ, узгодженість інтерфейсу з відповіддю сервера та відсутність дубльованої операції після повтору." },
-      { heading: "Питання на співбесіді", text: "Чому перевірка на фронтенді не замінює серверну валідацію? Клієнт можна обійти або змінити: запит можна сформувати напряму. Сервер має повторно перевірити формат, обмеження, права доступу та бізнес-правила перед зміною даних." },
-    ],
-    links: [{ label: "Курс тестування ПЗ українською: API та клієнт-сервер", href: "https://ter.dcz.gov.ua/node/8987" }, { label: "QALight: база знань", href: "https://qalight.ua/baza-znan/" }],
-  },
-  {
-    category: "API та протоколи",
-    title: "API, HTTP і REST для тестувальника",
-    summary: "Контракт між клієнтом і сервером та перевірки, які його покривають.",
-    sections: [
-      { heading: "API та REST", text: "API — інтерфейс, через який програми обмінюються даними й командами. REST — архітектурний стиль для мережевих API з ресурсами, ідентифікованими URI, та стандартними семантиками HTTP. REST — не окремий протокол і не гарантує, що кожне API коректне чи безпечне." },
-      { heading: "HTTP-запит", text: "Запит має метод, URI, заголовки й, за потреби, тіло. GET читає представлення ресурсу; POST зазвичай створює ресурс або запускає дію; PUT замінює представлення; PATCH частково змінює; DELETE просить видалити. Перевіряйте семантику та повторюваність операцій відповідно до контракту, а не лише назву методу." },
-      { heading: "Відповіді й перевірки", text: "Статус 2xx означає успішну обробку, 3xx — перенаправлення/кешування, 4xx — проблему запиту чи прав клієнта, 5xx — помилку сервера. Перевіряйте точний статус, структуру й типи полів, заголовки, схему, правила авторизації, граничні дані, помилки валідації, пагінацію, сортування, ідемпотентність і сумісність контракту." },
-      { heading: "Протоколи", text: "HTTP визначає обмін запитами й відповідями у вебі; HTTPS — HTTP через захищене TLS-з’єднання. DNS зіставляє доменне ім’я з мережевою адресою. TCP забезпечує впорядковану доставку потоку байтів, а QUIC є транспортною основою HTTP/3. Для QA важливо розуміти, на якому рівні може виникнути збій: DNS, TLS, транспорт, HTTP чи бізнес-логіка." },
-      { heading: "Питання на співбесіді", text: "Чим PUT відрізняється від PATCH? PUT зазвичай подає повне нове представлення ресурсу, PATCH — часткову зміну; точний контракт визначає API. Що означає 401 проти 403? 401 — автентифікація відсутня або не прийнята, 403 — сервер розуміє запит, але відмовляє в доступі." },
-    ],
-    links: [{ label: "Український курс з тестування API", href: "https://ter.dcz.gov.ua/node/8987" }, { label: "QALight: база знань для QA", href: "https://qalight.ua/baza-znan/" }],
-  },
-  {
-    category: "API та протоколи",
-    title: "Чекліст перевірки API",
-    summary: "Послідовність, що допоможе не обмежитися перевіркою статус-коду.",
-    sections: [
-      { heading: "Контракт і дані", text: "Звірте метод, шлях, заголовки, авторизацію, обов’язковість полів, типи, обмеження довжини/діапазону, формат дат, кодування та правила null/відсутнього поля. Перевірте валідні, невалідні, мінімальні, максимальні й граничні значення." },
-      { heading: "Відповідь і стан", text: "Перевірте статус, схему тіла, повідомлення помилки без витоку секретів, заголовки кешування й кореляційний ідентифікатор. Після створення або зміни ресурсу прочитайте його повторно та переконайтеся, що побічні ефекти й пов’язані дані узгоджені." },
-      { heading: "Доступ і надійність", text: "Перевірте анонімний запит, користувача без потрібної ролі, власника й іншого користувача, прострочений токен. Перевірте таймаут, повтор після тимчасового збою, дубльований запит, обмеження частоти, пагінацію та великі набори. Не використовуйте реальні секрети чи чужі дані." },
-      { heading: "Питання на співбесіді", text: "Як перевірити POST /orders? Окрім успішного створення: схему та обов’язкові поля, некоректні товари/кількість, недоступний товар, неавторизований користувач, дубльований запит, вичерпання запасу під час гонки, коректний статус і повторне читання створеного замовлення." },
-    ],
-    links: [{ label: "Український курс з Postman та тестування API", href: "https://ter.dcz.gov.ua/node/8987" }, { label: "QALight: запитання на співбесіді QA", href: "https://qalight.ua/baza-znan/" }],
-  },
-  {
-    category: "Співбесіда",
-    title: "Питання: як оформити якісний баг-репорт?",
-    summary: "Зробіть дефект зрозумілим, відтворюваним і корисним для команди.",
-    sections: [
-      { heading: "Структура", text: "Короткий конкретний заголовок; середовище й версія; передумови; мінімальні кроки відтворення; фактичний результат; очікуваний результат із посиланням на вимогу; частота; серйозність/пріоритет за правилами команди; докази — скриншот, відео, логи, мережевий запит або ідентифікатор сесії без секретів." },
-      { heading: "Приклад", text: "Погано: «Не працює профіль». Краще: «Після збереження нового імені сторінка профілю показує старе значення до повторного входу». Далі вкажіть браузер і версію, облікові дані тестового середовища без пароля, точні кроки, очікувану й фактичну поведінку та доказ запиту/відповіді." },
-      { heading: "Серйозність і пріоритет", text: "Серйозність описує вплив дефекту на продукт (наприклад, втрата даних або косметична помилка). Пріоритет визначає терміновість виправлення з погляду бізнесу й плану релізу. Вони пов’язані, але не тотожні; критерії встановлює команда." },
-      { heading: "Питання на співбесіді", text: "Розробник не відтворює баг — що робити? Перевірити середовище й версію, повторити кроки на чистих даних, уточнити передумови та частоту, додати відео/логи/мережеві деталі, звузити сценарій і разом узгодити спостережувані факти без звинувачень." },
-    ],
-    links: [{ label: "QALight: приклади QA-співбесід та баг-репортів", href: "https://qalight.ua/baza-znan/" }, { label: "USQB: терміни ISTQB українською", href: "https://usqb.org.ua/downloads" }],
-  },
-  {
-    category: "Співбесіда",
-    title: "Питання: що тестувати, коли часу мало?",
-    summary: "Пріоритезуйте на основі ризику та прозоро пояснюйте залишок.",
-    sections: [
-      { heading: "Оцінка ризику", text: "З’ясуйте, що змінилося, які користувачі й бізнес-процеси зачеплені, що критично для безпеки/грошей/даних, де складні інтеграції, які компоненти мають історію дефектів і які регіони/пристрої важливі. Ризик зазвичай поєднує ймовірність проблеми та її наслідок." },
-      { heading: "План короткої перевірки", text: "Спершу перевірте блокувальні наскрізні сценарії та найбільший ризик, потім критичні негативні й граничні випадки, інтеграції та регресію змінених ділянок. Використайте наявну автоматизацію, але оцініть її актуальність. Зафіксуйте неперевірені ділянки й залишковий ризик для рішення команди." },
-      { heading: "Приклад", text: "Для зміни оформлення замовлення пріоритетними будуть успішна оплата, відмова платіжного провайдера, повтор запиту, підсумкова сума й створення одного замовлення. Рідкісний декоративний стан нижче сторінки можна відкласти, якщо він не є вимогою доступності чи бренду." },
-      { heading: "Питання на співбесіді", text: "Чи достатньо написати «усе протестовано»? Ні. Вкажіть обсяг, середовище, результати, відомі дефекти, що не перевірялися, та залишкові ризики. Рішення про випуск приймає відповідальна команда на підставі цих даних." },
-    ],
-    links: [{ label: "USQB: матеріали ISTQB українською", href: "https://usqb.org.ua/downloads" }, { label: "Силабус тестування ПЗ, КПІ", href: "https://syllabuses.ist.kpi.ua/uk/SyllabusContent?curriculumId=2824" }],
-  },
+const tabs = [
+  { id: "interview", label: "QA Interview", description: "Питання та сценарії для Middle—Senior", icon: CircleHelp },
+  { id: "architecture", label: "Architecture & Networking", description: "Як компоненти системи взаємодіють між собою", icon: Layers3 },
+  { id: "tools", label: "Tools & Technologies", description: "Проблема, принцип роботи та QA-перевірки", icon: BookOpen },
 ];
+const savedKey = "conduit.qa-knowledge.bookmarks";
+const viewedKey = "conduit.qa-knowledge.viewed";
+const readList = (key) => { try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; } };
+
+function QuestionCard({ item, expanded, onToggle, viewed, bookmarked, onBookmark }) {
+  return <article className="hub-card hub-question">
+    <div className="hub-card__meta"><span>{item.category}</span><span className="hub-level">{item.difficulty === "strong-junior" ? "Strong Junior" : "Middle"}</span>{viewed && <span className="hub-viewed"><Check size={12} /> Переглянуто</span>}</div>
+    <h3>{item.question}</h3>
+    <div className="hub-card__actions">
+      <button className="hub-text-button" type="button" aria-expanded={expanded} onClick={onToggle}>{expanded ? "Сховати відповідь" : "Показати відповідь"}<ChevronDown size={15} className={expanded ? "is-rotated" : ""} /></button>
+      <button className={`hub-icon-button ${bookmarked ? "is-saved" : ""}`} type="button" aria-label={bookmarked ? "Видалити закладку" : "Зберегти закладку"} aria-pressed={bookmarked} onClick={() => onBookmark(item.slug)}><Bookmark size={16} /></button>
+    </div>
+    <div className={`hub-answer ${expanded ? "is-expanded" : ""}`} aria-hidden={!expanded}><div className="hub-answer__inner"><Markdown options={{ disableParsingRawHTML: true }}>{item.answer || item.body}</Markdown></div></div>
+  </article>;
+}
+
+function ArticleDetail({ item, bookmarked, onBookmark, onNavigate }) {
+  const articleSources = item.sourceRecords?.length ? item.sourceRecords : item.sources;
+  const headings = (item.body.match(/^## .+$/gm) || []).map((line, index) => ({ id: `article-section-${index + 1}`, title: line.slice(3) }));
+  let headingIndex = 0;
+  const markdownOptions = { disableParsingRawHTML: true, overrides: { h2: { component: ({ children, ...props }) => { headingIndex += 1; return <h2 id={`article-section-${headingIndex}`} {...props}>{children}</h2>; } } } };
+  const relationLabels = { prerequisite: "Попереднє знання", related: "Пов’язана тема", alternative: "Альтернатива", implements: "Реалізує концепцію", depends_on: "Залежить від" };
+  return <article className="hub-detail" key={item.slug}>
+    <div className="hub-detail__meta"><span>{item.category} · {String((item.orderIndex ?? 0) + 1).padStart(2, "0")}</span><span>{item.estimatedReadingTime || "—"} хв читання</span><button className={`hub-icon-button ${bookmarked ? "is-saved" : ""}`} type="button" aria-label={bookmarked ? "Видалити закладку" : "Зберегти закладку"} aria-pressed={bookmarked} onClick={() => onBookmark(item.slug)}><Bookmark size={17} /></button></div>
+    <h2>{item.title}</h2><p className="hub-detail__summary">{item.summary}</p>
+    {!!headings.length && <nav className="hub-article-toc" aria-label="Зміст статті"><strong>Зміст</strong>{headings.map((heading) => <a key={heading.id} href={`#${heading.id}`}>{heading.title}</a>)}</nav>}
+    <div className="hub-prose"><Markdown options={markdownOptions}>{item.body}</Markdown></div>
+    {!!item.outgoingRelations?.length && <section className="hub-related"><h3>Пов’язані матеріали</h3>{item.outgoingRelations.map(({ relationType, targetArticle }) => targetArticle && <button key={`${relationType}-${targetArticle.slug}`} type="button" onClick={() => onNavigate(targetArticle.slug)}><small>{relationLabels[relationType] || "Пов’язана тема"} · {targetArticle.category}</small><strong>{targetArticle.title}</strong></button>)}</section>}
+    {!!articleSources?.length && <section className="hub-sources"><h3>Джерела</h3>{articleSources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer"><span>{source.title}</span><small>{source.type} · {source.description}</small></a>)}</section>}
+    {!item.sources?.length && item.sourceUrl && <section className="hub-sources"><h3>Джерело</h3><a href={item.sourceUrl} target="_blank" rel="noreferrer">{item.sourceName}</a></section>}
+  </article>;
+}
 
 function QaKnowledgeSidebar() {
   const [open, setOpen] = useState(false);
-  const [activeTitle, setActiveTitle] = useState(topics[0].title);
+  const [items, setItems] = useState([]);
+  const [activeTab, setActiveTab] = useState("interview");
+  const [activeSlug, setActiveSlug] = useState(null);
   const [query, setQuery] = useState("");
-  const filteredTopics = useMemo(() => topics.filter((topic) => `${topic.category} ${topic.title} ${topic.summary} ${topic.sections.map((section) => `${section.heading} ${section.text}`).join(" ")}`.toLocaleLowerCase("uk").includes(query.trim().toLocaleLowerCase("uk"))), [query]);
-  const activeTopic = filteredTopics.find((topic) => topic.title === activeTitle) || filteredTopics[0];
+  const [category, setCategory] = useState("");
+  const [difficulty, setDifficulty] = useState("");
+  const [expanded, setExpanded] = useState({});
+  const [bookmarks, setBookmarks] = useState(() => readList(savedKey));
+  const [viewed, setViewed] = useState(() => readList(viewedKey));
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const triggerRef = useRef(null);
+  const closeRef = useRef(null);
+  const dialogRef = useRef(null);
 
-  return (
-    <aside className={`qa-knowledge ${open ? "is-open" : ""}`} onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)} onFocus={() => setOpen(true)} onKeyDown={(event) => { if (event.key === "Escape") setOpen(false); }} aria-label="Інтерактивна база знань QA">
-      <button className="qa-knowledge__handle" type="button" aria-expanded={open} aria-controls="qa-knowledge-panel" onClick={() => setOpen((value) => !value)}>
-        <span className="qa-knowledge__handle-icon"><BookOpen size={20} /></span><span className="qa-knowledge__handle-label">QA база знань</span><ChevronRight size={16} className="qa-knowledge__handle-chevron" />
-      </button>
-      <section id="qa-knowledge-panel" className="qa-knowledge__panel" aria-hidden={!open}>
-        <div className="qa-knowledge__header"><div><span className="qa-knowledge__eyebrow">CONDUIT / QA</span><h2>База знань</h2><p>Пояснення, практичні приклади й запитання для співбесід</p></div><button className="qa-knowledge__close" type="button" aria-label="Закрити базу знань" onClick={() => setOpen(false)}><X size={18} /></button></div>
-        <label className="qa-knowledge__search"><Search size={17} aria-hidden="true"/><span className="sr-only">Шукати тему</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Знайти тему або термін…" /></label>
-        <div className="qa-knowledge__body">
-          <nav className="qa-knowledge__topics" aria-label="Теми бази знань">
-            {filteredTopics.length ? filteredTopics.map((topic) => <button key={topic.title} type="button" className={`qa-knowledge__topic ${activeTopic?.title === topic.title ? "is-active" : ""}`} onClick={() => setActiveTitle(topic.title)}><span>{topic.category}</span><strong>{topic.title}</strong><ChevronDown size={15} /></button>) : <p className="qa-knowledge__empty">Нічого не знайдено. Спробуйте інший запит.</p>}
-          </nav>
-          {activeTopic && <article className="qa-knowledge__article" key={activeTopic.title}><span className="qa-knowledge__eyebrow">{activeTopic.category}</span><h3>{activeTopic.title}</h3><p className="qa-knowledge__summary">{activeTopic.summary}</p>{activeTopic.sections.map((section) => <section className="qa-knowledge__section" key={section.heading}><h4>{section.heading === "Питання на співбесіді" && <CircleHelp size={16} aria-hidden="true" />}{section.heading}</h4><p>{section.text}</p></section>)}<div className="qa-knowledge__sources"><h4>Джерела й матеріали українською</h4>{activeTopic.links.map((link) => <a key={link.label} href={link.href} target="_blank" rel="noreferrer">{link.label}<span aria-hidden="true">↗</span></a>)}</div></article>}
+  useEffect(() => {
+    let mounted = true;
+    getKnowledgeItems().then((records) => { if (mounted) { setItems(records); setError(false); } })
+      .catch(() => { if (mounted) setError(true); })
+      .finally(() => { if (mounted) setLoading(false); });
+    return () => { mounted = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeRef.current?.focus();
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") { event.stopPropagation(); closeHub(); triggerRef.current?.focus(); }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const focusable = [...dialogRef.current.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])')];
+      if (!focusable.length) return;
+      const first = focusable[0]; const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => { document.body.style.overflow = previousOverflow; document.removeEventListener("keydown", onKeyDown); };
+  }, [open]);
+
+  function closeHub() {
+    setOpen(false); setActiveTab("interview"); setActiveSlug(null); setQuery("");
+    setCategory(""); setDifficulty(""); setExpanded({});
+  }
+
+  const tabItems = useMemo(() => items.filter((item) => item.section === activeTab), [items, activeTab]);
+  const allResults = useMemo(() => {
+    const normalized = query.trim().toLocaleLowerCase("uk");
+    return items.filter((item) => {
+      const textMatch = !normalized || `${item.category} ${item.title} ${item.summary} ${item.body} ${item.question || ""} ${item.answer || ""}`.toLocaleLowerCase("uk").includes(normalized);
+      const categoryMatch = !category || item.category === category;
+      const difficultyMatch = !difficulty || item.difficulty === difficulty;
+      return textMatch && categoryMatch && difficultyMatch && (normalized ? (!difficulty || item.section === "interview") : item.section === activeTab);
+    });
+  }, [items, query, category, difficulty, activeTab]);
+  const categories = useMemo(() => [...new Set((query.trim() ? items : tabItems).map((item) => item.category))].sort((a, b) => a.localeCompare(b, "uk")), [items, tabItems, query]);
+  const currentTab = tabs.find((tab) => tab.id === activeTab);
+  const activeArticle = allResults.find((item) => item.slug === activeSlug) || allResults.find((item) => item.kind === "article");
+  const isSearching = Boolean(query.trim());
+
+  useEffect(() => {
+    if (category && !categories.includes(category)) setCategory("");
+  }, [categories, category]);
+
+  function toggleBookmark(slug) {
+    setBookmarks((previous) => {
+      const next = previous.includes(slug) ? previous.filter((value) => value !== slug) : [...previous, slug];
+      localStorage.setItem(savedKey, JSON.stringify(next)); return next;
+    });
+  }
+  function markViewed(slug) {
+    setViewed((previous) => {
+      if (previous.includes(slug)) return previous;
+      const next = [slug, ...previous].slice(0, 200); localStorage.setItem(viewedKey, JSON.stringify(next)); return next;
+    });
+  }
+  function changeTab(id) { setActiveTab(id); setCategory(""); setDifficulty(""); setQuery(""); setActiveSlug(null); setExpanded({}); }
+  function pickRandom() {
+    const questions = items.filter((item) => item.section === "interview");
+    if (!questions.length) return;
+    const choice = questions[Math.floor(Math.random() * questions.length)];
+    setActiveTab("interview"); setCategory(""); setDifficulty(""); setQuery(""); setExpanded({ [choice.slug]: true }); markViewed(choice.slug);
+  }
+
+  return <>
+    <button ref={triggerRef} className="qa-knowledge__handle" type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}><span className="qa-knowledge__handle-icon"><BookOpen size={19} /></span><span className="qa-knowledge__handle-label">QA Knowledge Hub</span></button>
+    {open && <div className="hub-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) { closeHub(); triggerRef.current?.focus(); } }}>
+      <section ref={dialogRef} className="hub-dialog" role="dialog" aria-modal="true" aria-labelledby="hub-title" aria-describedby="hub-description">
+        <header className="hub-header"><div><span className="hub-eyebrow">CONDUIT · ENGINEERING</span><h1 id="hub-title">QA Knowledge Hub</h1><p id="hub-description">Технічна база для роботи, співбесід і системного мислення QA</p></div><button ref={closeRef} className="hub-close" type="button" aria-label="Закрити Knowledge Hub" onClick={() => { closeHub(); triggerRef.current?.focus(); }}><X size={19} /></button></header>
+        <div className="hub-tabs" role="tablist" aria-label="Розділи бази знань">{tabs.map(({ id, label, icon: Icon }) => <button key={id} type="button" role="tab" id={`hub-tab-${id}`} aria-controls="hub-panel" aria-selected={activeTab === id} tabIndex={activeTab === id ? 0 : -1} className={activeTab === id ? "is-active" : ""} onClick={() => changeTab(id)} onKeyDown={(event) => { if (["ArrowLeft", "ArrowRight"].includes(event.key)) { event.preventDefault(); const direction = event.key === "ArrowRight" ? 1 : -1; const index = tabs.findIndex((tab) => tab.id === activeTab); const next = tabs[(index + direction + tabs.length) % tabs.length]; changeTab(next.id); document.getElementById(`hub-tab-${next.id}`)?.focus(); } }}><Icon size={16} /><span>{label}</span></button>)}</div>
+        <div className="hub-toolbar"><label className="hub-search"><Search size={17} aria-hidden="true" /><span className="sr-only">Пошук по базі знань</span><input value={query} onChange={(event) => { setQuery(event.target.value); setActiveSlug(null); }} placeholder="Шукати питання, тему або технологію…" /></label>
+          <label className="hub-filter"><span className="sr-only">Фільтр категорії</span><select value={category} onChange={(event) => setCategory(event.target.value)}><option value="">Усі категорії</option>{categories.map((value) => <option key={value}>{value}</option>)}</select></label>
+          {activeTab === "interview" && <label className="hub-filter"><span className="sr-only">Фільтр складності</span><select value={difficulty} onChange={(event) => setDifficulty(event.target.value)}><option value="">Усі рівні</option><option value="strong-junior">Strong Junior</option><option value="middle">Middle</option></select></label>}
+          {activeTab === "interview" && <button className="hub-random" type="button" onClick={pickRandom}><Shuffle size={15} /><span>Випадкове питання</span></button>}
         </div>
-        <div className="qa-knowledge__footer">Навчальна довідка · Звіряйте деталі з вимогами вашого проєкту</div>
+        <main id="hub-panel" className="hub-content" role="tabpanel" aria-labelledby={`hub-tab-${activeTab}`}>
+          <div className="hub-content__intro"><div><h2>{currentTab?.label}</h2><p>{currentTab?.description}</p></div><span className="hub-count">{allResults.length} матеріалів</span></div>
+          {loading ? <div className="hub-state"><LoaderCircle className="hub-spinner" size={22} />Завантажуємо матеріали з бази знань…</div>
+            : error ? <div className="hub-state hub-state--error"><h3>Не вдалося завантажити матеріали</h3><p>Перевірте з’єднання та спробуйте ще раз.</p><button type="button" onClick={() => { setLoading(true); setError(false); getKnowledgeItems().then(setItems).catch(() => setError(true)).finally(() => setLoading(false)); }}>Спробувати знову</button></div>
+            : !allResults.length ? <div className="hub-state"><Search size={23} /><h3>Нічого не знайдено</h3><p>Змініть пошуковий запит або фільтри.</p></div>
+            : isSearching ? <div className="hub-search-results">{allResults.map((item) => item.section === "interview" ? <QuestionCard key={item.slug} item={item} expanded={Boolean(expanded[item.slug])} viewed={viewed.includes(item.slug)} bookmarked={bookmarks.includes(item.slug)} onBookmark={toggleBookmark} onToggle={() => { setExpanded((previous) => ({ ...previous, [item.slug]: !previous[item.slug] })); if (!expanded[item.slug]) markViewed(item.slug); }} /> : <button key={item.slug} className="hub-search-result" type="button" onClick={() => { setActiveTab(item.section); setCategory(""); setDifficulty(""); setQuery(""); setActiveSlug(item.slug); markViewed(item.slug); }}><span>{item.section === "architecture" ? "Architecture & Networking" : "Tools & Technologies"} · {item.category}</span><strong>{item.title}</strong><small>{item.summary}</small></button>)}</div>
+            : activeTab === "interview" ? <div className="hub-question-list">{allResults.map((item) => <QuestionCard key={item.slug} item={item} expanded={Boolean(expanded[item.slug])} viewed={viewed.includes(item.slug)} bookmarked={bookmarks.includes(item.slug)} onBookmark={toggleBookmark} onToggle={() => { setExpanded((previous) => ({ ...previous, [item.slug]: !previous[item.slug] })); if (!expanded[item.slug]) markViewed(item.slug); }} />)}</div>
+            : <div className="hub-library"><nav className="hub-library__nav" aria-label={`${currentTab?.label} articles`}>{allResults.map((item, index) => <button key={item.slug} type="button" className={`hub-library__item ${activeArticle?.slug === item.slug ? "is-active" : ""}`} onClick={() => { setActiveSlug(item.slug); markViewed(item.slug); }}><span>{String(index + 1).padStart(2, "0")} · {item.category}</span><strong>{item.title}</strong><small>{item.summary}</small><em>{item.difficulty === "middle" ? "Middle+" : item.difficulty} · {item.estimatedReadingTime || "—"} хв</em><FileText size={15} /></button>)}</nav>{activeArticle ? <ArticleDetail item={activeArticle} bookmarked={bookmarks.includes(activeArticle.slug)} onBookmark={toggleBookmark} onNavigate={(slug) => { setActiveSlug(slug); markViewed(slug); }} /> : <div className="hub-state">Оберіть статтю зі списку.</div>}</div>}
+        </main>
+        <footer className="hub-footer"><span><Bookmark size={14} /> {bookmarks.length} закладок</span><span>{viewed.length} переглянутих матеріалів</span><span>Вміст завантажено з бази даних</span></footer>
       </section>
-    </aside>
-  );
+    </div>}
+  </>;
 }
 
 export default QaKnowledgeSidebar;

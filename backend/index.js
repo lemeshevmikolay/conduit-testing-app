@@ -11,6 +11,7 @@ const { sequelize, User } = require("./models");
 const { DataTypes } = require("sequelize");
 const { ApiAuditLog } = require("./models");
 const seedDemoData = require("./seed/demo");
+const seedKnowledge = require("./seed/knowledge");
 const errorHandler = require("./middleware/errorHandler");
 const requestLogger = require("./middleware/requestLogger");
 
@@ -19,6 +20,7 @@ const userRoutes = require("./routes/user");
 const articlesRoutes = require("./routes/articles");
 const profilesRoutes = require("./routes/profiles");
 const tagsRoutes = require("./routes/tags");
+const knowledgeRoutes = require("./routes/knowledge");
 
 const app = express();
 app.use(requestLogger(ApiAuditLog));
@@ -63,6 +65,7 @@ async function start() {
     if (env === "development" && process.env.SEED_DEMO_DATA !== "false") {
       await seedDemoData();
     }
+    await seedKnowledge();
     console.log(`Connection with ${env} database has been established.`);
     app.listen(PORT, () =>
       console.log(`Server running on http://localhost:${PORT}`),
@@ -83,6 +86,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/articles", articlesRoutes);
 app.use("/api/profiles", profilesRoutes);
 app.use("/api/tags", tagsRoutes);
+app.use("/api/knowledge", knowledgeRoutes);
 app.get("/health", async (req, res) => {
   try {
     await sequelize.authenticate();

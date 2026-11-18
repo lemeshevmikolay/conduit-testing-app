@@ -1,4 +1,4 @@
-const { NotFoundError } = require("../helper/customErrors");
+const { NotFoundError, UnauthorizedError } = require("../helper/customErrors");
 const { jwtVerify } = require("../helper/jwt");
 const { User } = require("../models");
 
