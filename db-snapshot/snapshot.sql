@@ -265,3 +265,4371 @@ UNLOCK TABLES;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2026-11-03 18:43:18
+
+-- BEGIN QA Knowledge Hub seed snapshot
+-- Generated from backend/seed/knowledge.js by scripts/generate-knowledge-snapshot.js.
+SET FOREIGN_KEY_CHECKS=0;
+DROP TABLE IF EXISTS `KnowledgeRelations`;
+DROP TABLE IF EXISTS `KnowledgeSources`;
+DROP TABLE IF EXISTS `KnowledgeItems`;
+
+CREATE TABLE `KnowledgeItems` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `slug` varchar(180) NOT NULL,
+  `kind` varchar(20) NOT NULL,
+  `section` varchar(30) NOT NULL DEFAULT 'architecture',
+  `category` varchar(80) NOT NULL,
+  `difficulty` varchar(20) NOT NULL DEFAULT 'middle',
+  `questionType` varchar(30) DEFAULT NULL,
+  `orderIndex` int NOT NULL DEFAULT 0,
+  `estimatedReadingTime` int DEFAULT NULL,
+  `title` varchar(255) NOT NULL,
+  `summary` varchar(500) NOT NULL,
+  `body` longtext NOT NULL,
+  `question` text,
+  `answer` longtext,
+  `sourceName` varchar(180) NOT NULL,
+  `sourceUrl` varchar(1000) NOT NULL,
+  `tags` json NOT NULL,
+  `published` tinyint(1) NOT NULL DEFAULT '1',
+  `createdAt` datetime NOT NULL,
+  `updatedAt` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `KnowledgeItems_slug_unique` (`slug`),
+  KEY `knowledge_items_kind_published` (`kind`,`published`),
+  KEY `knowledge_items_category` (`category`),
+  KEY `knowledge_items_section_kind_order` (`section`,`kind`,`orderIndex`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `KnowledgeSources` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `knowledgeItemId` int NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `url` varchar(700) NOT NULL,
+  `type` varchar(40) NOT NULL,
+  `description` varchar(500) NOT NULL,
+  `createdAt` datetime NOT NULL,
+  `updatedAt` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `knowledge_sources_item_url_unique` (`knowledgeItemId`,`url`),
+  CONSTRAINT `knowledge_sources_item_fk` FOREIGN KEY (`knowledgeItemId`) REFERENCES `KnowledgeItems` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `KnowledgeRelations` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `sourceArticleId` int NOT NULL,
+  `targetArticleId` int NOT NULL,
+  `relationType` varchar(24) NOT NULL,
+  `createdAt` datetime NOT NULL,
+  `updatedAt` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `knowledge_relations_unique_edge` (`sourceArticleId`,`targetArticleId`,`relationType`),
+  KEY `knowledge_relations_target_type` (`targetArticleId`,`relationType`),
+  CONSTRAINT `knowledge_relations_source_fk` FOREIGN KEY (`sourceArticleId`) REFERENCES `KnowledgeItems` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `knowledge_relations_target_fk` FOREIGN KEY (`targetArticleId`) REFERENCES `KnowledgeItems` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+INSERT INTO `KnowledgeItems` (`id`,`slug`,`kind`,`section`,`category`,`difficulty`,`questionType`,`orderIndex`,`estimatedReadingTime`,`title`,`summary`,`body`,`question`,`answer`,`sourceName`,`sourceUrl`,`tags`,`published`,`createdAt`,`updatedAt`) VALUES
+(1,'interview-priorytyzatsiya-za-ryzykom-51','question','interview','Fundamentals of Testing','strong-junior','technical',0,NULL,'Пріоритизація за ризиком','Як пояснити, що не встигли протестувати все?','Надати пріоритети, фактичне покриття, відомі дефекти й залишкові ризики, щоб відповідальна команда ухвалила рішення про реліз.
+
+Ризик тестування поєднує ймовірність дефекту й наслідок для користувача, бізнесу, даних або безпеки. Тестування зменшує невизначеність, але не доводить відсутність усіх дефектів.
+
+Практична перевірка може включати такі дії: Порівняйте план із вимогами, історією дефектів, залежностями й реальним використанням; переглядайте пріоритет при новій інформації.
+
+Окрему увагу слід приділити ризику: Перевіряти тільки happy path або випадковий набір сторінок не дає прозорого обґрунтування залишкового ризику.','Як пояснити, що не встигли протестувати все?','Надати пріоритети, фактичне покриття, відомі дефекти й залишкові ризики, щоб відповідальна команда ухвалила рішення про реліз.
+
+Ризик тестування поєднує ймовірність дефекту й наслідок для користувача, бізнесу, даних або безпеки. Тестування зменшує невизначеність, але не доводить відсутність усіх дефектів.
+
+Практична перевірка може включати такі дії: Порівняйте план із вимогами, історією дефектів, залежностями й реальним використанням; переглядайте пріоритет при новій інформації.
+
+Окрему увагу слід приділити ризику: Перевіряти тільки happy path або випадковий набір сторінок не дає прозорого обґрунтування залишкового ризику.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Fundamentals of Testing","Поради QA","Пріоритизація за ризиком"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(2,'interview-lohy-y-personal-ni-dani-62','question','interview','Fundamentals of Testing','strong-junior','technical',1,NULL,'Логи й персональні дані','Які дані не слід записувати в лог без маскування?','Паролі, токени, ключі, платіжні реквізити та персональні дані, якщо для них немає чіткої правової й технічної підстави.
+
+Логи полегшують діагностику, але можуть містити токени, паролі, персональні дані або повне тіло запиту. Correlation ID допомагає зв’язати події без запису всіх чутливих полів.
+
+Практична перевірка може включати такі дії: Виконайте запит із тестовим секретом і пошукайте його у логах, трасах, помилках і звітах pipeline.
+
+Окрему увагу слід приділити ризику: Токен у логах може залишатися доступним довше, ніж сам токен, і розширити наслідки витоку.','Які дані не слід записувати в лог без маскування?','Паролі, токени, ключі, платіжні реквізити та персональні дані, якщо для них немає чіткої правової й технічної підстави.
+
+Логи полегшують діагностику, але можуть містити токени, паролі, персональні дані або повне тіло запиту. Correlation ID допомагає зв’язати події без запису всіх чутливих полів.
+
+Практична перевірка може включати такі дії: Виконайте запит із тестовим секретом і пошукайте його у логах, трасах, помилках і звітах pipeline.
+
+Окрему увагу слід приділити ризику: Токен у логах може залишатися доступним довше, ніж сам токен, і розширити наслідки витоку.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Fundamentals of Testing","Поради QA","Логи й персональні дані"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(3,'interview-pytannya-na-spivbesidi-shcho-avtomatyzuvaty-90','question','interview','Fundamentals of Testing','strong-junior','technical',2,NULL,'Питання на співбесіді: що автоматизувати','Які тести автоматизувати першими?','Часті, стабільні, дорогі вручну та бізнес-критичні перевірки, які мають чіткі очікувані результати й надійні тестові дані.
+
+Автоматизація найцінніша для стабільних, повторюваних і ризикових перевірок, особливо регресії та контрактів. Автоматизація перевіряє закодовані assertions; вона не самостійно оцінює UX або нові ризики.
+
+Практична перевірка може включати такі дії: Почніть із smoke/contract та регресії критичних шляхів; вимірюйте час підтримки, flaky rate і корисність сигналу.
+
+Окрему увагу слід приділити ризику: UI-автоматизація крихких деталей може коштувати більше, ніж ручне дослідження.','Які тести автоматизувати першими?','Часті, стабільні, дорогі вручну та бізнес-критичні перевірки, які мають чіткі очікувані результати й надійні тестові дані.
+
+Автоматизація найцінніша для стабільних, повторюваних і ризикових перевірок, особливо регресії та контрактів. Автоматизація перевіряє закодовані assertions; вона не самостійно оцінює UX або нові ризики.
+
+Практична перевірка може включати такі дії: Почніть із smoke/contract та регресії критичних шляхів; вимірюйте час підтримки, flaky rate і корисність сигналу.
+
+Окрему увагу слід приділити ризику: UI-автоматизація крихких деталей може коштувати більше, ніж ручне дослідження.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Fundamentals of Testing","Поради QA","Питання на співбесіді: що автоматизувати"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(4,'interview-pahinatsiya-sortuvannya-y-fil-try-57','question','interview','Fundamentals of Testing','strong-junior','scenario',3,NULL,'Пагінація, сортування й фільтри','Як тестувати нестабільну пагінацію?','Використати фіксований набір даних, граничні сторінки та повторні запити; перевірити стабільний sort key і поведінку при конкурентній зміні.
+
+Пагінація обмежує обсяг відповіді, а фільтри й сортування мають діяти стабільно й передбачувано разом. Без явного tie-breaker сортування однакових значень може змінювати порядок між запитами.
+
+Практична перевірка може включати такі дії: Порівняйте елементи між сторінками, відсутність дублікатів/пропусків за стабільного dataset і поведінку невідомого фільтра.
+
+Окрему увагу слід приділити ризику: OFFSET пагінація може давати пропуски під час паралельного додавання записів; курсорна пагінація має власні правила.','Як тестувати нестабільну пагінацію?','Використати фіксований набір даних, граничні сторінки та повторні запити; перевірити стабільний sort key і поведінку при конкурентній зміні.
+
+Пагінація обмежує обсяг відповіді, а фільтри й сортування мають діяти стабільно й передбачувано разом. Без явного tie-breaker сортування однакових значень може змінювати порядок між запитами.
+
+Практична перевірка може включати такі дії: Порівняйте елементи між сторінками, відсутність дублікатів/пропусків за стабільного dataset і поведінку невідомого фільтра.
+
+Окрему увагу слід приділити ризику: OFFSET пагінація може давати пропуски під час паралельного додавання записів; курсорна пагінація має власні правила.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Fundamentals of Testing","Поради QA","Пагінація, сортування й фільтри"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(5,'interview-keshuvannya-na-rivnyakh-systemy-64','question','interview','Fundamentals of Testing','strong-junior','scenario',4,NULL,'Кешування на рівнях системи','Як перевірити, що кеш не змішує користувачів?','Виконати однаковий URL для різних сесій, перевірити заголовки й cache key та переконатися, що приватна відповідь не повертається іншому клієнту.
+
+Кеш може бути в браузері, CDN, API gateway, застосунку чи Redis; кожен рівень має власний ключ, TTL та інвалідацію. Cache-Control private/public та Vary впливають на безпечність спільного кешування.
+
+Практична перевірка може включати такі дії: Перевірте холодний/теплий кеш, різних користувачів, Cache-Control, Vary, invalidation та промах кешу.
+
+Окрему увагу слід приділити ризику: Персональна відповідь у спільному кеші без правильного ключа може потрапити іншому користувачу.','Як перевірити, що кеш не змішує користувачів?','Виконати однаковий URL для різних сесій, перевірити заголовки й cache key та переконатися, що приватна відповідь не повертається іншому клієнту.
+
+Кеш може бути в браузері, CDN, API gateway, застосунку чи Redis; кожен рівень має власний ключ, TTL та інвалідацію. Cache-Control private/public та Vary впливають на безпечність спільного кешування.
+
+Практична перевірка може включати такі дії: Перевірте холодний/теплий кеш, різних користувачів, Cache-Control, Vary, invalidation та промах кешу.
+
+Окрему увагу слід приділити ризику: Персональна відповідь у спільному кеші без правильного ключа може потрапити іншому користувачу.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Fundamentals of Testing","Архітектура","Кешування на рівнях системи"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(6,'interview-testuvannya-staniv-i-perekhodiv-79','question','interview','Fundamentals of Testing','strong-junior','scenario',5,NULL,'Тестування станів і переходів','Як перевірити workflow замовлення?','Покрити дозволені/заборонені переходи, умови, ролі, повторні події, порядок callbacks і незмінність даних після відмови.
+
+State transition testing моделює дозволені й заборонені переходи між станами та добре підходить для workflow, блокувань і підписок. Асинхронні callback-и можуть прийти не в тому порядку або повторитися.
+
+Практична перевірка може включати такі дії: Для замовлення перевірте draft→paid, paid→shipped, заборонене paid→draft і повторне отримання payment callback.
+
+Окрему увагу слід приділити ризику: Перевірити лише кожний статус окремо недостатньо: дефект може бути саме в переході.','Як перевірити workflow замовлення?','Покрити дозволені/заборонені переходи, умови, ролі, повторні події, порядок callbacks і незмінність даних після відмови.
+
+State transition testing моделює дозволені й заборонені переходи між станами та добре підходить для workflow, блокувань і підписок. Асинхронні callback-и можуть прийти не в тому порядку або повторитися.
+
+Практична перевірка може включати такі дії: Для замовлення перевірте draft→paid, paid→shipped, заборонене paid→draft і повторне отримання payment callback.
+
+Окрему увагу слід приділити ризику: Перевірити лише кожний статус окремо недостатньо: дефект може бути саме в переході.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Fundamentals of Testing","Поради QA","Тестування станів і переходів"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(7,'interview-perevirka-dubl-ovanykh-podiy-80','question','interview','Fundamentals of Testing','strong-junior','scenario',6,NULL,'Перевірка дубльованих подій','Як тестувати at-least-once delivery?','Навмисно повторити повідомлення й перевірити ідемпотентну обробку, стабільний результат і облік підтвердження.
+
+Черги й мережеві системи часто гарантують доставку щонайменше один раз, тому одна подія може бути оброблена повторно. Exactly-once end-to-end зазвичай досягається комбінацією гарантій і дедуплікації на межах, а не одним прапорцем брокера.
+
+Практична перевірка може включати такі дії: Опублікуйте однаковий event двічі, одночасно й після рестарту споживача; перевірте рівно один бізнес-ефект.
+
+Окрему увагу слід приділити ризику: Повторна доставка без дедуплікації може створити дубль замовлення, листа чи транзакції.','Як тестувати at-least-once delivery?','Навмисно повторити повідомлення й перевірити ідемпотентну обробку, стабільний результат і облік підтвердження.
+
+Черги й мережеві системи часто гарантують доставку щонайменше один раз, тому одна подія може бути оброблена повторно. Exactly-once end-to-end зазвичай досягається комбінацією гарантій і дедуплікації на межах, а не одним прапорцем брокера.
+
+Практична перевірка може включати такі дії: Опублікуйте однаковий event двічі, одночасно й після рестарту споживача; перевірте рівно один бізнес-ефект.
+
+Окрему увагу слід приділити ризику: Повторна доставка без дедуплікації може створити дубль замовлення, листа чи транзакції.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Fundamentals of Testing","Поради QA","Перевірка дубльованих подій"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(8,'interview-pytannya-na-spivbesidi-konteyner-padaye-pislya-zapusku-93','question','interview','Fundamentals of Testing','strong-junior','scenario',7,NULL,'Питання на співбесіді: контейнер падає після запуску','Що перевірити при CrashLoop контейнера?','Логи й exit code, entrypoint/command, env/secret mounts, права, порти, healthcheck та readiness залежних сервісів.
+
+Контейнерний процес може завершитися через помилку конфігурації, відсутню залежність, неправильну команду, права або healthcheck. Restart policy може створити цикл рестартів, не виправляючи первинну причину.
+
+Практична перевірка може включати такі дії: Повторіть із тим самим image digest, командою й конфігурацією; порівняйте робоче середовище та контейнер.
+
+Окрему увагу слід приділити ризику: Ручна правка всередині контейнера не потрапляє в образ і зникне після перестворення.','Що перевірити при CrashLoop контейнера?','Логи й exit code, entrypoint/command, env/secret mounts, права, порти, healthcheck та readiness залежних сервісів.
+
+Контейнерний процес може завершитися через помилку конфігурації, відсутню залежність, неправильну команду, права або healthcheck. Restart policy може створити цикл рестартів, не виправляючи первинну причину.
+
+Практична перевірка може включати такі дії: Повторіть із тим самим image digest, командою й конфігурацією; порівняйте робоче середовище та контейнер.
+
+Окрему увагу слід приділити ризику: Ручна правка всередині контейнера не потрапляє в образ і зникне після перестворення.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Fundamentals of Testing","Поради QA","Питання на співбесіді: контейнер падає після запуску"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(9,'interview-komunikatsiyni-kontrakty-y-consumer-driven-tests-102','question','interview','Fundamentals of Testing','strong-junior','scenario',8,NULL,'Комунікаційні контракти й consumer-driven tests','Що перевіряє consumer-driven contract?','Що provider зберігає конкретні формати й поведінку, які реально очікує consumer, у межах узгодженого контракту.
+
+Consumer-driven contract фіксує очікування споживача від провайдера та допомагає виявляти несумісні зміни до інтеграційного релізу. Contract test не замінює end-to-end перевірку важливого наскрізного сценарію.
+
+Практична перевірка може включати такі дії: Змініть поле або статус у provider і переконайтеся, що контрактний gate повідомив про несумісність.
+
+Окрему увагу слід приділити ризику: Контракт, який не оновлюється разом із реальним клієнтом, стає ще одним застарілим документом.','Що перевіряє consumer-driven contract?','Що provider зберігає конкретні формати й поведінку, які реально очікує consumer, у межах узгодженого контракту.
+
+Consumer-driven contract фіксує очікування споживача від провайдера та допомагає виявляти несумісні зміни до інтеграційного релізу. Contract test не замінює end-to-end перевірку важливого наскрізного сценарію.
+
+Практична перевірка може включати такі дії: Змініть поле або статус у provider і переконайтеся, що контрактний gate повідомив про несумісність.
+
+Окрему увагу слід приділити ризику: Контракт, який не оновлюється разом із реальним клієнтом, стає ще одним застарілим документом.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Fundamentals of Testing","Архітектура","Комунікаційні контракти й consumer-driven tests"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(10,'interview-testuvannya-lokalizatsii-ta-chasovykh-poyasiv-103','question','interview','Fundamentals of Testing','strong-junior','scenario',9,NULL,'Тестування локалізації та часових поясів','Як тестувати дату народження й timestamp?','Дата народження — календарна дата без зсуву часового поясу; timestamp — конкретний момент часу, який слід перевірити в UTC та локальному відображенні.
+
+Дата без часового поясу може означати різні моменти часу; формат і локаль впливають на введення, відображення та сортування. Момент часу й календарна дата (наприклад, день народження) мають різну семантику зберігання.
+
+Практична перевірка може включати такі дії: Перевірте UTC та кілька зон, перехід літнього часу, високосну дату, локальні роздільники й round-trip API.
+
+Окрему увагу слід приділити ризику: Тест лише у часовій зоні розробника може не виявити зміщення доби для користувача.','Як тестувати дату народження й timestamp?','Дата народження — календарна дата без зсуву часового поясу; timestamp — конкретний момент часу, який слід перевірити в UTC та локальному відображенні.
+
+Дата без часового поясу може означати різні моменти часу; формат і локаль впливають на введення, відображення та сортування. Момент часу й календарна дата (наприклад, день народження) мають різну семантику зберігання.
+
+Практична перевірка може включати такі дії: Перевірте UTC та кілька зон, перехід літнього часу, високосну дату, локальні роздільники й round-trip API.
+
+Окрему увагу слід приділити ризику: Тест лише у часовій зоні розробника може не виявити зміщення доби для користувача.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Fundamentals of Testing","Поради QA","Тестування локалізації та часових поясів"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(11,'interview-testing-when-acceptance-criteria-are-incomplete-133','question','interview','Fundamentals of Testing','strong-junior','technical',10,NULL,'Testing when acceptance criteria are incomplete','Ви виявили непослідовну поведінку, але критерії приймання не визначають очікуваного результату. Як діятимете?','Зафіксуйте фактичну поведінку та її вплив, опишіть можливі тлумачення й попросіть відповідального за продукт визначити очікуваний результат. Рішення та його обґрунтування потрібно задокументувати. До уточнення вимог можна перевіряти технічні інваріанти й пов''язані ризики, але припущення слід явно позначати, а не видавати за погоджену вимогу.
+
+Testing evaluates product risks and provides evidence; it cannot prove the absence of all defects or replace decisions about intended behavior. When requirements are unclear, observations must be separated from assumptions and confirmed with a product decision-maker.
+
+Практична перевірка може включати такі дії: Record the assumption, test a positive and negative path, and confirm the expected result before treating a mismatch as a defect.
+
+Окрему увагу слід приділити ризику: Silently inventing acceptance criteria creates false defects and can hide genuine product gaps.','Ви виявили непослідовну поведінку, але критерії приймання не визначають очікуваного результату. Як діятимете?','Зафіксуйте фактичну поведінку та її вплив, опишіть можливі тлумачення й попросіть відповідального за продукт визначити очікуваний результат. Рішення та його обґрунтування потрібно задокументувати. До уточнення вимог можна перевіряти технічні інваріанти й пов''язані ризики, але припущення слід явно позначати, а не видавати за погоджену вимогу.
+
+Testing evaluates product risks and provides evidence; it cannot prove the absence of all defects or replace decisions about intended behavior. When requirements are unclear, observations must be separated from assumptions and confirmed with a product decision-maker.
+
+Практична перевірка може включати такі дії: Record the assumption, test a positive and negative path, and confirm the expected result before treating a mismatch as a defect.
+
+Окрему увагу слід приділити ризику: Silently inventing acceptance criteria creates false defects and can hide genuine product gaps.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Fundamentals of Testing","Fundamentals of Testing","Testing when acceptance criteria are incomplete"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(12,'interview-idempotentnist-i-klyuchi-povtoru-58','question','interview','Fundamentals of Testing','strong-junior','scenario',11,NULL,'Ідемпотентність і ключі повтору','Як перевірити Idempotency-Key?','Повторити запит із тим самим ключем і тілом та звірити один ефект; повторити ключ з іншим тілом і перевірити відмову згідно з контрактом.
+
+Ідемпотентний запит дає той самий запланований ефект при повторенні, хоча статус і тіло відповіді можуть змінитися. Мережевий timeout залишає клієнту невідомий результат, а не доводить невиконання операції.
+
+Практична перевірка може включати такі дії: Надішліть однаковий ключ із тим самим тілом, потім із відмінним; перевірте кількість ресурсів і відповідь при конфлікті.
+
+Окрему увагу слід приділити ризику: Новий ключ для кожного retry не захищає від дубля, а повтор старого ключа з іншою дією має контрольовано відхилятися.','Як перевірити Idempotency-Key?','Повторити запит із тим самим ключем і тілом та звірити один ефект; повторити ключ з іншим тілом і перевірити відмову згідно з контрактом.
+
+Ідемпотентний запит дає той самий запланований ефект при повторенні, хоча статус і тіло відповіді можуть змінитися. Мережевий timeout залишає клієнту невідомий результат, а не доводить невиконання операції.
+
+Практична перевірка може включати такі дії: Надішліть однаковий ключ із тим самим тілом, потім із відмінним; перевірте кількість ресурсів і відповідь при конфлікті.
+
+Окрему увагу слід приділити ризику: Новий ключ для кожного retry не захищає від дубля, а повтор старого ключа з іншою дією має контрольовано відхилятися.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Fundamentals of Testing","Поради QA","Ідемпотентність і ключі повтору"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(13,'interview-test-dyzayn-i-hranychni-znachennya-54','question','interview','Test Design Techniques','strong-junior','technical',12,NULL,'Тест-дизайн і граничні значення','Як вибрати мінімальний набір boundary tests?','Визначити діапазони, взяти значення на межі та найближчі по обидва боки, врахувавши включність і типи даних.
+
+Еквівалентне розбиття зменшує кількість тестів, а аналіз граничних значень концентрує їх біля місць, де часто помиляються умови. Класи еквівалентності залежать від правил системи: два синтаксично різні значення можуть мати різну семантику.
+
+Практична перевірка може включати такі дії: Уточніть включність меж, одиниці виміру, нормалізацію пробілів, Unicode та форматування локалі.
+
+Окрему увагу слід приділити ризику: Перевірка лише одного валідного значення не охоплює межі й класи невалідних даних.','Як вибрати мінімальний набір boundary tests?','Визначити діапазони, взяти значення на межі та найближчі по обидва боки, врахувавши включність і типи даних.
+
+Еквівалентне розбиття зменшує кількість тестів, а аналіз граничних значень концентрує їх біля місць, де часто помиляються умови. Класи еквівалентності залежать від правил системи: два синтаксично різні значення можуть мати різну семантику.
+
+Практична перевірка може включати такі дії: Уточніть включність меж, одиниці виміру, нормалізацію пробілів, Unicode та форматування локалі.
+
+Окрему увагу слід приділити ризику: Перевірка лише одного валідного значення не охоплює межі й класи невалідних даних.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Test Design Techniques","Поради QA","Тест-дизайн і граничні значення"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(14,'interview-osi-model-and-practical-protocol-mapping-105','question','interview','Test Design Techniques','strong-junior','scenario',13,NULL,'OSI model and practical protocol mapping','Запит браузера не отримав HTTP-відповіді. Як послідовно локалізувати можливий рівень мережевої несправності?','Перевірку слід проводити від нижчих рівнів взаємодії до прикладного. Спочатку з''ясуйте, чи резолвиться доменне ім''я та чи має клієнт маршрут до потрібної мережі. Потім перевірте встановлення TCP- або QUIC-з''єднання та узгодження TLS. Лише після успішного проходження цих етапів аналізуйте HTTP-запит і серверну обробку. Відсутність HTTP-відповіді означає, що несправність може виникати до рівня прикладного протоколу. Зафіксуйте час, адресу призначення, помилку браузера й кореляційний ідентифікатор; мережеве захоплення використовуйте лише за наявності доступу та потреби.','Запит браузера не отримав HTTP-відповіді. Як послідовно локалізувати можливий рівень мережевої несправності?','Перевірку слід проводити від нижчих рівнів взаємодії до прикладного. Спочатку з''ясуйте, чи резолвиться доменне ім''я та чи має клієнт маршрут до потрібної мережі. Потім перевірте встановлення TCP- або QUIC-з''єднання та узгодження TLS. Лише після успішного проходження цих етапів аналізуйте HTTP-запит і серверну обробку. Відсутність HTTP-відповіді означає, що несправність може виникати до рівня прикладного протоколу. Зафіксуйте час, адресу призначення, помилку браузера й кореляційний ідентифікатор; мережеве захоплення використовуйте лише за наявності доступу та потреби.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Test Design Techniques","Networking","OSI model and practical protocol mapping"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(15,'interview-opentelemetry-traces-metrics-and-logs-128','question','interview','Test Design Techniques','strong-junior','technical',14,NULL,'OpenTelemetry traces, metrics and logs','Розподілене трасування обривається після проходження повідомлення через брокер. Які ланки перевірити?','Перевірте, чи записується контекст трасування в заголовки повідомлення під час публікації та чи відновлюється споживачем. Далі зіставте батьківський і дочірній сегменти, правила вибірки, помилки експорту й доступність колектора для обох сервісів. Відсутній сегмент може бути наслідком вибірки, втрати контексту або відсутньої інструментації, а не втрати самого повідомлення. Для одного контрольного запиту простежте кореляційний ідентифікатор через видавця, брокер і споживача. Це допомагає встановити, на якому переході порушилося передавання телеметрії.','Розподілене трасування обривається після проходження повідомлення через брокер. Які ланки перевірити?','Перевірте, чи записується контекст трасування в заголовки повідомлення під час публікації та чи відновлюється споживачем. Далі зіставте батьківський і дочірній сегменти, правила вибірки, помилки експорту й доступність колектора для обох сервісів. Відсутній сегмент може бути наслідком вибірки, втрати контексту або відсутньої інструментації, а не втрати самого повідомлення. Для одного контрольного запиту простежте кореляційний ідентифікатор через видавця, брокер і споживача. Це допомагає встановити, на якому переході порушилося передавання телеметрії.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Test Design Techniques","Monitoring","OpenTelemetry traces, metrics and logs"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(16,'interview-swagger-ui-ta-api-dokumentatsiya-27','question','interview','Test Documentation','strong-junior','technical',15,NULL,'Swagger UI та API-документація','Чим відрізняються Swagger та OpenAPI?','OpenAPI — специфікація опису HTTP API; Swagger — назва інструментів, які її використовують, зокрема UI та генератори.
+
+Swagger UI може показати інтерактивну документацію, згенеровану зі специфікації OpenAPI; це зручний клієнт, але не гарантія правильності API. OpenAPI — формат опису; Swagger — набір інструментів навколо специфікації.
+
+Практична перевірка може включати такі дії: Спробуйте валідний і невалідний запит через UI та незалежним HTTP-клієнтом, щоб помилка самого інструмента не маскувала дефект.
+
+Окрему увагу слід приділити ризику: Відкрита документація внутрішнього API може розкрити зайву інформацію або операції.','Чим відрізняються Swagger та OpenAPI?','OpenAPI — специфікація опису HTTP API; Swagger — назва інструментів, які її використовують, зокрема UI та генератори.
+
+Swagger UI може показати інтерактивну документацію, згенеровану зі специфікації OpenAPI; це зручний клієнт, але не гарантія правильності API. OpenAPI — формат опису; Swagger — набір інструментів навколо специфікації.
+
+Практична перевірка може включати такі дії: Спробуйте валідний і невалідний запит через UI та незалежним HTTP-клієнтом, щоб помилка самого інструмента не маскувала дефект.
+
+Окрему увагу слід приділити ризику: Відкрита документація внутрішнього API може розкрити зайву інформацію або операції.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Test Documentation","Інструменти QA","Swagger UI та API-документація"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(17,'interview-bah-report-iz-dokazamy-50','question','interview','Defect Management','strong-junior','technical',16,NULL,'Баг-репорт із доказами','Що робити, якщо розробник не відтворює дефект?','Звірити версію і дані, зменшити сценарій, додати відео/логи/HTTP details без секретів та узгодити фактологічні кроки.
+
+Якісний баг-репорт дає іншій людині змогу відтворити дефект і зрозуміти різницю між фактичним та очікуваним результатом. Severity описує вплив, priority — терміновість; команда визначає власні значення.
+
+Практична перевірка може включати такі дії: Попросіть колегу відтворити дефект лише за описом; якщо він мусить здогадуватися, уточніть кроки й контекст.
+
+Окрему увагу слід приділити ризику: Фрази «не працює» без прикладу, частоти й впливу затримують діагностику.','Що робити, якщо розробник не відтворює дефект?','Звірити версію і дані, зменшити сценарій, додати відео/логи/HTTP details без секретів та узгодити фактологічні кроки.
+
+Якісний баг-репорт дає іншій людині змогу відтворити дефект і зрозуміти різницю між фактичним та очікуваним результатом. Severity описує вплив, priority — терміновість; команда визначає власні значення.
+
+Практична перевірка може включати такі дії: Попросіть колегу відтворити дефект лише за описом; якщо він мусить здогадуватися, уточніть кроки й контекст.
+
+Окрему увагу слід приділити ризику: Фрази «не працює» без прикладу, частоти й впливу затримують діагностику.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Defect Management","Поради QA","Баг-репорт із доказами"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(18,'interview-pytannya-na-spivbesidi-500-internal-server-error-91','question','interview','Defect Management','strong-junior','technical',17,NULL,'Питання на співбесіді: 500 Internal Server Error','Що додати до баг-репорту про 500?','Час, endpoint, безпечне тіло, кроки, request/correlation ID, версію, частоту, фактичний вплив і перевірку побічного стану.
+
+500 означає неочікувану серверну помилку, але не пояснює її причину; точний діагноз потребує request ID та серверної телеметрії. 4xx/5xx мають відображати природу відмови за контрактом, а не використовуватись навмання.
+
+Практична перевірка може включати такі дії: Перевірте, чи 500 відтворюється на валідних/невалідних даних, чи не змінився стан і чи є контрольована відповідь без stack trace.
+
+Окрему увагу слід приділити ризику: Повторюваний 500 може залишити часткові записи або відкрити внутрішні подробиці.','Що додати до баг-репорту про 500?','Час, endpoint, безпечне тіло, кроки, request/correlation ID, версію, частоту, фактичний вплив і перевірку побічного стану.
+
+500 означає неочікувану серверну помилку, але не пояснює її причину; точний діагноз потребує request ID та серверної телеметрії. 4xx/5xx мають відображати природу відмови за контрактом, а не використовуватись навмання.
+
+Практична перевірка може включати такі дії: Перевірте, чи 500 відтворюється на валідних/невалідних даних, чи не змінився стан і чи є контрольована відповідь без stack trace.
+
+Окрему увагу слід приділити ризику: Повторюваний 500 може залишити часткові записи або відкрити внутрішні подробиці.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Defect Management","Поради QA","Питання на співбесіді: 500 Internal Server Error"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(19,'interview-apache-kafka-topics-partitions-and-consumer-groups-121','question','interview','Defect Management','strong-junior','technical',18,NULL,'Apache Kafka topics, partitions and consumer groups','Споживач Kafka обробив ту саму подію двічі після перезапуску. Чи обов''язково це означає дефект брокера?','Ні. За моделі доставки щонайменше один раз подія може бути повторно доставлена, якщо споживач завершився після побічної дії, але до фіксації зсуву читання. Перевірте послідовність: отримання запису, виконання бізнес-операції, фіксація зсуву та перезапуск. Споживач має безпечно обробляти повтори, наприклад, через ідемпотентний запис або ключ операції. Також зважайте, що порядок гарантується в межах розділу, а не для всього топіка. QA перевіряє повторну доставку, відновлення споживача та цілісність кінцевих даних.','Споживач Kafka обробив ту саму подію двічі після перезапуску. Чи обов''язково це означає дефект брокера?','Ні. За моделі доставки щонайменше один раз подія може бути повторно доставлена, якщо споживач завершився після побічної дії, але до фіксації зсуву читання. Перевірте послідовність: отримання запису, виконання бізнес-операції, фіксація зсуву та перезапуск. Споживач має безпечно обробляти повтори, наприклад, через ідемпотентний запис або ключ операції. Також зважайте, що порядок гарантується в межах розділу, а не для всього топіка. QA перевіряє повторну доставку, відновлення споживача та цілісність кінцевих даних.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Defect Management","Message Brokers","Apache Kafka topics, partitions and consumer groups"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(20,'interview-severity-versus-priority-in-defect-triage-132','question','interview','Defect Management','strong-junior','technical',19,NULL,'Severity versus priority in defect triage','Незначний візуальний дефект блокує контрактний запуск, тоді як серйозна помилка стосується вимкненої функції. Як оформите обидва випадки?','Окремо оцініть вплив на користувачів і систему та терміновість для бізнесу. Наведіть докази, контекст випуску, коло користувачів і наявність обхідного шляху. Запропонуйте рівень серйозності й пріоритет згідно з правилами команди, після чого погодьте їх із відповідальними учасниками. Ризик відкладення серйозної помилки має бути явно прийнятий, а не прихований за низьким пріоритетом.
+
+Severity describes impact on users or system behavior; priority communicates urgency and ordering for a team to address it. They are related but not identical: a low-severity typo on a release-critical page can be urgent, while a severe issue in an unused feature may be deferred with explicit risk acceptance.
+
+Практична перевірка може включати такі дії: Reproduce the issue, capture scope and workaround, then review severity and priority with product and engineering owners.
+
+Окрему увагу слід приділити ризику: Treating severity and priority as synonyms loses product context and creates inconsistent triage.','Незначний візуальний дефект блокує контрактний запуск, тоді як серйозна помилка стосується вимкненої функції. Як оформите обидва випадки?','Окремо оцініть вплив на користувачів і систему та терміновість для бізнесу. Наведіть докази, контекст випуску, коло користувачів і наявність обхідного шляху. Запропонуйте рівень серйозності й пріоритет згідно з правилами команди, після чого погодьте їх із відповідальними учасниками. Ризик відкладення серйозної помилки має бути явно прийнятий, а не прихований за низьким пріоритетом.
+
+Severity describes impact on users or system behavior; priority communicates urgency and ordering for a team to address it. They are related but not identical: a low-severity typo on a release-critical page can be urgent, while a severe issue in an unused feature may be deferred with explicit risk acceptance.
+
+Практична перевірка може включати такі дії: Reproduce the issue, capture scope and workaround, then review severity and priority with product and engineering owners.
+
+Окрему увагу слід приділити ризику: Treating severity and priority as synonyms loses product context and creates inconsistent triage.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Defect Management","Defect Management","Severity versus priority in defect triage"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(21,'interview-evidence-that-makes-a-defect-reproducible-134','question','interview','Defect Management','strong-junior','technical',20,NULL,'Evidence that makes a defect reproducible','Які докази ви додасте до періодичної помилки API, яку не вдається відтворити щоразу?','Зафіксуйте частоту й час прояву, середовище та версію збірки, очищені від чутливих даних запит і відповідь, ідентифікатор кореляції, відповідні записи журналу або трасування, передумови тестових даних і результат повторної спроби. Приховайте токени та персональні дані. Такий набір дає змогу зіставити клієнтське спостереження з конкретною операцією на сервері та відокремити нестабільність від помилки налаштування чи даних.
+
+A useful defect record connects a specific build and environment to repeatable steps, observed output, expected behavior and evidence. The artifact should be sufficient to reproduce the issue without copying credentials or unnecessary personal data.
+
+Практична перевірка може включати такі дії: Have another engineer follow the steps using the stated build and data; confirm that attached logs match the same request.
+
+Окрему увагу слід приділити ризику: A screenshot alone may show an outcome but omit the trigger, state, request or environment needed to reproduce it.','Які докази ви додасте до періодичної помилки API, яку не вдається відтворити щоразу?','Зафіксуйте частоту й час прояву, середовище та версію збірки, очищені від чутливих даних запит і відповідь, ідентифікатор кореляції, відповідні записи журналу або трасування, передумови тестових даних і результат повторної спроби. Приховайте токени та персональні дані. Такий набір дає змогу зіставити клієнтське спостереження з конкретною операцією на сервері та відокремити нестабільність від помилки налаштування чи даних.
+
+A useful defect record connects a specific build and environment to repeatable steps, observed output, expected behavior and evidence. The artifact should be sufficient to reproduce the issue without copying credentials or unnecessary personal data.
+
+Практична перевірка може включати такі дії: Have another engineer follow the steps using the stated build and data; confirm that attached logs match the same request.
+
+Окрему увагу слід приділити ризику: A screenshot alone may show an outcome but omit the trigger, state, request or environment needed to reproduce it.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Defect Management","Test Documentation","Evidence that makes a defect reproducible"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(22,'interview-cors-i-brauzerni-api-zapyty-83','question','interview','Web Testing','strong-junior','technical',21,NULL,'CORS і браузерні API-запити','Чи захищає CORS endpoint від curl?','Ні. CORS обмежує браузерні сторінки; сервер усе одно має перевіряти автентифікацію й авторизацію для кожного клієнта.
+
+CORS — браузерна політика, яка визначає, чи може сторінка одного origin читати відповідь іншого origin; це не механізм автентифікації API. curl не застосовує браузерну CORS-політику, тому успішний curl не доводить, що браузер зможе прочитати відповідь.
+
+Практична перевірка може включати такі дії: Надішліть запит із дозволеного й стороннього origin, із custom header та cookie; перевірте preflight і фактичну відповідь.
+
+Окрему увагу слід приділити ризику: Налаштування Access-Control-Allow-Origin:* разом із credentials є некоректним і не повинно відкривати приватні дані.','Чи захищає CORS endpoint від curl?','Ні. CORS обмежує браузерні сторінки; сервер усе одно має перевіряти автентифікацію й авторизацію для кожного клієнта.
+
+CORS — браузерна політика, яка визначає, чи може сторінка одного origin читати відповідь іншого origin; це не механізм автентифікації API. curl не застосовує браузерну CORS-політику, тому успішний curl не доводить, що браузер зможе прочитати відповідь.
+
+Практична перевірка може включати такі дії: Надішліть запит із дозволеного й стороннього origin, із custom header та cookie; перевірте preflight і фактичну відповідь.
+
+Окрему увагу слід приділити ризику: Налаштування Access-Control-Allow-Origin:* разом із credentials є некоректним і не повинно відкривати приватні дані.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Web Testing","API та протоколи","CORS і браузерні API-запити"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(23,'interview-tls-certificates-and-handshake-115','question','interview','Web Testing','strong-junior','technical',22,NULL,'TLS certificates and handshake','Один браузер відкриває сайт, а інший повідомляє про помилку сертифіката. Які параметри слід порівняти?','Перевірте системний час, ім''я хоста в сертифікаті, повноту ланцюжка довіри, довірені кореневі центри сертифікації та узгоджену версію TLS. Також зіставте SNI й мережевий маршрут: різні клієнти можуть потрапляти на різні вузли або використовувати різні сховища сертифікатів. Зафіксуйте точний текст помилки й сертифікат, отриманий саме з проблемного клієнта. Не обходьте перевірку сертифіката для підтвердження працездатності: це приховує дефект безпеки. Порівняння контрольного та проблемного середовищ допоможе локалізувати конфігураційну відмінність.','Один браузер відкриває сайт, а інший повідомляє про помилку сертифіката. Які параметри слід порівняти?','Перевірте системний час, ім''я хоста в сертифікаті, повноту ланцюжка довіри, довірені кореневі центри сертифікації та узгоджену версію TLS. Також зіставте SNI й мережевий маршрут: різні клієнти можуть потрапляти на різні вузли або використовувати різні сховища сертифікатів. Зафіксуйте точний текст помилки й сертифікат, отриманий саме з проблемного клієнта. Не обходьте перевірку сертифіката для підтвердження працездатності: це приховує дефект безпеки. Порівняння контрольного та проблемного середовищ допоможе локалізувати конфігураційну відмінність.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Web Testing","Networking","TLS certificates and handshake"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(24,'interview-nginx-as-reverse-proxy-124','question','interview','Web Testing','strong-junior','technical',23,NULL,'Nginx as reverse proxy','Клієнт підключається до сайту через HTTPS, але застосунок формує перенаправлення на HTTP. Які налаштування проксі перевірити?','TLS може завершуватися на Nginx, тоді як запит до застосунку передається незашифрованим HTTP. Перевірте, чи передає проксі початкову схему через довірений заголовок, чи застосунок правильно обробляє цей заголовок і чи налаштована довіра лише до очікуваного проксі. Також перевірте переписування хоста й шляху та журнали обох компонентів. Якщо застосунок не знає, що зовнішній запит був HTTPS, він може сформувати некоректне перенаправлення. Відтворіть сценарій через реальний крайовий маршрут і зіставте заголовки на вході та виході проксі.','Клієнт підключається до сайту через HTTPS, але застосунок формує перенаправлення на HTTP. Які налаштування проксі перевірити?','TLS може завершуватися на Nginx, тоді як запит до застосунку передається незашифрованим HTTP. Перевірте, чи передає проксі початкову схему через довірений заголовок, чи застосунок правильно обробляє цей заголовок і чи налаштована довіра лише до очікуваного проксі. Також перевірте переписування хоста й шляху та журнали обох компонентів. Якщо застосунок не знає, що зовнішній запит був HTTPS, він може сформувати некоректне перенаправлення. Відтворіть сценарій через реальний крайовий маршрут і зіставте заголовки на вході та виході проксі.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Web Testing","Infrastructure","Nginx as reverse proxy"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(25,'interview-devtools-i-merezhevyy-zhurnal-brauzera-78','question','interview','Web Testing','strong-junior','scenario',24,NULL,'DevTools і мережевий журнал браузера','Як перевірити, чи кнопка відправляє два запити?','Увімкнути Preserve log у Network, виконати дію один раз і зіставити кількість запитів, payload, initiator та повтори.
+
+Network panel показує запити браузера, час, заголовки, статуси й тіло відповіді, допомагаючи відокремити UI-проблему від API-проблеми. Запит, заблокований CORS у браузері, може відрізнятися від відповіді curl через іншу політику клієнта.
+
+Практична перевірка може включати такі дії: Перевірте request payload, response, initiator, redirects, CORS, timing і чи не було дубльованого запиту.
+
+Окрему увагу слід приділити ризику: HAR-файл може містити активні сесійні cookies й персональні дані.','Як перевірити, чи кнопка відправляє два запити?','Увімкнути Preserve log у Network, виконати дію один раз і зіставити кількість запитів, payload, initiator та повтори.
+
+Network panel показує запити браузера, час, заголовки, статуси й тіло відповіді, допомагаючи відокремити UI-проблему від API-проблеми. Запит, заблокований CORS у браузері, може відрізнятися від відповіді curl через іншу політику клієнта.
+
+Практична перевірка може включати такі дії: Перевірте request payload, response, initiator, redirects, CORS, timing і чи не було дубльованого запиту.
+
+Окрему увагу слід приділити ризику: HAR-файл може містити активні сесійні cookies й персональні дані.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Web Testing","Інструменти QA","DevTools і мережевий журнал браузера"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(26,'interview-browser-storage-and-session-boundaries-135','question','interview','Web Testing','strong-junior','scenario',25,NULL,'Browser storage and session boundaries','Як перевірити, що вихід із системи справді завершує сеанс у браузері?','Перевірте, чи анулює сервер сеанс або застосовує погоджену політику завершення строку дії токена, і чи видаляє клієнт облікові дані. Після виходу оновіть захищену сторінку, повторіть запит до API зі старими обліковими даними та перевірте іншу вкладку. Сервер має відхилити недійсний сеанс, а секрети не повинні залишатися у сховищі браузера всупереч вимогам системи.
+
+Cookies, local storage and session storage have different scope, lifetime and browser request behavior; authentication designs rely on those differences. Cookie attributes such as Secure, HttpOnly and SameSite affect transmission and script access; storage contents may survive reloads or tabs differently.
+
+Практична перевірка може включати такі дії: Inspect storage before and after logout, open a second tab, and verify protected requests after token/session expiry.
+
+Окрему увагу слід приділити ризику: A UI logout that only navigates away while retaining valid credentials leaves the session active.','Як перевірити, що вихід із системи справді завершує сеанс у браузері?','Перевірте, чи анулює сервер сеанс або застосовує погоджену політику завершення строку дії токена, і чи видаляє клієнт облікові дані. Після виходу оновіть захищену сторінку, повторіть запит до API зі старими обліковими даними та перевірте іншу вкладку. Сервер має відхилити недійсний сеанс, а секрети не повинні залишатися у сховищі браузера всупереч вимогам системи.
+
+Cookies, local storage and session storage have different scope, lifetime and browser request behavior; authentication designs rely on those differences. Cookie attributes such as Secure, HttpOnly and SameSite affect transmission and script access; storage contents may survive reloads or tabs differently.
+
+Практична перевірка може включати такі дії: Inspect storage before and after logout, open a second tab, and verify protected requests after token/session expiry.
+
+Окрему увагу слід приділити ризику: A UI logout that only navigates away while retaining valid credentials leaves the session active.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Web Testing","Web Testing","Browser storage and session boundaries"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(27,'interview-arkhitekturni-styli-systemy-1','question','interview','Practical Testing Tasks','strong-junior','technical',26,NULL,'Архітектурні стилі системи','Як обґрунтувати архітектурне рішення?','Опишіть контекст і обмеження, порівняйте реальні альтернативи за вимогами якості, вкажіть компроміси й спосіб перевірити рішення на практиці.
+
+Архітектурний стиль описує спосіб організації компонентів і взаємодії між ними. Вибір впливає на незалежність змін, масштабування, відмовостійкість і вартість експлуатації. Архітектура не зводиться до схеми серверів: правила модулів, контракти, дані й командна взаємодія також є її частинами.
+
+Практична перевірка може включати такі дії: Перевірте критичні наскрізні сценарії, межі відповідальності, точки відмови, навантаження, відновлення та спостережуваність. Переконайтеся, що важливі вимоги можна виміряти.
+
+Окрему увагу слід приділити ризику: Частий ризик — обрати модну архітектуру до розуміння домену. Це додає складність раніше, ніж з’являється потреба.','Як обґрунтувати архітектурне рішення?','Опишіть контекст і обмеження, порівняйте реальні альтернативи за вимогами якості, вкажіть компроміси й спосіб перевірити рішення на практиці.
+
+Архітектурний стиль описує спосіб організації компонентів і взаємодії між ними. Вибір впливає на незалежність змін, масштабування, відмовостійкість і вартість експлуатації. Архітектура не зводиться до схеми серверів: правила модулів, контракти, дані й командна взаємодія також є її частинами.
+
+Практична перевірка може включати такі дії: Перевірте критичні наскрізні сценарії, межі відповідальності, точки відмови, навантаження, відновлення та спостережуваність. Переконайтеся, що важливі вимоги можна виміряти.
+
+Окрему увагу слід приділити ризику: Частий ризик — обрати модну архітектуру до розуміння домену. Це додає складність раніше, ніж з’являється потреба.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Practical Testing Tasks","Архітектура","Архітектурні стилі системи"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(28,'interview-komponenty-ta-ikhni-kontrakty-2','question','interview','Practical Testing Tasks','strong-junior','technical',27,NULL,'Компоненти та їхні контракти','Як зрозуміти, що компонент має чітку межу?','Його призначення можна пояснити коротко, контракт стабільний, а зміна внутрішньої реалізації не змушує без потреби змінювати споживачів.
+
+Компонент об’єднує узгоджену відповідальність і надає іншим частинам системи контракт. Добра межа приховує внутрішню реалізацію та обмежує поширення змін. Компонент може бути модулем у моноліті або окремим розгортуваним сервісом — слово саме по собі не означає мікросервіс.
+
+Практична перевірка може включати такі дії: Тестуйте контракт компонента окремо, потім перевірте інтеграцію з реальними залежностями та поведінку при невалідному вводі й відмовах.
+
+Окрему увагу слід приділити ризику: Надмірно дрібне розбиття збільшує кількість викликів, налаштувань і місць для помилок; надто великі компоненти приховують зв’язність.','Як зрозуміти, що компонент має чітку межу?','Його призначення можна пояснити коротко, контракт стабільний, а зміна внутрішньої реалізації не змушує без потреби змінювати споживачів.
+
+Компонент об’єднує узгоджену відповідальність і надає іншим частинам системи контракт. Добра межа приховує внутрішню реалізацію та обмежує поширення змін. Компонент може бути модулем у моноліті або окремим розгортуваним сервісом — слово саме по собі не означає мікросервіс.
+
+Практична перевірка може включати такі дії: Тестуйте контракт компонента окремо, потім перевірте інтеграцію з реальними залежностями та поведінку при невалідному вводі й відмовах.
+
+Окрему увагу слід приділити ризику: Надмірно дрібне розбиття збільшує кількість викликів, налаштувань і місць для помилок; надто великі компоненти приховують зв’язність.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Practical Testing Tasks","Архітектура","Компоненти та їхні контракти"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(29,'interview-monolitna-arkhitektura-3','question','interview','Practical Testing Tasks','strong-junior','technical',28,NULL,'Монолітна архітектура','Коли моноліт є доречним вибором?','Коли домен і команда ще формуються, є потреба швидко перевіряти продукт, а єдине розгортання та спільні транзакції знижують операційну складність.
+
+У моноліті застосунок зазвичай збирається й розгортається як один артефакт. Це спрощує локальний запуск, транзакції та діагностику, але збільшує спільну область розгортання. Моноліт може бути добре модульованим і масштабуватися горизонтально; мікросервіси не є автоматично швидшими чи дешевшими.
+
+Практична перевірка може включати такі дії: Перевірте, що модульна зміна не ламає інші функції, міграції даних сумісні, а збірка та тести вкладаються у прийнятний час.
+
+Окрему увагу слід приділити ризику: Проблема не в одному процесі, а в неконтрольованій зв’язності: спільні таблиці й глобальний стан перетворюють модулі на клубок.','Коли моноліт є доречним вибором?','Коли домен і команда ще формуються, є потреба швидко перевіряти продукт, а єдине розгортання та спільні транзакції знижують операційну складність.
+
+У моноліті застосунок зазвичай збирається й розгортається як один артефакт. Це спрощує локальний запуск, транзакції та діагностику, але збільшує спільну область розгортання. Моноліт може бути добре модульованим і масштабуватися горизонтально; мікросервіси не є автоматично швидшими чи дешевшими.
+
+Практична перевірка може включати такі дії: Перевірте, що модульна зміна не ламає інші функції, міграції даних сумісні, а збірка та тести вкладаються у прийнятний час.
+
+Окрему увагу слід приділити ризику: Проблема не в одному процесі, а в неконтрольованій зв’язності: спільні таблиці й глобальний стан перетворюють модулі на клубок.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Practical Testing Tasks","Архітектура","Монолітна архітектура"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(30,'interview-podiyeva-arkhitektura-9','question','interview','Practical Testing Tasks','strong-junior','technical',29,NULL,'Подієва архітектура','Як уникнути втрати події після коміту в базі?','Застосувати transactional outbox або інший гарантований механізм узгодження запису стану з публікацією, а споживачів зробити ідемпотентними.
+
+Подія повідомляє, що факт уже стався; команда-публішер не мусить знати всіх споживачів. Це зменшує зв’язність, але ускладнює трасування причин і наслідків. Transactional outbox допомагає атомарно зберегти зміну в БД і запис про подію, який буде опубліковано окремо.
+
+Практична перевірка може включати такі дії: Перевірте повторну доставку, дублікати, порядок, стару схему, повільного споживача, повторне програвання й відновлення offset.
+
+Окрему увагу слід приділити ризику: Не використовуйте події як неструктурований канал команд: кілька споживачів можуть по-різному трактувати прихований намір.','Як уникнути втрати події після коміту в базі?','Застосувати transactional outbox або інший гарантований механізм узгодження запису стану з публікацією, а споживачів зробити ідемпотентними.
+
+Подія повідомляє, що факт уже стався; команда-публішер не мусить знати всіх споживачів. Це зменшує зв’язність, але ускладнює трасування причин і наслідків. Transactional outbox допомагає атомарно зберегти зміну в БД і запис про подію, який буде опубліковано окремо.
+
+Практична перевірка може включати такі дії: Перевірте повторну доставку, дублікати, порядок, стару схему, повільного споживача, повторне програвання й відновлення offset.
+
+Окрему увагу слід приділити ризику: Не використовуйте події як неструктурований канал команд: кілька споживачів можуть по-різному трактувати прихований намір.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Practical Testing Tasks","Архітектура","Подієва архітектура"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(31,'interview-volodinnya-danymy-servisu-10','question','interview','Practical Testing Tasks','strong-junior','technical',30,NULL,'Володіння даними сервісу','Чим небезпечне пряме читання таблиць іншого сервісу?','Схема стає неформальним контрактом, її зміни ламають споживача, а власник не може незалежно еволюціонувати модель.
+
+У мікросервісному дизайні сервіс має володіти своїми даними; пряме читання чужої бази з’єднує внутрішню реалізацію двох сервісів. Окрема БД на сервіс не означає обов’язково окремий сервер бази даних; важливе володіння й незалежний контракт.
+
+Практична перевірка може включати такі дії: Переконайтеся, що зміни схеми власника не ламають споживачів, а кешовані або копійовані дані мають зрозумілий строк узгодження.
+
+Окрему увагу слід приділити ризику: Спільна БД часто перетворюється на прихований API без версій, власника та контролю доступу.','Чим небезпечне пряме читання таблиць іншого сервісу?','Схема стає неформальним контрактом, її зміни ламають споживача, а власник не може незалежно еволюціонувати модель.
+
+У мікросервісному дизайні сервіс має володіти своїми даними; пряме читання чужої бази з’єднує внутрішню реалізацію двох сервісів. Окрема БД на сервіс не означає обов’язково окремий сервер бази даних; важливе володіння й незалежний контракт.
+
+Практична перевірка може включати такі дії: Переконайтеся, що зміни схеми власника не ламають споживачів, а кешовані або копійовані дані мають зрозумілий строк узгодження.
+
+Окрему увагу слід приділити ризику: Спільна БД часто перетворюється на прихований API без версій, власника та контролю доступу.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Practical Testing Tasks","Архітектура","Володіння даними сервісу"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(32,'interview-circuit-breaker-i-taymauty-11','question','interview','Practical Testing Tasks','strong-junior','technical',31,NULL,'Circuit breaker і таймаути','Чому не можна повторювати кожну помилку?','Помилка може бути постійною або операція вже виконалася; повтор збільшує навантаження та створює побічний ефект. Враховуйте статус, безпечність операції й ліміт спроб.
+
+Таймаут обмежує час очікування, а circuit breaker тимчасово припиняє виклики залежності, що систематично падає. Обидва механізми зменшують каскадне виснаження ресурсів. Retry без idempotency key може зробити дубльований запис, коли відповідь загубилась після успішного виконання.
+
+Практична перевірка може включати такі дії: Перевірте відкритий, напіввідкритий і закритий стани breaker, відновлення залежності, ліміти спроб і поведінку для неідемпотентної операції.
+
+Окрему увагу слід приділити ризику: Нескінченні або синхронізовані повтори збільшують навантаження саме під час збою.','Чому не можна повторювати кожну помилку?','Помилка може бути постійною або операція вже виконалася; повтор збільшує навантаження та створює побічний ефект. Враховуйте статус, безпечність операції й ліміт спроб.
+
+Таймаут обмежує час очікування, а circuit breaker тимчасово припиняє виклики залежності, що систематично падає. Обидва механізми зменшують каскадне виснаження ресурсів. Retry без idempotency key може зробити дубльований запис, коли відповідь загубилась після успішного виконання.
+
+Практична перевірка може включати такі дії: Перевірте відкритий, напіввідкритий і закритий стани breaker, відновлення залежності, ліміти спроб і поведінку для неідемпотентної операції.
+
+Окрему увагу слід приділити ризику: Нескінченні або синхронізовані повтори збільшують навантаження саме під час збою.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Practical Testing Tasks","Архітектура","Circuit breaker і таймаути"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(33,'interview-masshtabuvannya-i-stateful-komponenty-66','question','interview','Practical Testing Tasks','strong-junior','technical',32,NULL,'Масштабування і stateful компоненти','Чому локальні сесії ускладнюють масштабування?','Наступний запит може потрапити на інший екземпляр; потрібна sticky session або спільне сховище, а відмова вузла може втратити локальний стан.
+
+Stateless екземпляри легше додавати за балансувальником; локальна сесія чи файл створюють affinity та ускладнюють заміну вузла. Stateless не означає відсутності стану в усій системі; це означає, що конкретний екземпляр не є єдиним власником клієнтського стану.
+
+Практична перевірка може включати такі дії: Перекидайте запити між екземплярами, перезапускайте один вузол і перевіряйте, що користувацька сесія та файли збереглися.
+
+Окрему увагу слід приділити ризику: Горизонтальне масштабування application tier не допоможе, якщо єдина БД або черга стала вузьким місцем.','Чому локальні сесії ускладнюють масштабування?','Наступний запит може потрапити на інший екземпляр; потрібна sticky session або спільне сховище, а відмова вузла може втратити локальний стан.
+
+Stateless екземпляри легше додавати за балансувальником; локальна сесія чи файл створюють affinity та ускладнюють заміну вузла. Stateless не означає відсутності стану в усій системі; це означає, що конкретний екземпляр не є єдиним власником клієнтського стану.
+
+Практична перевірка може включати такі дії: Перекидайте запити між екземплярами, перезапускайте один вузол і перевіряйте, що користувацька сесія та файли збереглися.
+
+Окрему увагу слід приділити ризику: Горизонтальне масштабування application tier не допоможе, якщо єдина БД або черга стала вузьким місцем.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Practical Testing Tasks","Архітектура","Масштабування і stateful компоненти"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(34,'interview-apache-airflow-dag-scheduling-129','question','interview','Practical Testing Tasks','strong-junior','technical',33,NULL,'Apache Airflow DAG scheduling','Завдання Airflow повторно створило дані за ту саму календарну дату. Які налаштування та властивості завдання слід перевірити?','Перевірте логічний інтервал запуску, розклад, параметри catchup і backfill, історію повторів та ключі вихідних даних. Повторне виконання може бути очікуваним наслідком відновлення після помилки, тому завдання має бути ідемпотентним або записувати результат транзакційно. Логічна дата запуску не завжди збігається з фактичним часом старту. Перевірте, чи вихідні записи прив''язані до інтервалу даних, а не лише до часу виконання. Для QA корисно контрольовано повторити запуск і звірити, що повтор не створює дублікати та не змінює коректні результати.','Завдання Airflow повторно створило дані за ту саму календарну дату. Які налаштування та властивості завдання слід перевірити?','Перевірте логічний інтервал запуску, розклад, параметри catchup і backfill, історію повторів та ключі вихідних даних. Повторне виконання може бути очікуваним наслідком відновлення після помилки, тому завдання має бути ідемпотентним або записувати результат транзакційно. Логічна дата запуску не завжди збігається з фактичним часом старту. Перевірте, чи вихідні записи прив''язані до інтервалу даних, а не лише до часу виконання. Для QA корисно контрольовано повторити запуск і звірити, що повтор не створює дублікати та не змінює коректні результати.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Practical Testing Tasks","Orchestration","Apache Airflow DAG scheduling"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(35,'interview-modul-nyy-monolit-4','question','interview','Practical Testing Tasks','strong-junior','technical',34,NULL,'Модульний моноліт','Чим модульний моноліт відрізняється від звичайного?','Він має контрольовані внутрішні межі та залежності, хоча збирається і запускається як один застосунок.
+
+Модульний моноліт має один артефакт розгортання, але всередині підтримує явні межі модулів і напрямки залежностей. Такий підхід часто дає змогу відкласти розподілену інфраструктуру, зберігаючи зрозумілі межі для можливих майбутніх змін.
+
+Практична перевірка може включати такі дії: Перевіряйте ізольованість модулів, відсутність циклів, сумісність меж і можливість тестувати бізнес-логіку без запуску всієї системи.
+
+Окрему увагу слід приділити ризику: Якщо правила існують лише в документації, модулі поступово знову з’єднаються через спільні моделі й утиліти.','Чим модульний моноліт відрізняється від звичайного?','Він має контрольовані внутрішні межі та залежності, хоча збирається і запускається як один застосунок.
+
+Модульний моноліт має один артефакт розгортання, але всередині підтримує явні межі модулів і напрямки залежностей. Такий підхід часто дає змогу відкласти розподілену інфраструктуру, зберігаючи зрозумілі межі для можливих майбутніх змін.
+
+Практична перевірка може включати такі дії: Перевіряйте ізольованість модулів, відсутність циклів, сумісність меж і можливість тестувати бізнес-логіку без запуску всієї системи.
+
+Окрему увагу слід приділити ризику: Якщо правила існують лише в документації, модулі поступово знову з’єднаються через спільні моделі й утиліти.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Practical Testing Tasks","Архітектура","Модульний моноліт"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(36,'interview-balansuval-nyk-i-health-checks-65','question','interview','Practical Testing Tasks','strong-junior','technical',35,NULL,'Балансувальник і health checks','Чим readiness відрізняється від liveness?','Readiness показує, чи треба спрямовувати трафік; liveness — чи слід перезапустити процес.
+
+Load balancer розподіляє трафік, а health check допомагає виявити екземпляр, який не готовий або не може обробляти запити. Проба готовності й загальна бізнес-метрика мають різні цілі та частоту.
+
+Практична перевірка може включати такі дії: Вимкніть залежність або навантажте один інстанс, перевірте вилучення з пулу, повторне включення й відсутність флапінгу.
+
+Окрему увагу слід приділити ризику: Невдалий health endpoint може видалити всі екземпляри одночасно або повідомляти healthy при зламаній бізнес-функції.','Чим readiness відрізняється від liveness?','Readiness показує, чи треба спрямовувати трафік; liveness — чи слід перезапустити процес.
+
+Load balancer розподіляє трафік, а health check допомагає виявити екземпляр, який не готовий або не може обробляти запити. Проба готовності й загальна бізнес-метрика мають різні цілі та частоту.
+
+Практична перевірка може включати такі дії: Вимкніть залежність або навантажте один інстанс, перевірте вилучення з пулу, повторне включення й відсутність флапінгу.
+
+Окрему увагу слід приділити ризику: Невдалий health endpoint може видалити всі екземпляри одночасно або повідомляти healthy при зламаній бізнес-функції.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Practical Testing Tasks","Архітектура","Балансувальник і health checks"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(37,'interview-api-gateway-8','question','interview','API Testing','strong-junior','technical',36,NULL,'API Gateway','Що не варто розміщувати в API Gateway?','Велику доменну бізнес-логіку, яка має змінюватися разом із конкретною бізнес-відповідальністю сервісу.
+
+API Gateway є контрольованою точкою входу для маршрутизації, автентифікації, обмеження частоти або агрегації — залежно від дизайну системи. Шлюз не скасовує серверну авторизацію: сервіс має перевірити право на власні дані й операції.
+
+Практична перевірка може включати такі дії: Тестуйте маршрути, авторизаційні політики, заголовки, timeout, rate limit, великі тіла запиту, недоступний upstream і коректність логів без секретів.
+
+Окрему увагу слід приділити ризику: Перевантажений gateway стає новим монолітом і критичною точкою відмови.','Що не варто розміщувати в API Gateway?','Велику доменну бізнес-логіку, яка має змінюватися разом із конкретною бізнес-відповідальністю сервісу.
+
+API Gateway є контрольованою точкою входу для маршрутизації, автентифікації, обмеження частоти або агрегації — залежно від дизайну системи. Шлюз не скасовує серверну авторизацію: сервіс має перевірити право на власні дані й операції.
+
+Практична перевірка може включати такі дії: Тестуйте маршрути, авторизаційні політики, заголовки, timeout, rate limit, великі тіла запиту, недоступний upstream і коректність логів без секретів.
+
+Окрему увагу слід приділити ризику: Перевантажений gateway стає новим монолітом і критичною точкою відмови.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","API Testing","Архітектура","API Gateway"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(38,'interview-openapi-ta-kontraktne-testuvannya-25','question','interview','API Testing','strong-junior','technical',37,NULL,'OpenAPI та контрактне тестування','Чи достатньо валідної OpenAPI-схеми для якості API?','Ні. Потрібно перевірити реалізацію, бізнес-поведінку, доступ, обмеження, сумісність і нефункціональні ризики.
+
+OpenAPI описує шляхи, операції, параметри, схеми даних і відповіді HTTP API у машинозчитуваному контракті. Контрактні тести між споживачем і провайдером допомагають розвивати версії незалежно.
+
+Практична перевірка може включати такі дії: Звірте кожне поле, статус, авторизацію й обмеження; запускайте позитивні та негативні контрактні тести проти середовища.
+
+Окрему увагу слід приділити ризику: Застаріла специфікація створює хибне відчуття покриття, якщо тести перевіряють лише сам файл.','Чи достатньо валідної OpenAPI-схеми для якості API?','Ні. Потрібно перевірити реалізацію, бізнес-поведінку, доступ, обмеження, сумісність і нефункціональні ризики.
+
+OpenAPI описує шляхи, операції, параметри, схеми даних і відповіді HTTP API у машинозчитуваному контракті. Контрактні тести між споживачем і провайдером допомагають розвивати версії незалежно.
+
+Практична перевірка може включати такі дії: Звірте кожне поле, статус, авторизацію й обмеження; запускайте позитивні та негативні контрактні тести проти середовища.
+
+Окрему увагу слід приділити ризику: Застаріла специфікація створює хибне відчуття покриття, якщо тести перевіряють лише сам файл.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","API Testing","API та протоколи","OpenAPI та контрактне тестування"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(39,'interview-postman-dlya-api-testuvannya-26','question','interview','API Testing','strong-junior','technical',38,NULL,'Postman для API-тестування','Що зробити, щоб Postman-колекція стала придатною для CI?','Прибрати локальні секрети, параметризувати середовище, створити повторювані дані, явні assertions і повернення ненульового коду при помилці.
+
+Postman зберігає запити в колекціях, підтримує середовища, змінні й автоматизовані перевірки відповіді. Колекцію можна запускати в автоматизованому конвеєрі, але результат має бути стабільним і незалежним від локального стану.
+
+Практична перевірка може включати такі дії: Перевірте метод, URL, заголовки, тіло, авторизацію, статус, схему й сценарій повторного використання токена.
+
+Окрему увагу слід приділити ризику: Ручний успішний запит не є повторюваною регресією, якщо його дані та очікування не збережені.','Що зробити, щоб Postman-колекція стала придатною для CI?','Прибрати локальні секрети, параметризувати середовище, створити повторювані дані, явні assertions і повернення ненульового коду при помилці.
+
+Postman зберігає запити в колекціях, підтримує середовища, змінні й автоматизовані перевірки відповіді. Колекцію можна запускати в автоматизованому конвеєрі, але результат має бути стабільним і незалежним від локального стану.
+
+Практична перевірка може включати такі дії: Перевірте метод, URL, заголовки, тіло, авторизацію, статус, схему й сценарій повторного використання токена.
+
+Окрему увагу слід приділити ризику: Ручний успішний запит не є повторюваною регресією, якщо його дані та очікування не збережені.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","API Testing","Інструменти QA","Postman для API-тестування"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(40,'interview-curl-dlya-diahnostyky-api-28','question','interview','API Testing','strong-junior','technical',39,NULL,'curl для діагностики API','Коли curl корисніший за Postman?','Для швидкої ізольованої перевірки, діагностики мережевого запиту й відтворення проблеми в CI чи на сервері.
+
+curl дозволяє напряму відправляти HTTP-запити з термінала й бачити заголовки, статуси та тіло без UI-клієнта. curl допомагає перевірити мережу й API, але автоматизацію краще оформити як керований повторюваний набір assertions.
+
+Практична перевірка може включати такі дії: Порівняйте метод, URL-encoding, заголовки, TLS, таймаут і тіло; додайте verbose діагностику лише коли вона потрібна.
+
+Окрему увагу слід приділити ризику: Копіювання команди з Authorization у чат або shell history може розкрити активний секрет.','Коли curl корисніший за Postman?','Для швидкої ізольованої перевірки, діагностики мережевого запиту й відтворення проблеми в CI чи на сервері.
+
+curl дозволяє напряму відправляти HTTP-запити з термінала й бачити заголовки, статуси та тіло без UI-клієнта. curl допомагає перевірити мережу й API, але автоматизацію краще оформити як керований повторюваний набір assertions.
+
+Практична перевірка може включати такі дії: Порівняйте метод, URL-encoding, заголовки, TLS, таймаут і тіло; додайте verbose діагностику лише коли вона потрібна.
+
+Окрему увагу слід приділити ризику: Копіювання команди з Authorization у чат або shell history може розкрити активний секрет.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","API Testing","Інструменти QA","curl для діагностики API"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(41,'interview-skhemna-validatsiya-json-30','question','interview','API Testing','strong-junior','technical',40,NULL,'Схемна валідація JSON','Чи виявить JSON Schema неправильну бізнес-суму замовлення?','Не обов’язково: схема може перевірити типи, але рівність підсумку компонентів і бізнес-правило потрібно перевірити окремо.
+
+JSON Schema описує очікувану структуру, типи та обмеження JSON-документа, але не замінює бізнес-перевірки між полями. Режим дозволу невідомих полів має відповідати політиці сумісності клієнтів.
+
+Практична перевірка може включати такі дії: Застосуйте схему до правильної відповіді, відсутнього поля, зайвого поля, неправильного типу та граничного значення.
+
+Окрему увагу слід приділити ризику: Надто поблажлива схема пропускає регресію, надто жорстка ламає сумісність через нешкідливі додаткові поля.','Чи виявить JSON Schema неправильну бізнес-суму замовлення?','Не обов’язково: схема може перевірити типи, але рівність підсумку компонентів і бізнес-правило потрібно перевірити окремо.
+
+JSON Schema описує очікувану структуру, типи та обмеження JSON-документа, але не замінює бізнес-перевірки між полями. Режим дозволу невідомих полів має відповідати політиці сумісності клієнтів.
+
+Практична перевірка може включати такі дії: Застосуйте схему до правильної відповіді, відсутнього поля, зайвого поля, неправильного типу та граничного значення.
+
+Окрему увагу слід приділити ризику: Надто поблажлива схема пропускає регресію, надто жорстка ламає сумісність через нешкідливі додаткові поля.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","API Testing","Інструменти QA","Схемна валідація JSON"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(42,'interview-versionuvannya-ta-sumisnist-api-60','question','interview','API Testing','strong-junior','technical',41,NULL,'Версіонування та сумісність API','Що може зламати сумісність API?','Зміна типу, перейменування/видалення поля, нове обов’язкове поле, зміна семантики чи неочікувано сувора валідація.
+
+API-контракт еволюціонує разом зі споживачами; видалення чи зміна типу поля може зламати старий клієнт. Додавання обов’язкового поля може бути breaking change, навіть якщо endpoint і статус не змінилися.
+
+Практична перевірка може включати такі дії: Запустіть стару версію клієнта проти нової відповіді, перевірте невідомі поля, enum, optional поля та перехідний період.
+
+Окрему увагу слід приділити ризику: Синхронний реліз усіх клієнтів не завжди реалістичний, особливо для мобільних застосунків.','Що може зламати сумісність API?','Зміна типу, перейменування/видалення поля, нове обов’язкове поле, зміна семантики чи неочікувано сувора валідація.
+
+API-контракт еволюціонує разом зі споживачами; видалення чи зміна типу поля може зламати старий клієнт. Додавання обов’язкового поля може бути breaking change, навіть якщо endpoint і статус не змінилися.
+
+Практична перевірка може включати такі дії: Запустіть стару версію клієнта проти нової відповіді, перевірте невідомі поля, enum, optional поля та перехідний період.
+
+Окрему увагу слід приділити ризику: Синхронний реліз усіх клієнтів не завжди реалістичний, особливо для мобільних застосунків.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","API Testing","Поради QA","Версіонування та сумісність API"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(43,'interview-docker-compose-healthcheck-i-readiness-69','question','interview','API Testing','strong-junior','technical',42,NULL,'Docker Compose healthcheck і readiness','Чому контейнер running, але API недоступне?','Процес може ще завантажуватися, зависнути або втратити залежність; перевірте application readiness, logs, port mapping і health status.
+
+Healthcheck перевіряє стан сервісу періодично; статус running сам собою лише показує, що контейнерний процес запущено. Compose може чекати service_healthy при залежності, але саме застосунок також має коректно повторювати підключення.
+
+Практична перевірка може включати такі дії: Змоделюйте повільний старт і збій залежності, перевірте перехід unhealthy/healthy та реакцію залежного сервісу.
+
+Окрему увагу слід приділити ризику: Probe, який тестує лише існування процесу, може показати healthy для застосунку, що не приймає запити.','Чому контейнер running, але API недоступне?','Процес може ще завантажуватися, зависнути або втратити залежність; перевірте application readiness, logs, port mapping і health status.
+
+Healthcheck перевіряє стан сервісу періодично; статус running сам собою лише показує, що контейнерний процес запущено. Compose може чекати service_healthy при залежності, але саме застосунок також має коректно повторювати підключення.
+
+Практична перевірка може включати такі дії: Змоделюйте повільний старт і збій залежності, перевірте перехід unhealthy/healthy та реакцію залежного сервісу.
+
+Окрему увагу слід приділити ризику: Probe, який тестує лише існування процесу, може показати healthy для застосунку, що не приймає запити.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","API Testing","Docker","Docker Compose healthcheck і readiness"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(44,'interview-koduvannya-json-i-unicode-68','question','interview','API Testing','strong-junior','technical',43,NULL,'Кодування JSON і Unicode','Чим символи відрізняються від байтів у лімітах API?','UTF-8 використовує змінну кількість байтів на символ, а деякі видимі символи складаються з кількох code points; контракт має уточнювати одиницю виміру.
+
+JSON задає формат даних, а Unicode дозволяє представляти символи різних мов; байтова довжина та кількість видимих символів не завжди однакові. Візуально однакові Unicode рядки можуть мати різне нормалізоване подання.
+
+Практична перевірка може включати такі дії: Надішліть український текст, лапки, слеші, переноси рядка й комбіновані діакритики; звірте збереження та повторне читання.
+
+Окрему увагу слід приділити ризику: Ліміт у байтах може відхилити текст, який вкладається у ліміт символів, або навпаки.','Чим символи відрізняються від байтів у лімітах API?','UTF-8 використовує змінну кількість байтів на символ, а деякі видимі символи складаються з кількох code points; контракт має уточнювати одиницю виміру.
+
+JSON задає формат даних, а Unicode дозволяє представляти символи різних мов; байтова довжина та кількість видимих символів не завжди однакові. Візуально однакові Unicode рядки можуть мати різне нормалізоване подання.
+
+Практична перевірка може включати такі дії: Надішліть український текст, лапки, слеші, переноси рядка й комбіновані діакритики; звірте збереження та повторне читання.
+
+Окрему увагу слід приділити ризику: Ліміт у байтах може відхилити текст, який вкладається у ліміт символів, або навпаки.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","API Testing","API та протоколи","Кодування JSON і Unicode"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(45,'interview-testovi-dani-api-29','question','interview','API Testing','strong-junior','technical',44,NULL,'Тестові дані API','Як уникнути конфлікту даних паралельних API-тестів?','Виділяти простір даних для запуску, створювати унікальні записи, уникати спільного стану та виконувати контрольоване очищення.
+
+Якість API-перевірок залежить від керованого стану: один тест не повинен випадково залежати від записів, створених іншим. Тестові дані мають бути синтетичними й не містити реальних персональних або платіжних відомостей.
+
+Практична перевірка може включати такі дії: Запустіть сценарій двічі й паралельно; результат має бути передбачуваним, а очищення — не видаляти дані іншого тесту.
+
+Окрему увагу слід приділити ризику: Спільний статичний користувач або запис спричиняє flaky тести при паралельному запуску.','Як уникнути конфлікту даних паралельних API-тестів?','Виділяти простір даних для запуску, створювати унікальні записи, уникати спільного стану та виконувати контрольоване очищення.
+
+Якість API-перевірок залежить від керованого стану: один тест не повинен випадково залежати від записів, створених іншим. Тестові дані мають бути синтетичними й не містити реальних персональних або платіжних відомостей.
+
+Практична перевірка може включати такі дії: Запустіть сценарій двічі й паралельно; результат має бути передбачуваним, а очищення — не видаляти дані іншого тесту.
+
+Окрему увагу слід приділити ризику: Спільний статичний користувач або запис спричиняє flaky тести при паралельному запуску.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","API Testing","Інструменти QA","Тестові дані API"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(46,'interview-pozytyvni-ta-nehatyvni-api-stsenarii-55','question','interview','API Testing','strong-junior','scenario',45,NULL,'Позитивні та негативні API-сценарії','Що перевірити після негативного POST?','Окрім контрольованого статусу й помилки, перечитати стан системи й упевнитися, що частковий запис або побічний ефект не відбувся.
+
+Позитивні сценарії підтверджують дозволену поведінку, негативні — контрольовану відмову при невалідних даних, доступі чи стані. Негативний тест також перевіряє, що повідомлення не розкриває внутрішній stack trace чи секрет.
+
+Практична перевірка може включати такі дії: Перевірте missing/null/empty, формат, тип, ліміти, прострочені credentials, роль і конфлікт стану.
+
+Окрему увагу слід приділити ризику: Підтвердження лише статусу 4xx не гарантує, що сервер не змінив дані перед відмовою.','Що перевірити після негативного POST?','Окрім контрольованого статусу й помилки, перечитати стан системи й упевнитися, що частковий запис або побічний ефект не відбувся.
+
+Позитивні сценарії підтверджують дозволену поведінку, негативні — контрольовану відмову при невалідних даних, доступі чи стані. Негативний тест також перевіряє, що повідомлення не розкриває внутрішній stack trace чи секрет.
+
+Практична перевірка може включати такі дії: Перевірте missing/null/empty, формат, тип, ліміти, прострочені credentials, роль і конфлікт стану.
+
+Окрему увагу слід приділити ризику: Підтвердження лише статусу 4xx не гарантує, що сервер не змінив дані перед відмовою.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","API Testing","Поради QA","Позитивні та негативні API-сценарії"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(47,'interview-pytannya-na-spivbesidi-testuvannya-zavantazhennya-faylu-88','question','interview','API Testing','strong-junior','scenario',46,NULL,'Питання на співбесіді: тестування завантаження файлу','Що перевірити для upload API?','Ліміти, тип і вміст, auth/ownership, обрив, дубль, зберігання, сканування, URL доступу та очищення часткового файлу.
+
+Upload endpoint приймає великі й потенційно небезпечні дані, тож важливі тип, розмір, зберігання, доступ і обробка перерваного передавання. Публічний URL може залишити приватний файл доступним після видалення запису.
+
+Практична перевірка може включати такі дії: Перевірте порожній файл, перевищення ліміту, підроблений MIME, подвійне розширення, довге ім’я, перерване з’єднання й IDOR при скачуванні.
+
+Окрему увагу слід приділити ризику: Перевірка лише розширення файлу не захищає від вмісту іншого типу.','Що перевірити для upload API?','Ліміти, тип і вміст, auth/ownership, обрив, дубль, зберігання, сканування, URL доступу та очищення часткового файлу.
+
+Upload endpoint приймає великі й потенційно небезпечні дані, тож важливі тип, розмір, зберігання, доступ і обробка перерваного передавання. Публічний URL може залишити приватний файл доступним після видалення запису.
+
+Практична перевірка може включати такі дії: Перевірте порожній файл, перевищення ліміту, підроблений MIME, подвійне розширення, довге ім’я, перерване з’єднання й IDOR при скачуванні.
+
+Окрему увагу слід приділити ризику: Перевірка лише розширення файлу не захищає від вмісту іншого типу.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","API Testing","Поради QA","Питання на співбесіді: тестування завантаження файлу"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(48,'interview-kody-vidpovidi-http-19','question','interview','HTTP / HTTPS','strong-junior','technical',47,NULL,'Коди відповіді HTTP','Коли API має повертати 201, а коли 202?','201 — ресурс створено; 202 — запит прийнято, але виконання ще не завершене або відкладене.
+
+Статуси 2xx позначають успішну обробку, 3xx — перенаправлення, 4xx — проблему запиту або доступу клієнта, 5xx — помилку сервера. 202 Accepted означає прийняття до подальшої обробки, а не обов’язково завершену операцію.
+
+Практична перевірка може включати такі дії: Перевірте 200/201/202/204 за сценарієм, 400/401/403/404/409/422 і 429, а також контрольовану відповідь 5xx.
+
+Окрему увагу слід приділити ризику: Неправильний 200 на помилку змушує клієнта трактувати невдалу операцію як успішну.','Коли API має повертати 201, а коли 202?','201 — ресурс створено; 202 — запит прийнято, але виконання ще не завершене або відкладене.
+
+Статуси 2xx позначають успішну обробку, 3xx — перенаправлення, 4xx — проблему запиту або доступу клієнта, 5xx — помилку сервера. 202 Accepted означає прийняття до подальшої обробки, а не обов’язково завершену операцію.
+
+Практична перевірка може включати такі дії: Перевірте 200/201/202/204 за сценарієм, 400/401/403/404/409/422 і 429, а також контрольовану відповідь 5xx.
+
+Окрему увагу слід приділити ризику: Неправильний 200 на помилку змушує клієнта трактувати невдалу операцію як успішну.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","HTTP / HTTPS","API та протоколи","Коди відповіді HTTP"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(49,'interview-https-i-tls-21','question','interview','HTTP / HTTPS','strong-junior','technical',48,NULL,'HTTPS і TLS','Від чого захищає TLS і чого він не вирішує?','Захищає дані між клієнтом і сервером від читання/зміни в дорозі й перевіряє сертифікат; не замінює авторизацію та захист застосунку.
+
+HTTPS передає HTTP через TLS, захищаючи конфіденційність та цілісність каналу і перевірку сертифіката сервера. Шифрування каналу не означає шифрування даних у базі або кінцевого пристрою.
+
+Практична перевірка може включати такі дії: Переконайтеся в перенаправленні HTTP, відсутності змішаного контенту й секретів у логах та URL; перевірте помилки сертифіката в тестовому середовищі.
+
+Окрему увагу слід приділити ризику: TLS не виправляє помилки авторизації, ін''єкції, слабке зберігання пароля чи надмірний доступ.','Від чого захищає TLS і чого він не вирішує?','Захищає дані між клієнтом і сервером від читання/зміни в дорозі й перевіряє сертифікат; не замінює авторизацію та захист застосунку.
+
+HTTPS передає HTTP через TLS, захищаючи конфіденційність та цілісність каналу і перевірку сертифіката сервера. Шифрування каналу не означає шифрування даних у базі або кінцевого пристрою.
+
+Практична перевірка може включати такі дії: Переконайтеся в перенаправленні HTTP, відсутності змішаного контенту й секретів у логах та URL; перевірте помилки сертифіката в тестовому середовищі.
+
+Окрему увагу слід приділити ризику: TLS не виправляє помилки авторизації, ін''єкції, слабке зберігання пароля чи надмірний доступ.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","HTTP / HTTPS","API та протоколи","HTTPS і TLS"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(50,'interview-http-caching-i-etag-98','question','interview','HTTP / HTTPS','strong-junior','technical',49,NULL,'HTTP caching і ETag','Що означає 304 Not Modified?','Сервер повідомляє, що умовний запит не потребує нового представлення; клієнт використовує свою валідну кешовану копію.
+
+ETag і conditional request можуть скоротити передавання: клієнт надсилає валідатор, а сервер відповідає 304, якщо представлення не змінилося. 304 не має звичайного тіла представлення; клієнт використовує раніше кешовану копію.
+
+Практична перевірка може включати такі дії: Отримайте ETag, повторіть запит із ним, змініть ресурс і переконайтеся, що стара копія більше не вважається актуальною.
+
+Окрему увагу слід приділити ризику: Неправильний cache key або слабкий ETag може змішати персональні представлення.','Що означає 304 Not Modified?','Сервер повідомляє, що умовний запит не потребує нового представлення; клієнт використовує свою валідну кешовану копію.
+
+ETag і conditional request можуть скоротити передавання: клієнт надсилає валідатор, а сервер відповідає 304, якщо представлення не змінилося. 304 не має звичайного тіла представлення; клієнт використовує раніше кешовану копію.
+
+Практична перевірка може включати такі дії: Отримайте ETag, повторіть запит із ним, змініть ресурс і переконайтеся, що стара копія більше не вважається актуальною.
+
+Окрему увагу слід приділити ризику: Неправильний cache key або слабкий ETag може змішати персональні представлення.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","HTTP / HTTPS","API та протоколи","HTTP caching і ETag"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(51,'interview-synkhronna-ta-asynkhronna-vzayemodiya-7','question','interview','HTTP / HTTPS','strong-junior','technical',50,NULL,'Синхронна та асинхронна взаємодія','Коли обрати подію замість синхронного HTTP-виклику?','Коли відправнику не потрібна негайна відповідь, роботу можна обробити пізніше, а команда готова керувати повторною доставкою та узгодженістю.
+
+Синхронний запит чекає відповідь залежності; асинхронне повідомлення роз’єднує час виконання, але додає черги, повтори, дедуплікацію й eventual consistency. Асинхронність не означає миттєве масштабування: черга може накопичити backlog швидше, ніж його обробляють.
+
+Практична перевірка може включати такі дії: Перевірте затримку, таймаути, повторну доставку, порядок повідомлень, дублікати, dead-letter queue та відновлення після недоступності споживача.
+
+Окрему увагу слід приділити ризику: Без ідемпотентного споживача повторне повідомлення може двічі списати кошти або виконати дію.','Коли обрати подію замість синхронного HTTP-виклику?','Коли відправнику не потрібна негайна відповідь, роботу можна обробити пізніше, а команда готова керувати повторною доставкою та узгодженістю.
+
+Синхронний запит чекає відповідь залежності; асинхронне повідомлення роз’єднує час виконання, але додає черги, повтори, дедуплікацію й eventual consistency. Асинхронність не означає миттєве масштабування: черга може накопичити backlog швидше, ніж його обробляють.
+
+Практична перевірка може включати такі дії: Перевірте затримку, таймаути, повторну доставку, порядок повідомлень, дублікати, dead-letter queue та відновлення після недоступності споживача.
+
+Окрему увагу слід приділити ризику: Без ідемпотентного споживача повторне повідомлення може двічі списати кошти або виконати дію.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","HTTP / HTTPS","Архітектура","Синхронна та асинхронна взаємодія"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(52,'interview-http-zaholovky-ta-content-type-20','question','interview','HTTP / HTTPS','strong-junior','technical',51,NULL,'HTTP-заголовки та Content-Type','Чим Content-Type відрізняється від Accept?','Content-Type описує формат тіла запиту/відповіді; Accept повідомляє серверу, який формат відповіді прийнятний клієнту.
+
+Заголовки передають метадані: Content-Type описує формат тіла, Accept — бажаний формат відповіді, Authorization — облікові дані, Cache-Control — правила кешу. Vary може змінювати ключ кешування на основі вказаних заголовків запиту.
+
+Практична перевірка може включати такі дії: Надішліть коректний JSON, пошкоджений JSON, неправильний charset і тіло з іншим media type, порівняйте код і помилку.
+
+Окрему увагу слід приділити ризику: Залежність від неявного формату може зробити API неоднозначним і різним для різних клієнтів.','Чим Content-Type відрізняється від Accept?','Content-Type описує формат тіла запиту/відповіді; Accept повідомляє серверу, який формат відповіді прийнятний клієнту.
+
+Заголовки передають метадані: Content-Type описує формат тіла, Accept — бажаний формат відповіді, Authorization — облікові дані, Cache-Control — правила кешу. Vary може змінювати ключ кешування на основі вказаних заголовків запиту.
+
+Практична перевірка може включати такі дії: Надішліть коректний JSON, пошкоджений JSON, неправильний charset і тіло з іншим media type, порівняйте код і помилку.
+
+Окрему увагу слід приділити ризику: Залежність від неявного формату може зробити API неоднозначним і різним для різних клієнтів.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","HTTP / HTTPS","API та протоколи","HTTP-заголовки та Content-Type"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(53,'interview-http-metody-get-post-put-patch-i-delete-18','question','interview','HTTP / HTTPS','strong-junior','technical',52,NULL,'HTTP-методи GET, POST, PUT, PATCH і DELETE','Чи є POST ідемпотентним за замовчуванням?','Ні. Повтор може створити новий ресурс або повторити дію; використовуйте ключ ідемпотентності, якщо контракт його передбачає.
+
+Методи HTTP несуть семантику: GET читає, POST зазвичай створює або запускає дію, PUT замінює, PATCH частково змінює, DELETE видаляє. PATCH не має одного універсального формату тіла: формат і правила визначають контракт API.
+
+Практична перевірка може включати такі дії: Для кожного методу перевірте валідний і невалідний ввід, дозволені побічні ефекти та стан ресурсу після повторення.
+
+Окрему увагу слід приділити ризику: Небезпечний GET може випадково активуватися префетчем браузера, кешем або сканером посилань.','Чи є POST ідемпотентним за замовчуванням?','Ні. Повтор може створити новий ресурс або повторити дію; використовуйте ключ ідемпотентності, якщо контракт його передбачає.
+
+Методи HTTP несуть семантику: GET читає, POST зазвичай створює або запускає дію, PUT замінює, PATCH частково змінює, DELETE видаляє. PATCH не має одного універсального формату тіла: формат і правила визначають контракт API.
+
+Практична перевірка може включати такі дії: Для кожного методу перевірте валідний і невалідний ввід, дозволені побічні ефекти та стан ресурсу після повторення.
+
+Окрему увагу слід приділити ризику: Небезпечний GET може випадково активуватися префетчем браузера, кешем або сканером посилань.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","HTTP / HTTPS","API та протоколи","HTTP-методи GET, POST, PUT, PATCH і DELETE"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(54,'interview-rollback-i-database-migrations-73','question','interview','SQL and Databases','strong-junior','technical',53,NULL,'Rollback і database migrations','Чи достатньо відкотити Docker image?','Ні, перевірте сумісність схеми, міграції, нові дані, конфігурацію та зовнішні побічні ефекти.
+
+Rollback deployment повертає попередній код, але не обов’язково повертає схему чи дані до попереднього стану. Іноді безпечніше виправити forward migration, ніж відновлювати стару БД із втратою нових записів.
+
+Практична перевірка може включати такі дії: Програйте реліз і rollback на копії даних; перевірте старий код проти вже зміненої схеми.
+
+Окрему увагу слід приділити ризику: Незворотна destructive migration може унеможливити безпечний відкат бінарного артефакту.','Чи достатньо відкотити Docker image?','Ні, перевірте сумісність схеми, міграції, нові дані, конфігурацію та зовнішні побічні ефекти.
+
+Rollback deployment повертає попередній код, але не обов’язково повертає схему чи дані до попереднього стану. Іноді безпечніше виправити forward migration, ніж відновлювати стару БД із втратою нових записів.
+
+Практична перевірка може включати такі дії: Програйте реліз і rollback на копії даних; перевірте старий код проти вже зміненої схеми.
+
+Окрему увагу слід приділити ризику: Незворотна destructive migration може унеможливити безпечний відкат бінарного артефакту.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","SQL and Databases","CI/CD та Jenkins","Rollback і database migrations"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(55,'interview-sql-i-perevirka-danykh-api-101','question','interview','SQL and Databases','strong-junior','technical',54,NULL,'SQL і перевірка даних API','Чому не варто перевіряти API лише SQL-запитом?','SQL не тестує HTTP-контракт, middleware, auth і серіалізацію; він корисний як додатковий спосіб підтвердити збережений стан.
+
+API-відповідь і стан бази можуть розійтися через транзакції, кеш, асинхронні jobs або помилки проєкції. Доступ до БД тестового середовища має бути обмеженим і контрольованим.
+
+Практична перевірка може включати такі дії: Після зміни звірте кількість/зв’язки/унікальність, відкат транзакції й eventual side effects; не змінюйте production дані.
+
+Окрему увагу слід приділити ризику: Прямий SQL може обійти бізнес-правила й приховати дефект API.','Чому не варто перевіряти API лише SQL-запитом?','SQL не тестує HTTP-контракт, middleware, auth і серіалізацію; він корисний як додатковий спосіб підтвердити збережений стан.
+
+API-відповідь і стан бази можуть розійтися через транзакції, кеш, асинхронні jobs або помилки проєкції. Доступ до БД тестового середовища має бути обмеженим і контрольованим.
+
+Практична перевірка може включати такі дії: Після зміни звірте кількість/зв’язки/унікальність, відкат транзакції й eventual side effects; не змінюйте production дані.
+
+Окрему увагу слід приділити ризику: Прямий SQL може обійти бізнес-правила й приховати дефект API.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","SQL and Databases","Інструменти QA","SQL і перевірка даних API"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(56,'interview-postgresql-transactions-and-isolation-120','question','interview','SQL and Databases','strong-junior','scenario',55,NULL,'PostgreSQL transactions and isolation','Як перевірити, що паралельні покупки не резервують більше товару, ніж є на складі?','Сформулюйте інваріант: кількість успішних резервувань не може перевищити доступний запас. Створіть контрольований початковий стан із малою кількістю товару й одночасно виконайте кілька транзакцій. Перевірте зафіксований стан бази, результати конфліктних запитів, відкат і поведінку повтору. У PostgreSQL результат залежить від рівня ізоляції, блокувань і обмежень схеми, тому ці передумови потрібно зафіксувати. Послідовний одиночний тест не виявляє втрачених оновлень і перегонів. Перевірка має підтвердити інваріант після завершення всіх транзакцій, а не лише статус окремого запиту.','Як перевірити, що паралельні покупки не резервують більше товару, ніж є на складі?','Сформулюйте інваріант: кількість успішних резервувань не може перевищити доступний запас. Створіть контрольований початковий стан із малою кількістю товару й одночасно виконайте кілька транзакцій. Перевірте зафіксований стан бази, результати конфліктних запитів, відкат і поведінку повтору. У PostgreSQL результат залежить від рівня ізоляції, блокувань і обмежень схеми, тому ці передумови потрібно зафіксувати. Послідовний одиночний тест не виявляє втрачених оновлень і перегонів. Перевірка має підтвердити інваріант після завершення всіх транзакцій, а не лише статус окремого запиту.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","SQL and Databases","Databases","PostgreSQL transactions and isolation"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(57,'interview-robota-z-git-dlya-testuval-nyka-77','question','interview','Tools & Technologies','strong-junior','scenario',56,NULL,'Робота з Git для тестувальника','Як упевнитися, що тестуєте правильну версію?','Звірити commit SHA/build number у UI або API з очікуваною гілкою та артефактом, а не покладатися лише на назву середовища.
+
+Git дозволяє відстежувати зміну коду, пов’язувати її з тестами й швидко знайти commit, який змінив поведінку. Git tag може бути переміщений у деяких процесах; перевіряйте immutable build ID.
+
+Практична перевірка може включати такі дії: Переконайтеся, що перевіряєте потрібну гілку й commit SHA; після cherry-pick або rebase звірте фактичний код.
+
+Окрему увагу слід приділити ризику: Тестування застарілого build або не тієї гілки дає хибний результат про наявність виправлення.','Як упевнитися, що тестуєте правильну версію?','Звірити commit SHA/build number у UI або API з очікуваною гілкою та артефактом, а не покладатися лише на назву середовища.
+
+Git дозволяє відстежувати зміну коду, пов’язувати її з тестами й швидко знайти commit, який змінив поведінку. Git tag може бути переміщений у деяких процесах; перевіряйте immutable build ID.
+
+Практична перевірка може включати такі дії: Переконайтеся, що перевіряєте потрібну гілку й commit SHA; після cherry-pick або rebase звірте фактичний код.
+
+Окрему увагу слід приділити ризику: Тестування застарілого build або не тієї гілки дає хибний результат про наявність виправлення.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Tools & Technologies","Інструменти QA","Робота з Git для тестувальника"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(58,'interview-rest-i-resursy-api-17','question','interview','REST Architecture','middle','technical',57,NULL,'REST і ресурси API','Що таке REST і чи є він протоколом?','REST є архітектурним стилем для розподілених систем; HTTP часто слугує протоколом, через який реалізують API в цьому стилі.
+
+REST — архітектурний стиль, а не назва протоколу. REST-подібне HTTP API використовує ресурси, стандартні методи й семантику відповідей. REST має додаткові обмеження; багато практичних API називають RESTful у спрощеному значенні.
+
+Практична перевірка може включати такі дії: Перевірте, що URI ідентифікує ресурс, метод відповідає операції, коди стану й помилки відповідають контракту.
+
+Окрему увагу слід приділити ризику: Називати будь-який JSON endpoint REST API недостатньо: нестандартна семантика методів ускладнює клієнтам кешування й повтори.','Що таке REST і чи є він протоколом?','REST є архітектурним стилем для розподілених систем; HTTP часто слугує протоколом, через який реалізують API в цьому стилі.
+
+REST — архітектурний стиль, а не назва протоколу. REST-подібне HTTP API використовує ресурси, стандартні методи й семантику відповідей. REST має додаткові обмеження; багато практичних API називають RESTful у спрощеному значенні.
+
+Практична перевірка може включати такі дії: Перевірте, що URI ідентифікує ресурс, метод відповідає операції, коди стану й помилки відповідають контракту.
+
+Окрему увагу слід приділити ризику: Називати будь-який JSON endpoint REST API недостатньо: нестандартна семантика методів ускладнює клієнтам кешування й повтори.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","REST Architecture","API та протоколи","REST і ресурси API"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(59,'interview-rest-soap-i-graphql-24','question','interview','REST Architecture','middle','scenario',58,NULL,'REST, SOAP і GraphQL','Як відрізняється контрактне тестування REST і SOAP?','Для REST перевіряють HTTP-коди й OpenAPI-схему; для SOAP — структуру XML, WSDL/XSD та fault-повідомлення. Бізнес-правила й авторизація важливі в обох.
+
+REST зазвичай моделює ресурси через HTTP; SOAP визначає XML-повідомлення та формальний контракт; GraphQL дає клієнту запитати потрібну форму даних через схему. Різні стилі API мають спільні ризики: доступ, дані, сумісність і контрольовані помилки.
+
+Практична перевірка може включати такі дії: Перевіряйте контракт, валідацію, авторизацію на рівні полів/ресурсів, помилки та надмірне отримання даних.
+
+Окрему увагу слід приділити ризику: Гнучкий GraphQL-запит може стати надто дорогим; SOAP XML може спричинити ризики парсера за неправильної конфігурації.','Як відрізняється контрактне тестування REST і SOAP?','Для REST перевіряють HTTP-коди й OpenAPI-схему; для SOAP — структуру XML, WSDL/XSD та fault-повідомлення. Бізнес-правила й авторизація важливі в обох.
+
+REST зазвичай моделює ресурси через HTTP; SOAP визначає XML-повідомлення та формальний контракт; GraphQL дає клієнту запитати потрібну форму даних через схему. Різні стилі API мають спільні ризики: доступ, дані, сумісність і контрольовані помилки.
+
+Практична перевірка може включати такі дії: Перевіряйте контракт, валідацію, авторизацію на рівні полів/ресурсів, помилки та надмірне отримання даних.
+
+Окрему увагу слід приділити ризику: Гнучкий GraphQL-запит може стати надто дорогим; SOAP XML може спричинити ризики парсера за неправильної конфігурації.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","REST Architecture","API та протоколи","REST, SOAP і GraphQL"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(60,'interview-doslidnyts-ke-testuvannya-52','question','interview','Test Management','middle','technical',59,NULL,'Дослідницьке тестування','Як зробити exploratory testing відтворюваним?','Фіксувати charter, дані, кроки, спостереження, час і знайдені дефекти; перетворювати повторювані ризикові перевірки на стійкі сценарії.
+
+Дослідницьке тестування поєднує вивчення системи, дизайн і виконання тестів, використовуючи нові спостереження для наступних перевірок. Чекліст і дослідницький підхід доповнюють одне одного, а не конкурують.
+
+Практична перевірка може включати такі дії: Після сесії повторіть ключові знахідки, збережіть корисні сценарії як regression test і позначте нерозглянуті ризики.
+
+Окрему увагу слід приділити ризику: Без нотаток і цілі exploratory session може перетворитися на нерепродуковане клацання.','Як зробити exploratory testing відтворюваним?','Фіксувати charter, дані, кроки, спостереження, час і знайдені дефекти; перетворювати повторювані ризикові перевірки на стійкі сценарії.
+
+Дослідницьке тестування поєднує вивчення системи, дизайн і виконання тестів, використовуючи нові спостереження для наступних перевірок. Чекліст і дослідницький підхід доповнюють одне одного, а не конкурують.
+
+Практична перевірка може включати такі дії: Після сесії повторіть ключові знахідки, збережіть корисні сценарії як regression test і позначте нерозглянуті ризики.
+
+Окрему увагу слід приділити ризику: Без нотаток і цілі exploratory session може перетворитися на нерепродуковане клацання.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Test Management","Поради QA","Дослідницьке тестування"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(61,'interview-rehresiyne-testuvannya-53','question','interview','Test Management','middle','technical',60,NULL,'Регресійне тестування','Чим confirmation testing відрізняється від regression testing?','Confirmation повторно перевіряє конкретний виправлений дефект; regression оцінює, чи зміни не спричинили інших дефектів.
+
+Регресійне тестування перевіряє, що зміни не зламали раніше працюючі можливості; воно не обов’язково означає запуск усіх тестів. Confirmation testing перевіряє конкретне виправлення; regression шукає побічні поломки в інших функціях.
+
+Практична перевірка може включати такі дії: Покрийте змінений компонент, сусідні інтеграції, збереження даних і ключові наскрізні сценарії.
+
+Окрему увагу слід приділити ризику: Надмірно великий набір із нестабільними перевірками збільшує час релізу й провокує ігнорування сигналів.','Чим confirmation testing відрізняється від regression testing?','Confirmation повторно перевіряє конкретний виправлений дефект; regression оцінює, чи зміни не спричинили інших дефектів.
+
+Регресійне тестування перевіряє, що зміни не зламали раніше працюючі можливості; воно не обов’язково означає запуск усіх тестів. Confirmation testing перевіряє конкретне виправлення; regression шукає побічні поломки в інших функціях.
+
+Практична перевірка може включати такі дії: Покрийте змінений компонент, сусідні інтеграції, збереження даних і ключові наскрізні сценарії.
+
+Окрему увагу слід приділити ризику: Надмірно великий набір із нестабільними перевірками збільшує час релізу й провокує ігнорування сигналів.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Test Management","Поради QA","Регресійне тестування"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(62,'interview-test-estimation-under-changing-scope-131','question','interview','Test Estimation','middle','technical',61,NULL,'Test estimation under changing scope','Функцію потрібно завершити за два дні, але контракт API та тестові дані ще змінюються. Як оцінити обсяг тестування?','Уточніть межі функції та ризик випуску, перелічіть залежності й невідомі чинники, розбийте перевірки на конкретні роботи та оцініть їх діапазоном, а не одним удавано точним числом. Вкажіть, які задачі можна виконувати паралельно, і домовтеся, які нові факти змінять прогноз. Якщо обсяг і строк несумісні, відкрито погодьте компроміс із відповідальними учасниками, не приховуючи його через мовчазне скорочення перевірок із високим ризиком.
+
+An estimate is a forecast based on scope, uncertainty, dependencies, capacity and an agreed quality target. A single point estimate can hide uncertainty; state assumptions and use ranges or confidence when the work is uncertain.
+
+Практична перевірка може включати такі дії: Compare planned and actual effort by activity and ask which assumption changed instead of applying a blanket percentage.
+
+Окрему увагу слід приділити ризику: Giving a precise date without assumptions can be mistaken for a commitment and encourages cutting high-risk coverage silently.','Функцію потрібно завершити за два дні, але контракт API та тестові дані ще змінюються. Як оцінити обсяг тестування?','Уточніть межі функції та ризик випуску, перелічіть залежності й невідомі чинники, розбийте перевірки на конкретні роботи та оцініть їх діапазоном, а не одним удавано точним числом. Вкажіть, які задачі можна виконувати паралельно, і домовтеся, які нові факти змінять прогноз. Якщо обсяг і строк несумісні, відкрито погодьте компроміс із відповідальними учасниками, не приховуючи його через мовчазне скорочення перевірок із високим ризиком.
+
+An estimate is a forecast based on scope, uncertainty, dependencies, capacity and an agreed quality target. A single point estimate can hide uncertainty; state assumptions and use ranges or confidence when the work is uncertain.
+
+Практична перевірка може включати такі дії: Compare planned and actual effort by activity and ask which assumption changed instead of applying a blanket percentage.
+
+Окрему увагу слід приділити ризику: Giving a precise date without assumptions can be mistaken for a commitment and encourages cutting high-risk coverage silently.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Test Estimation","Test Management","Test estimation under changing scope"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(63,'interview-bezperervne-testuvannya-i-test-pyramid-48','question','interview','Automation Testing','middle','technical',62,NULL,'Безперервне тестування і test pyramid','Як зменшити нестабільність E2E?','Ізолювати дані, уникати таймерних очікувань, чекати стан за умовою, стабілізувати залежності та розбирати flaky failure замість нескінченних повторів.
+
+Швидкі unit/component тести часто дають дешевий зворотний зв’язок, а інтеграційні й end-to-end тести перевіряють більші межі, але коштують дорожче. Test pyramid — евристика, а не жорстке правило; оптимальний баланс залежить від архітектури й ризику.
+
+Практична перевірка може включати такі дії: Вимірюйте час, flaky rate і діагностичність кожного рівня; pipeline має швидко сигналізувати про причину невдачі.
+
+Окрему увагу слід приділити ризику: Велика кількість повільних flaky E2E тестів штовхає команду ігнорувати червоний pipeline.','Як зменшити нестабільність E2E?','Ізолювати дані, уникати таймерних очікувань, чекати стан за умовою, стабілізувати залежності та розбирати flaky failure замість нескінченних повторів.
+
+Швидкі unit/component тести часто дають дешевий зворотний зв’язок, а інтеграційні й end-to-end тести перевіряють більші межі, але коштують дорожче. Test pyramid — евристика, а не жорстке правило; оптимальний баланс залежить від архітектури й ризику.
+
+Практична перевірка може включати такі дії: Вимірюйте час, flaky rate і діагностичність кожного рівня; pipeline має швидко сигналізувати про причину невдачі.
+
+Окрему увагу слід приділити ризику: Велика кількість повільних flaky E2E тестів штовхає команду ігнорувати червоний pipeline.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Automation Testing","CI/CD та Jenkins","Безперервне тестування і test pyramid"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(64,'interview-redis-yak-skhovyshche-struktur-danykh-31','question','interview','Caching','middle','technical',63,NULL,'Redis як сховище структур даних','Коли Redis підходить як кеш?','Для часто читаних даних із прийнятним строком застарівання, коли система визначила TTL/інвалідацію й може пережити промах кешу.
+
+Redis — сервер структур даних у пам’яті з підтримкою рядків, хешів, списків, множин, sorted sets і потоків, серед іншого. Команди над окремими структурами можуть бути атомарними, але багатокрокова логіка вимагає продуманого транзакційного чи скриптового підходу.
+
+Практична перевірка може включати такі дії: Перевірте тип ключа, атомарність операцій, поведінку після TTL, пікове споживання пам’яті та сценарії відновлення.
+
+Окрему увагу слід приділити ризику: Використати Redis як універсальну БД без плану persistence, eviction і відновлення — ризик втрати даних.','Коли Redis підходить як кеш?','Для часто читаних даних із прийнятним строком застарівання, коли система визначила TTL/інвалідацію й може пережити промах кешу.
+
+Redis — сервер структур даних у пам’яті з підтримкою рядків, хешів, списків, множин, sorted sets і потоків, серед іншого. Команди над окремими структурами можуть бути атомарними, але багатокрокова логіка вимагає продуманого транзакційного чи скриптового підходу.
+
+Практична перевірка може включати такі дії: Перевірте тип ключа, атомарність операцій, поведінку після TTL, пікове споживання пам’яті та сценарії відновлення.
+
+Окрему увагу слід приділити ризику: Використати Redis як універсальну БД без плану persistence, eviction і відновлення — ризик втрати даних.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Caching","Redis","Redis як сховище структур даних"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(65,'interview-ttl-ta-invalidatsiya-keshu-redis-32','question','interview','Caching','middle','technical',64,NULL,'TTL та інвалідація кешу Redis','Що таке cache stampede і як його зменшити?','Масовий паралельний перерахунок після спливу TTL; допомагають jitter, single-flight/lock, попереднє оновлення й контрольований fallback.
+
+TTL автоматично обмежує строк життя ключа; він зменшує залежність від ручного очищення, але створює вікно застарілих даних. Інвалідація кешу складна, бо дані змінюються в джерелі незалежно від кешованої копії.
+
+Практична перевірка може включати такі дії: Перевірте читання до й після TTL, оновлення джерела, cache miss, негативне кешування й поведінку при недоступності Redis.
+
+Окрему увагу слід приділити ризику: Cache stampede виникає, коли багато клієнтів одночасно перебудовують прострочений дорогий ключ.','Що таке cache stampede і як його зменшити?','Масовий паралельний перерахунок після спливу TTL; допомагають jitter, single-flight/lock, попереднє оновлення й контрольований fallback.
+
+TTL автоматично обмежує строк життя ключа; він зменшує залежність від ручного очищення, але створює вікно застарілих даних. Інвалідація кешу складна, бо дані змінюються в джерелі незалежно від кешованої копії.
+
+Практична перевірка може включати такі дії: Перевірте читання до й після TTL, оновлення джерела, cache miss, негативне кешування й поведінку при недоступності Redis.
+
+Окрему увагу слід приділити ризику: Cache stampede виникає, коли багато клієнтів одночасно перебудовують прострочений дорогий ключ.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Caching","Redis","TTL та інвалідація кешу Redis"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(66,'interview-redis-eviction-i-mezhi-pam-yati-34','question','interview','Caching','middle','technical',65,NULL,'Redis eviction і межі пам’яті','Яку політику eviction обрати?','Це залежить від ролі ключів: для кешу часто прийнятна політика витіснення; для даних, які не можна втрачати, потрібні окремий план пам’яті й інша конфігурація.
+
+За досягнення maxmemory Redis застосовує вибрану політику: відмовляє у записі або видаляє ключі за правилом eviction. Моніторинг пам’яті має враховувати overhead і фрагментацію, а не тільки суму value.
+
+Практична перевірка може включати такі дії: Заповніть тестовий екземпляр до ліміту й перевірте, які ключі видаляються, як поводяться записи та чи є метрики eviction.
+
+Окрему увагу слід приділити ризику: Якщо Redis зберігає незамінний стан, політика видалення кеш-подібних ключів може знищити важливі дані.','Яку політику eviction обрати?','Це залежить від ролі ключів: для кешу часто прийнятна політика витіснення; для даних, які не можна втрачати, потрібні окремий план пам’яті й інша конфігурація.
+
+За досягнення maxmemory Redis застосовує вибрану політику: відмовляє у записі або видаляє ключі за правилом eviction. Моніторинг пам’яті має враховувати overhead і фрагментацію, а не тільки суму value.
+
+Практична перевірка може включати такі дії: Заповніть тестовий екземпляр до ліміту й перевірте, які ключі видаляються, як поводяться записи та чи є метрики eviction.
+
+Окрему увагу слід приділити ризику: Якщо Redis зберігає незамінний стан, політика видалення кеш-подібних ключів може знищити важливі дані.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Caching","Redis","Redis eviction і межі пам’яті"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(67,'interview-redis-streams-i-cherhy-35','question','interview','Caching','middle','technical',66,NULL,'Redis Streams і черги','Навіщо consumer group у Redis Streams?','Щоб розподіляти повідомлення між споживачами, вести pending стан та підтверджувати оброблені записи.
+
+Redis Streams надає append-only структуру повідомлень, групи споживачів і підтвердження обробки, що корисно для потокових сценаріїв. Повторна доставка можлива, тому обробник має бути ідемпотентним.
+
+Практична перевірка може включати такі дії: Перевірте pending entries, повторне призначення, дублікати, порядок у межах потоку та поведінку після рестарту.
+
+Окрему увагу слід приділити ризику: Невизначене обрізання потоку може видалити ще не оброблені повідомлення.','Навіщо consumer group у Redis Streams?','Щоб розподіляти повідомлення між споживачами, вести pending стан та підтверджувати оброблені записи.
+
+Redis Streams надає append-only структуру повідомлень, групи споживачів і підтвердження обробки, що корисно для потокових сценаріїв. Повторна доставка можлива, тому обробник має бути ідемпотентним.
+
+Практична перевірка може включати такі дії: Перевірте pending entries, повторне призначення, дублікати, порядок у межах потоку та поведінку після рестарту.
+
+Окрему увагу слід приділити ризику: Невизначене обрізання потоку може видалити ще не оброблені повідомлення.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Caching","Redis","Redis Streams і черги"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(68,'interview-pytannya-na-spivbesidi-redis-cache-miss-95','question','interview','Caching','middle','technical',67,NULL,'Питання на співбесіді: Redis cache miss','Що робить cache-aside при cache miss?','Читає значення з основного сховища, повертає його клієнту й зазвичай записує у кеш із TTL; політика помилок має бути визначена.
+
+Cache miss — штатний сценарій: застосунок має безпечно прочитати джерело істини, повернути відповідь і за потреби наповнити кеш. Cache-aside має окремий ризик гонки між читанням джерела й оновленням ключа.
+
+Практична перевірка може включати такі дії: Очистіть ключ, викличте endpoint, повторіть читання, змініть джерело й перевірте момент оновлення кешу.
+
+Окрему увагу слід приділити ризику: Якщо система не витримує промах кешу, масове очищення створює різкий удар по БД.','Що робить cache-aside при cache miss?','Читає значення з основного сховища, повертає його клієнту й зазвичай записує у кеш із TTL; політика помилок має бути визначена.
+
+Cache miss — штатний сценарій: застосунок має безпечно прочитати джерело істини, повернути відповідь і за потреби наповнити кеш. Cache-aside має окремий ризик гонки між читанням джерела й оновленням ключа.
+
+Практична перевірка може включати такі дії: Очистіть ключ, викличте endpoint, повторіть читання, змініть джерело й перевірте момент оновлення кешу.
+
+Окрему увагу слід приділити ризику: Якщо система не витримує промах кешу, масове очищення створює різкий удар по БД.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Caching","Поради QA","Питання на співбесіді: Redis cache miss"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(69,'interview-redis-persistence-rdb-i-aof-33','question','interview','Caching','middle','technical',68,NULL,'Redis persistence: RDB і AOF','Чим snapshot відрізняється від append-only журналу?','Snapshot фіксує стан у певний момент; AOF зберігає послідовність операцій, яку можна відтворити під час запуску.
+
+RDB створює знімки стану, а AOF записує операції зміни для відтворення; режим збереження впливає на втрату даних, диск і відновлення. RDB і AOF можна комбінувати; конкретна поведінка залежить від налаштувань версії Redis.
+
+Практична перевірка може включати такі дії: Після тестового перезапуску перевірте очікуване вікно втрати, час відновлення, цілісність і поведінку диска.
+
+Окрему увагу слід приділити ризику: Наявність persistence не замінює backup: помилкове видалення може коректно зберегтися у файлах журналу.','Чим snapshot відрізняється від append-only журналу?','Snapshot фіксує стан у певний момент; AOF зберігає послідовність операцій, яку можна відтворити під час запуску.
+
+RDB створює знімки стану, а AOF записує операції зміни для відтворення; режим збереження впливає на втрату даних, диск і відновлення. RDB і AOF можна комбінувати; конкретна поведінка залежить від налаштувань версії Redis.
+
+Практична перевірка може включати такі дії: Після тестового перезапуску перевірте очікуване вікно втрати, час відновлення, цілісність і поведінку диска.
+
+Окрему увагу слід приділити ризику: Наявність persistence не замінює backup: помилкове видалення може коректно зберегтися у файлах журналу.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Caching","Redis","Redis persistence: RDB і AOF"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(70,'interview-ci-caching-i-artefakty-47','question','interview','Caching','middle','technical',69,NULL,'CI caching і артефакти','Чим artifact відрізняється від cache?','Artifact — потрібний результат конкретного запуску; cache — оптимізація, яку можна втратити без зміни коректності pipeline.
+
+Cache пришвидшує повторне отримання залежностей; artifact є результатом конкретного build, який можна передати між етапами або зберегти. Кеш створює швидкість, а не джерело істини; artifacts забезпечують передавання конкретного результату.
+
+Практична перевірка може включати такі дії: Очистіть кеш і повторіть pipeline; збірка має залишатися правильною. Перевірте, що deploy використовує артефакт саме цього commit.
+
+Окрему увагу слід приділити ризику: Вважати cache артефактом небезпечно: кеш може бути очищений, застарілий або отруєний.','Чим artifact відрізняється від cache?','Artifact — потрібний результат конкретного запуску; cache — оптимізація, яку можна втратити без зміни коректності pipeline.
+
+Cache пришвидшує повторне отримання залежностей; artifact є результатом конкретного build, який можна передати між етапами або зберегти. Кеш створює швидкість, а не джерело істини; artifacts забезпечують передавання конкретного результату.
+
+Практична перевірка може включати такі дії: Очистіть кеш і повторіть pipeline; збірка має залишатися правильною. Перевірте, що deploy використовує артефакт саме цього commit.
+
+Окрему увагу слід приділити ризику: Вважати cache артефактом небезпечно: кеш може бути очищений, застарілий або отруєний.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Caching","CI/CD та Jenkins","CI caching і артефакти"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(71,'interview-redis-replication-i-failover-81','question','interview','Caching','middle','technical',70,NULL,'Redis replication і failover','Чи гарантує replica нульову втрату даних?','Не обов’язково; при асинхронній реплікації останні зміни можуть не встигнути дійти до replica до відмови.
+
+Реплікація підтримує копії даних і може допомогти з доступністю та читанням, але асинхронна реплікація допускає коротке вікно відставання. Точні гарантії залежать від конфігурації, topology й режиму продукту.
+
+Практична перевірка може включати такі дії: Зупиніть primary у тестовому середовищі, перевірте promotion, reconnect клієнтів, втрату останніх записів і відновлення топології.
+
+Окрему увагу слід приділити ризику: Клієнт може читати застаріле значення з репліки після успішного запису на primary.','Чи гарантує replica нульову втрату даних?','Не обов’язково; при асинхронній реплікації останні зміни можуть не встигнути дійти до replica до відмови.
+
+Реплікація підтримує копії даних і може допомогти з доступністю та читанням, але асинхронна реплікація допускає коротке вікно відставання. Точні гарантії залежать від конфігурації, topology й режиму продукту.
+
+Практична перевірка може включати такі дії: Зупиніть primary у тестовому середовищі, перевірте promotion, reconnect клієнтів, втрату останніх записів і відновлення топології.
+
+Окрему увагу слід приділити ризику: Клієнт може читати застаріле значення з репліки після успішного запису на primary.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Caching","Redis","Redis replication і failover"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(72,'interview-redis-atomarni-komandy-ta-race-conditions-82','question','interview','Caching','middle','technical',71,NULL,'Redis атомарні команди та race conditions','Чому GET, потім SET може загубити інкремент?','Два клієнти можуть прочитати однакове старе значення й записати однаковий результат; використовуйте атомарну INCR чи транзакційний механізм.
+
+Окремі команди Redis атомарні відносно інших команд, але послідовність GET-обчислення-SET між клієнтом не є автоматично атомарною. Довгий Lua script виконується атомарно, але блокує обробку інших команд на час виконання.
+
+Практична перевірка може включати такі дії: Запустіть конкурентні збільшення/резервування й перевірте інваріант, який не можна порушити при одночасному запиті.
+
+Окрему увагу слід приділити ризику: Read-modify-write без атомарності губить оновлення під навантаженням.','Чому GET, потім SET може загубити інкремент?','Два клієнти можуть прочитати однакове старе значення й записати однаковий результат; використовуйте атомарну INCR чи транзакційний механізм.
+
+Окремі команди Redis атомарні відносно інших команд, але послідовність GET-обчислення-SET між клієнтом не є автоматично атомарною. Довгий Lua script виконується атомарно, але блокує обробку інших команд на час виконання.
+
+Практична перевірка може включати такі дії: Запустіть конкурентні збільшення/резервування й перевірте інваріант, який не можна порушити при одночасному запиті.
+
+Окрему увагу слід приділити ризику: Read-modify-write без атомарності губить оновлення під навантаженням.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Caching","Redis","Redis атомарні команди та race conditions"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(73,'interview-dockerfile-i-vidtvoryuvani-obrazy-37','question','interview','Docker and Containers','middle','technical',72,NULL,'Dockerfile і відтворювані образи','Навіщо multi-stage build?','Щоб використовувати інструменти компіляції на build-етапі, а в runtime образ покласти лише необхідний результат і залежності.
+
+Dockerfile описує кроки побудови образу; порядок інструкцій і контекст збірки впливають на кеш, розмір і відтворюваність. Build cache прискорює збірку, але не є джерелом достовірності чи сховищем артефактів.
+
+Практична перевірка може включати такі дії: Зберіть образ двічі, перевірте його склад, розмір, версії пакетів, користувача процесу й відсутність секретів у шарах.
+
+Окрему увагу слід приділити ризику: COPY усього репозиторію без .dockerignore може включити node_modules, .git та локальні секрети.','Навіщо multi-stage build?','Щоб використовувати інструменти компіляції на build-етапі, а в runtime образ покласти лише необхідний результат і залежності.
+
+Dockerfile описує кроки побудови образу; порядок інструкцій і контекст збірки впливають на кеш, розмір і відтворюваність. Build cache прискорює збірку, але не є джерелом достовірності чи сховищем артефактів.
+
+Практична перевірка може включати такі дії: Зберіть образ двічі, перевірте його склад, розмір, версії пакетів, користувача процесу й відсутність секретів у шарах.
+
+Окрему увагу слід приділити ризику: COPY усього репозиторію без .dockerignore може включити node_modules, .git та локальні секрети.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Docker and Containers","Docker","Dockerfile і відтворювані образи"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(74,'interview-docker-volumes-i-zberezhennya-stanu-38','question','interview','Docker and Containers','middle','technical',73,NULL,'Docker volumes і збереження стану','Чи замінює Docker volume резервне копіювання?','Ні. Volume переживає перестворення контейнера, але не захищає від пошкодження, видалення тому чи втрати хоста.
+
+Volume зберігає дані незалежно від життєвого циклу контейнера й може використовуватись для бази або інших файлів, які мають пережити перестворення. Volume не є резервною копією: логічне пошкодження може зберегтися в тому самому томі.
+
+Практична перевірка може включати такі дії: Створіть тестовий запис, перестворіть контейнер і перевірте збереження; потім випробуйте відновлення резервної копії.
+
+Окрему увагу слід приділити ризику: docker compose down -v може видалити named volumes і дані; команду потрібно застосовувати усвідомлено.','Чи замінює Docker volume резервне копіювання?','Ні. Volume переживає перестворення контейнера, але не захищає від пошкодження, видалення тому чи втрати хоста.
+
+Volume зберігає дані незалежно від життєвого циклу контейнера й може використовуватись для бази або інших файлів, які мають пережити перестворення. Volume не є резервною копією: логічне пошкодження може зберегтися в тому самому томі.
+
+Практична перевірка може включати такі дії: Створіть тестовий запис, перестворіть контейнер і перевірте збереження; потім випробуйте відновлення резервної копії.
+
+Окрему увагу слід приділити ризику: docker compose down -v може видалити named volumes і дані; команду потрібно застосовувати усвідомлено.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Docker and Containers","Docker","Docker volumes і збереження стану"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(75,'interview-container-logs-i-syhnaly-zavershennya-70','question','interview','Docker and Containers','middle','technical',74,NULL,'Container logs і сигнали завершення','Навіщо застосунку обробляти SIGTERM?','Щоб завершити активну роботу, закрити з’єднання та зупинитися контрольовано до примусового kill контейнера.
+
+Контейнерні журнали зазвичай збирають stdout/stderr процесу, а коректна обробка SIGTERM дозволяє сервісу завершити запити й закрити ресурси. Вивід у stdout спрощує збір централізованим logging driver, але потребує структурованого формату.
+
+Практична перевірка може включати такі дії: Надішліть SIGTERM під час запиту, дочекайтеся завершення й перевірте відсутність пошкоджених записів та orphan процесів.
+
+Окрему увагу слід приділити ризику: Процес, який ігнорує сигнал або запускається через shell без exec, може завершитися примусово після grace period.','Навіщо застосунку обробляти SIGTERM?','Щоб завершити активну роботу, закрити з’єднання та зупинитися контрольовано до примусового kill контейнера.
+
+Контейнерні журнали зазвичай збирають stdout/stderr процесу, а коректна обробка SIGTERM дозволяє сервісу завершити запити й закрити ресурси. Вивід у stdout спрощує збір централізованим logging driver, але потребує структурованого формату.
+
+Практична перевірка може включати такі дії: Надішліть SIGTERM під час запиту, дочекайтеся завершення й перевірте відсутність пошкоджених записів та orphan процесів.
+
+Окрему увагу слід приділити ризику: Процес, який ігнорує сигнал або запускається через shell без exec, може завершитися примусово після grace period.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Docker and Containers","Docker","Container logs і сигнали завершення"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(76,'interview-kubernetes-deployments-pods-and-services-123','question','interview','Docker and Containers','middle','scenario',75,NULL,'Kubernetes deployments, pods and services','У Kubernetes кількість доступних реплік правильна, але запити періодично завершуються помилкою. Що перевірити?','Перевірте відповідність селекторів Service міткам Pod, фактичні кінцеві точки сервісу та стан readiness-проб. Дослідіть події кластера, журнали кожного Pod, версію розгортання й конфігурацію ingress. Статус Running означає, що контейнерний процес запущений, але не гарантує готовності застосунку приймати запити. Перевірте, чи не потрапляє трафік на вузол до завершення ініціалізації, і чи не залишається несправна репліка серед кінцевих точок. QA має зіставляти час помилок із переходами готовності та змінами розгортання.','У Kubernetes кількість доступних реплік правильна, але запити періодично завершуються помилкою. Що перевірити?','Перевірте відповідність селекторів Service міткам Pod, фактичні кінцеві точки сервісу та стан readiness-проб. Дослідіть події кластера, журнали кожного Pod, версію розгортання й конфігурацію ingress. Статус Running означає, що контейнерний процес запущений, але не гарантує готовності застосунку приймати запити. Перевірте, чи не потрапляє трафік на вузол до завершення ініціалізації, і чи не залишається несправна репліка серед кінцевих точок. QA має зіставляти час помилок із переходами готовності та змінами розгортання.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Docker and Containers","Containers","Kubernetes deployments, pods and services"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(77,'interview-docker-image-i-container-36','question','interview','Docker and Containers','middle','technical',76,NULL,'Docker image і container','Чим образ відрізняється від контейнера?','Образ є шаблоном для запуску; контейнер — екземпляром цього шаблону з процесом і тимчасовим записуваним шаром.
+
+Image — незмінний шаблон із шарами, а container — запущений екземпляр образу з власним writable layer та ізоляцією процесів. Контейнери використовують ядро хоста, тому не є повними віртуальними машинами.
+
+Практична перевірка може включати такі дії: Зупиніть і створіть контейнер повторно; потрібні дані мають зберегтися у volume, а додаток — стартувати з образу без ручних кроків.
+
+Окрему увагу слід приділити ризику: Видалення контейнера видаляє його змінюваний шар; без volume незбережені дані зникнуть.','Чим образ відрізняється від контейнера?','Образ є шаблоном для запуску; контейнер — екземпляром цього шаблону з процесом і тимчасовим записуваним шаром.
+
+Image — незмінний шаблон із шарами, а container — запущений екземпляр образу з власним writable layer та ізоляцією процесів. Контейнери використовують ядро хоста, тому не є повними віртуальними машинами.
+
+Практична перевірка може включати такі дії: Зупиніть і створіть контейнер повторно; потрібні дані мають зберегтися у volume, а додаток — стартувати з образу без ручних кроків.
+
+Окрему увагу слід приділити ризику: Видалення контейнера видаляє його змінюваний шар; без volume незбережені дані зникнуть.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Docker and Containers","Docker","Docker image і container"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(78,'interview-docker-compose-i-zalezhnosti-servisiv-39','question','interview','Docker and Containers','middle','technical',77,NULL,'Docker Compose і залежності сервісів','Чим healthcheck відрізняється від простого запуску контейнера?','Контейнер може існувати, але сервіс ще не готовий. Healthcheck перевіряє стан за заданою командою та дозволяє відрізнити readiness від процесу.
+
+Compose описує кілька сервісів, мережі, томи й конфігурацію, щоб запускати локальний стек єдиним узгодженим способом. Порядок запуску не дорівнює готовності; retry підключення в застосунку все одно корисний.
+
+Практична перевірка може включати такі дії: Запустіть стек із чистого стану, перевірте startup order, readiness, DNS між сервісами й поведінку при перезапуску залежності.
+
+Окрему увагу слід приділити ризику: depends_on без перевірки здоров’я може стартувати застосунок раніше, ніж база готова приймати запити.','Чим healthcheck відрізняється від простого запуску контейнера?','Контейнер може існувати, але сервіс ще не готовий. Healthcheck перевіряє стан за заданою командою та дозволяє відрізнити readiness від процесу.
+
+Compose описує кілька сервісів, мережі, томи й конфігурацію, щоб запускати локальний стек єдиним узгодженим способом. Порядок запуску не дорівнює готовності; retry підключення в застосунку все одно корисний.
+
+Практична перевірка може включати такі дії: Запустіть стек із чистого стану, перевірте startup order, readiness, DNS між сервісами й поведінку при перезапуску залежності.
+
+Окрему увагу слід приділити ризику: depends_on без перевірки здоров’я може стартувати застосунок раніше, ніж база готова приймати запити.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Docker and Containers","Docker","Docker Compose і залежності сервісів"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(79,'interview-jenkins-pipeline-as-code-43','question','interview','CI/CD','middle','technical',78,NULL,'Jenkins Pipeline as Code','Навіщо Jenkinsfile зберігати у репозиторії?','Історія pipeline змінюється разом із застосунком, проходить review і може бути відтворена для конкретної версії коду.
+
+Jenkinsfile зберігає pipeline поруч із кодом і описує агента, стадії, кроки та post-дії у версійованому вигляді. Pipeline конфігурація є кодом і теж потребує review та контрольованого доступу.
+
+Практична перевірка може включати такі дії: Перевірте успішний, помилковий і скасований pipeline, cleanup, звіти тестів і обробку credentials без виводу в лог.
+
+Окрему увагу слід приділити ризику: Секрет, надрукований командою echo або в stack trace, залишається в build log.','Навіщо Jenkinsfile зберігати у репозиторії?','Історія pipeline змінюється разом із застосунком, проходить review і може бути відтворена для конкретної версії коду.
+
+Jenkinsfile зберігає pipeline поруч із кодом і описує агента, стадії, кроки та post-дії у версійованому вигляді. Pipeline конфігурація є кодом і теж потребує review та контрольованого доступу.
+
+Практична перевірка може включати такі дії: Перевірте успішний, помилковий і скасований pipeline, cleanup, звіти тестів і обробку credentials без виводу в лог.
+
+Окрему увагу слід приділити ризику: Секрет, надрукований командою echo або в stack trace, залишається в build log.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","CI/CD","CI/CD та Jenkins","Jenkins Pipeline as Code"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(80,'interview-stadii-build-test-i-deploy-45','question','interview','CI/CD','middle','technical',79,NULL,'Стадії build, test і deploy','Як не допустити deploy після невдалого тесту?','Зв’язати stage залежністю успішного попереднього етапу, не ковтати exit code і перевірити негативний сценарій pipeline.
+
+Стадії роблять мету pipeline зрозумілою: збирання артефакту, перевірки та контрольоване розгортання. Staging має максимально відтворювати важливі властивості production, але без реальних секретів і даних.
+
+Практична перевірка може включати такі дії: Внесіть контрольований дефект і переконайтеся, що pipeline завершується невдало та deploy не запускається.
+
+Окрему увагу слід приділити ризику: Pipeline, який завжди повертає успіх попри зламані assertions, дає хибний сигнал якості.','Як не допустити deploy після невдалого тесту?','Зв’язати stage залежністю успішного попереднього етапу, не ковтати exit code і перевірити негативний сценарій pipeline.
+
+Стадії роблять мету pipeline зрозумілою: збирання артефакту, перевірки та контрольоване розгортання. Staging має максимально відтворювати важливі властивості production, але без реальних секретів і даних.
+
+Практична перевірка може включати такі дії: Внесіть контрольований дефект і переконайтеся, що pipeline завершується невдало та deploy не запускається.
+
+Окрему увагу слід приділити ризику: Pipeline, який завжди повертає успіх попри зламані assertions, дає хибний сигнал якості.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","CI/CD","CI/CD та Jenkins","Стадії build, test і deploy"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(81,'interview-pidpysuvannya-ta-pokhodzhennya-artefaktiv-71','question','interview','CI/CD','middle','technical',80,NULL,'Підписування та походження артефактів','Чому небезпечно деплоїти image лише за тегом latest?','Тег змінюваний; digest однозначно ідентифікує вміст, який пройшов перевірки.
+
+Артефакт має бути пов’язаний із commit, pipeline, залежностями та джерелом побудови, щоб середовище отримало саме перевірений результат. Reproducible build та підпис provenance допомагають перевірити ланцюг постачання.
+
+Практична перевірка може включати такі дії: Звірте commit SHA, image digest, SBOM/сканування та фактичну версію у deployment.
+
+Окрему увагу слід приділити ризику: Тег latest може вказувати на інший образ у момент розгортання.','Чому небезпечно деплоїти image лише за тегом latest?','Тег змінюваний; digest однозначно ідентифікує вміст, який пройшов перевірки.
+
+Артефакт має бути пов’язаний із commit, pipeline, залежностями та джерелом побудови, щоб середовище отримало саме перевірений результат. Reproducible build та підпис provenance допомагають перевірити ланцюг постачання.
+
+Практична перевірка може включати такі дії: Звірте commit SHA, image digest, SBOM/сканування та фактичну версію у deployment.
+
+Окрему увагу слід приділити ризику: Тег latest може вказувати на інший образ у момент розгортання.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","CI/CD","CI/CD та Jenkins","Підписування та походження артефактів"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(82,'interview-quality-gates-u-ci-cd-74','question','interview','CI/CD','middle','scenario',81,NULL,'Quality gates у CI/CD','Які перевірки варто включити в gate?','Ті, що швидко й надійно зменшують конкретні ризики: unit/contract tests, lint, vulnerability policy та необхідний approval для середовища.
+
+Quality gate визначає умови, які мають бути виконані до наступного етапу: тести, lint, security scan, coverage або ручне погодження. Coverage відсоток сам по собі не доводить якість assertions чи тестового дизайну.
+
+Практична перевірка може включати такі дії: Навмисно поруште одну умову й переконайтеся, що pipeline блокує promotion і показує причину.
+
+Окрему увагу слід приділити ризику: Непояснений високий поріг або flaky gate провокує масові винятки й втрату довіри.','Які перевірки варто включити в gate?','Ті, що швидко й надійно зменшують конкретні ризики: unit/contract tests, lint, vulnerability policy та необхідний approval для середовища.
+
+Quality gate визначає умови, які мають бути виконані до наступного етапу: тести, lint, security scan, coverage або ручне погодження. Coverage відсоток сам по собі не доводить якість assertions чи тестового дизайну.
+
+Практична перевірка може включати такі дії: Навмисно поруште одну умову й переконайтеся, що pipeline блокує promotion і показує причину.
+
+Окрему увагу слід приділити ризику: Непояснений високий поріг або flaky gate провокує масові винятки й втрату довіри.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","CI/CD","CI/CD та Jenkins","Quality gates у CI/CD"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(83,'interview-blue-green-i-canary-deployment-85','question','interview','CI/CD','middle','technical',82,NULL,'Blue-green і canary deployment','Які сигнали мають зупинити canary?','Порогові зміни error rate, latency, saturation або бізнес-метрик разом із достатньою вибіркою та чітким auto-stop правилом.
+
+Blue-green переключає трафік між двома середовищами, а canary поступово спрямовує частину трафіку на нову версію й спостерігає метрики. Rollback трафіку не скасовує вже виконаних побічних дій у БД або зовнішніх системах.
+
+Практична перевірка може включати такі дії: Перевірте частковий трафік, метрики помилок, перемикання назад, sticky sessions і schema compatibility.
+
+Окрему увагу слід приділити ризику: Автоматичне продовження canary без достатніх метрик може швидко поширити дефект.','Які сигнали мають зупинити canary?','Порогові зміни error rate, latency, saturation або бізнес-метрик разом із достатньою вибіркою та чітким auto-stop правилом.
+
+Blue-green переключає трафік між двома середовищами, а canary поступово спрямовує частину трафіку на нову версію й спостерігає метрики. Rollback трафіку не скасовує вже виконаних побічних дій у БД або зовнішніх системах.
+
+Практична перевірка може включати такі дії: Перевірте частковий трафік, метрики помилок, перемикання назад, sticky sessions і schema compatibility.
+
+Окрему увагу слід приділити ризику: Автоматичне продовження canary без достатніх метрик може швидко поширити дефект.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","CI/CD","CI/CD та Jenkins","Blue-green і canary deployment"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(84,'interview-mihratsii-jenkins-controller-86','question','interview','CI/CD','middle','technical',83,NULL,'Міграції Jenkins controller','Що включити в план оновлення Jenkins?','Перевірку сумісності Java/plugins, backup controller home, smoke pipeline, агентів і credentials, maintenance window та відпрацьоване відновлення.
+
+Jenkins plugins, controller state й версія Java впливають на сумісність pipeline; оновлення інфраструктури теж потребує плану перевірки й відкату. Backup має бути консистентним із controller state та secrets, а не просто копією частини workspace.
+
+Практична перевірка може включати такі дії: Перевірте startup, credentials, агенти, ключові job-и, plugin dependencies і відновлення із backup.
+
+Окрему увагу слід приділити ризику: Оновити всі plugins одночасно без backup може зробити controller несумісним або недоступним.','Що включити в план оновлення Jenkins?','Перевірку сумісності Java/plugins, backup controller home, smoke pipeline, агентів і credentials, maintenance window та відпрацьоване відновлення.
+
+Jenkins plugins, controller state й версія Java впливають на сумісність pipeline; оновлення інфраструктури теж потребує плану перевірки й відкату. Backup має бути консистентним із controller state та secrets, а не просто копією частини workspace.
+
+Практична перевірка може включати такі дії: Перевірте startup, credentials, агенти, ключові job-и, plugin dependencies і відновлення із backup.
+
+Окрему увагу слід приділити ризику: Оновити всі plugins одночасно без backup може зробити controller несумісним або недоступним.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","CI/CD","CI/CD та Jenkins","Міграції Jenkins controller"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(85,'interview-pytannya-na-spivbesidi-flaky-test-u-jenkins-94','question','interview','CI/CD','middle','technical',84,NULL,'Питання на співбесіді: flaky тест у Jenkins','Як зменшити flaky rate?','Виявити залежність від часу/порядку/ресурсу, ізолювати дані й середовище, замінити sleep на очікування умови та відстежити результат.
+
+Flaky тест має різний результат без зміни коду, часто через час, shared state, порядок, ресурси чи мережеву залежність. Причина може бути в тесті, продукті або середовищі — потрібен доказ, а не припущення.
+
+Практична перевірка може включати такі дії: Повторіть тест окремо й у suite, паралельно й послідовно, зі свіжими даними; зіставте timing/logs.
+
+Окрему увагу слід приділити ризику: Автоматичний retry, який зелено маскує нестабільність, створює хибну довіру до gate.','Як зменшити flaky rate?','Виявити залежність від часу/порядку/ресурсу, ізолювати дані й середовище, замінити sleep на очікування умови та відстежити результат.
+
+Flaky тест має різний результат без зміни коду, часто через час, shared state, порядок, ресурси чи мережеву залежність. Причина може бути в тесті, продукті або середовищі — потрібен доказ, а не припущення.
+
+Практична перевірка може включати такі дії: Повторіть тест окремо й у suite, паралельно й послідовно, зі свіжими даними; зіставте timing/logs.
+
+Окрему увагу слід приділити ризику: Автоматичний retry, який зелено маскує нестабільність, створює хибну довіру до gate.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","CI/CD","Поради QA","Питання на співбесіді: flaky тест у Jenkins"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(86,'interview-ci-continuous-delivery-i-continuous-deployment-42','question','interview','CI/CD','middle','technical',85,NULL,'CI, Continuous Delivery і Continuous Deployment','Чим Continuous Delivery відрізняється від Continuous Deployment?','Delivery тримає реліз придатним до випуску з можливим ручним рішенням; Deployment автоматично випускає кожну зміну, що пройшла всі gate-и.
+
+CI часто автоматизує інтеграцію змін, збірку й перевірки; Continuous Delivery залишає контрольований крок випуску, Continuous Deployment автоматизує production після успішних gate-ів. CI не означає, що треба зливати неперевірений код; малі інтеграції та швидкий зворотний зв’язок є основою практики.
+
+Практична перевірка може включати такі дії: Перевірте запуск на pull request, блокування при невдалих тестах, збереження артефакту, approvals, rollback і повідомлення про результат.
+
+Окрему увагу слід приділити ризику: Термін CD використовують неоднозначно; визначте, чи це доставка до готового релізу, чи автоматичний production deployment.','Чим Continuous Delivery відрізняється від Continuous Deployment?','Delivery тримає реліз придатним до випуску з можливим ручним рішенням; Deployment автоматично випускає кожну зміну, що пройшла всі gate-и.
+
+CI часто автоматизує інтеграцію змін, збірку й перевірки; Continuous Delivery залишає контрольований крок випуску, Continuous Deployment автоматизує production після успішних gate-ів. CI не означає, що треба зливати неперевірений код; малі інтеграції та швидкий зворотний зв’язок є основою практики.
+
+Практична перевірка може включати такі дії: Перевірте запуск на pull request, блокування при невдалих тестах, збереження артефакту, approvals, rollback і повідомлення про результат.
+
+Окрему увагу слід приділити ризику: Термін CD використовують неоднозначно; визначте, чи це доставка до готового релізу, чи автоматичний production deployment.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","CI/CD","CI/CD та Jenkins","CI, Continuous Delivery і Continuous Deployment"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(87,'interview-jenkins-controller-i-agents-44','question','interview','CI/CD','middle','technical',86,NULL,'Jenkins controller і agents','Яка різниця між Jenkins controller і agent?','Controller керує чергою й конфігурацією; agent виконує призначені build steps у своєму workspace та середовищі.
+
+Controller планує роботу й керує Jenkins; agents надають executors і середовища, де реально виконуються кроки pipeline. Наявність вільного executor не означає, що на agent встановлені потрібні інструменти або доступні залежності.
+
+Практична перевірка може включати такі дії: Перевірте призначення stage потрібному label, паралельні executor-и, ізоляцію workspace і поведінку при відключенні агента.
+
+Окрему увагу слід приділити ризику: Недовірений pull request на привілейованому агенті може отримати доступ до credentials чи внутрішньої мережі.','Яка різниця між Jenkins controller і agent?','Controller керує чергою й конфігурацією; agent виконує призначені build steps у своєму workspace та середовищі.
+
+Controller планує роботу й керує Jenkins; agents надають executors і середовища, де реально виконуються кроки pipeline. Наявність вільного executor не означає, що на agent встановлені потрібні інструменти або доступні залежності.
+
+Практична перевірка може включати такі дії: Перевірте призначення stage потрібному label, паралельні executor-и, ізоляцію workspace і поведінку при відключенні агента.
+
+Окрему увагу слід приділити ризику: Недовірений pull request на привілейованому агенті може отримати доступ до credentials чи внутрішньої мережі.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","CI/CD","CI/CD та Jenkins","Jenkins controller і agents"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(88,'interview-feature-flags-i-bezpechnyy-reliz-49','question','interview','CI/CD','middle','technical',87,NULL,'Feature flags і безпечний реліз','Чим release відрізняється від deploy?','Deploy встановлює версію коду в середовище; release робить функцію доступною користувачам, іноді керовано через flag.
+
+Feature flag відокремлює доставку коду від увімкнення функції, що дає змогу обмежено перевірити поведінку та вимкнути її без повторного build. Прапорець не є механізмом авторизації: приховану функцію все ще має захищати сервер.
+
+Практична перевірка може включати такі дії: Перевірте обидва стани, зміну прапорця під час роботи, правила аудиторії, кешування та rollback.
+
+Окрему увагу слід приділити ризику: Забуті flags множать комбінації стану та ускладнюють підтримку.','Чим release відрізняється від deploy?','Deploy встановлює версію коду в середовище; release робить функцію доступною користувачам, іноді керовано через flag.
+
+Feature flag відокремлює доставку коду від увімкнення функції, що дає змогу обмежено перевірити поведінку та вимкнути її без повторного build. Прапорець не є механізмом авторизації: приховану функцію все ще має захищати сервер.
+
+Практична перевірка може включати такі дії: Перевірте обидва стани, зміну прапорця під час роботи, правила аудиторії, кешування та rollback.
+
+Окрему увагу слід приділити ризику: Забуті flags множать комбінації стану та ускладнюють підтримку.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","CI/CD","CI/CD та Jenkins","Feature flags і безпечний реліз"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(89,'interview-jenkins-credentials-i-sekrety-46','question','interview','CI/CD','middle','scenario',88,NULL,'Jenkins credentials і секрети','Як тестувати безпечну роботу credentials?','Виконати контрольний job із тестовим секретом, перевірити log/artifacts і підтвердити, що доступ має лише потрібна гілка та job.
+
+Jenkins Credentials зберігає секрети окремо від Jenkinsfile й дозволяє посилатися на них за ідентифікатором під час виконання. Довірені та недовірені pipeline треба запускати з різним набором доступів.
+
+Практична перевірка може включати такі дії: Переконайтеся, що секрет не з’явився в логах, артефактах, командному рядку чи output тестів навіть після помилки.
+
+Окрему увагу слід приділити ризику: Маскування допомагає, але не захищає від навмисного друку або ексфільтрації через зловмисний build.','Як тестувати безпечну роботу credentials?','Виконати контрольний job із тестовим секретом, перевірити log/artifacts і підтвердити, що доступ має лише потрібна гілка та job.
+
+Jenkins Credentials зберігає секрети окремо від Jenkinsfile й дозволяє посилатися на них за ідентифікатором під час виконання. Довірені та недовірені pipeline треба запускати з різним набором доступів.
+
+Практична перевірка може включати такі дії: Переконайтеся, що секрет не з’явився в логах, артефактах, командному рядку чи output тестів навіть після помилки.
+
+Окрему увагу слід приділити ризику: Маскування допомагає, але не захищає від навмисного друку або ексфільтрації через зловмисний build.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","CI/CD","CI/CD та Jenkins","Jenkins credentials і секрети"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(90,'interview-paralel-ni-stadii-pipeline-72','question','interview','CI/CD','middle','scenario',89,NULL,'Паралельні стадії pipeline','Що перевірити перед паралелізацією тестів?','Незалежність даних, ресурсів і cleanup, конкурентні ліміти середовища та коректне об’єднання звітів.
+
+Незалежні перевірки можна запускати паралельно для швидшого зворотного зв’язку, якщо є достатньо executor-ів і ізольовані ресурси. Fast fail скорочує час, але може приховати результати інших гілок перевірки, якщо звіти не збережені.
+
+Практична перевірка може включати такі дії: Запустіть паралельні тести кілька разів; перевірте конфлікти портів, тестових акаунтів, файлів і ресурсів бази.
+
+Окрему увагу слід приділити ризику: Два тести, які змінюють той самий користувацький стан, можуть флакати лише при паралельному режимі.','Що перевірити перед паралелізацією тестів?','Незалежність даних, ресурсів і cleanup, конкурентні ліміти середовища та коректне об’єднання звітів.
+
+Незалежні перевірки можна запускати паралельно для швидшого зворотного зв’язку, якщо є достатньо executor-ів і ізольовані ресурси. Fast fail скорочує час, але може приховати результати інших гілок перевірки, якщо звіти не збережені.
+
+Практична перевірка може включати такі дії: Запустіть паралельні тести кілька разів; перевірте конфлікти портів, тестових акаунтів, файлів і ресурсів бази.
+
+Окрему увагу слід приділити ризику: Два тести, які змінюють той самий користувацький стан, можуть флакати лише при паралельному режимі.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","CI/CD","CI/CD та Jenkins","Паралельні стадії pipeline"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(91,'interview-infrastructure-as-code-100','question','interview','CI/CD','middle','scenario',90,NULL,'Infrastructure as Code','Навіщо перевіряти plan перед apply?','Щоб побачити очікувані зміни, виявити руйнівні операції та дати review до зміни реального середовища.
+
+Infrastructure as Code описує інфраструктуру декларативними або скриптовими файлами, щоб її можна було переглядати, повторювати й версіонувати. IaC робить інфраструктуру відтворюванішою, але не автоматично безпечною.
+
+Практична перевірка може включати такі дії: Створіть середовище з чистого стану, повторіть plan без змін і перевірте контрольований drift.
+
+Окрему увагу слід приділити ризику: Секрети у state-файлі можуть залишатися чутливими навіть після видалення з конфігурації.','Навіщо перевіряти plan перед apply?','Щоб побачити очікувані зміни, виявити руйнівні операції та дати review до зміни реального середовища.
+
+Infrastructure as Code описує інфраструктуру декларативними або скриптовими файлами, щоб її можна було переглядати, повторювати й версіонувати. IaC робить інфраструктуру відтворюванішою, але не автоматично безпечною.
+
+Практична перевірка може включати такі дії: Створіть середовище з чистого стану, повторіть plan без змін і перевірте контрольований drift.
+
+Окрему увагу слід приділити ризику: Секрети у state-файлі можуть залишатися чутливими навіть після видалення з конфігурації.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","CI/CD","CI/CD та Jenkins","Infrastructure as Code"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(92,'interview-docker-secrets-i-konfihuratsiya-41','question','interview','Security Testing','middle','technical',91,NULL,'Docker secrets і конфігурація','Чому не можна зашивати ключ у Dockerfile?','Він може залишитися в шарах образу, історії збірки або registry; використовуйте підтримуваний механізм секретів під час build/runtime.
+
+Змінні середовища зручні для конфігурації, але можуть бути видимими у діагностиці й метаданих процесу; секретам потрібне кероване сховище. Build arguments не є безпечним місцем для секретів, бо можуть потрапити в історію побудови.
+
+Практична перевірка може включати такі дії: Проскануйте шари образу, журнали, CI artifacts і помилки; перевірте, що токен маскується та відсутній у клієнтському bundle.
+
+Окрему увагу слід приділити ризику: Видалити секрет із поточного файлу недостатньо, якщо він лишився в історії Git або шарах image.','Чому не можна зашивати ключ у Dockerfile?','Він може залишитися в шарах образу, історії збірки або registry; використовуйте підтримуваний механізм секретів під час build/runtime.
+
+Змінні середовища зручні для конфігурації, але можуть бути видимими у діагностиці й метаданих процесу; секретам потрібне кероване сховище. Build arguments не є безпечним місцем для секретів, бо можуть потрапити в історію побудови.
+
+Практична перевірка може включати такі дії: Проскануйте шари образу, журнали, CI artifacts і помилки; перевірте, що токен маскується та відсутній у клієнтському bundle.
+
+Окрему увагу слід приділити ризику: Видалити секрет із поточного файлу недостатньо, якщо він лишився в історії Git або шарах image.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Security Testing","Docker","Docker secrets і конфігурація"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(93,'interview-sekrety-v-pull-request-pipelines-75','question','interview','Security Testing','middle','technical',92,NULL,'Секрети в pull request pipelines','Чи безпечно відкривати production secret для кожного PR pipeline?','Ні. Недовірений код може використати його; ізолюйте PR, мінімізуйте credentials і розділяйте build/test та deploy.
+
+Код із зовнішнього pull request може бути недовіреним; запуск у job з production credentials створює ризик їх викрадення. Маскування секретів у логах не зупиняє довільний код, який має до них доступ.
+
+Практична перевірка може включати такі дії: Перевірте permissions job-а з fork, доступ до environment secrets, Docker socket, workspace і мережевих ресурсів.
+
+Окрему увагу слід приділити ризику: Зловмисна зміна build script може надрукувати секрет або відправити його назовні.','Чи безпечно відкривати production secret для кожного PR pipeline?','Ні. Недовірений код може використати його; ізолюйте PR, мінімізуйте credentials і розділяйте build/test та deploy.
+
+Код із зовнішнього pull request може бути недовіреним; запуск у job з production credentials створює ризик їх викрадення. Маскування секретів у логах не зупиняє довільний код, який має до них доступ.
+
+Практична перевірка може включати такі дії: Перевірте permissions job-а з fork, доступ до environment secrets, Docker socket, workspace і мережевих ресурсів.
+
+Окрему увагу слід приділити ризику: Зловмисна зміна build script може надрукувати секрет або відправити його назовні.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Security Testing","CI/CD та Jenkins","Секрети в pull request pipelines"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(94,'interview-keycloak-realms-clients-and-identity-federation-130','question','interview','Security Testing','middle','technical',93,NULL,'Keycloak realms, clients and identity federation','Користувач успішно ввійшов через Keycloak, але API повертає 403. Які твердження й налаштування потрібно зіставити?','Автентифікація підтверджує особу, але не гарантує право на кожну операцію. Перевірте realm і client, запитані області доступу, ролі в токені, зіставлення ролей зовнішнього постачальника і політику авторизації самого API. Зіставте конкретне твердження токена з вимогами ресурсу. Неправильний мапінг може успішно виконати вхід, але не надати застосунку очікувану роль. QA перевіряє як дозволений сценарій, так і користувача без потрібної ролі; окремо фіксує, на якому рівні виникло 403.','Користувач успішно ввійшов через Keycloak, але API повертає 403. Які твердження й налаштування потрібно зіставити?','Автентифікація підтверджує особу, але не гарантує право на кожну операцію. Перевірте realm і client, запитані області доступу, ролі в токені, зіставлення ролей зовнішнього постачальника і політику авторизації самого API. Зіставте конкретне твердження токена з вимогами ресурсу. Неправильний мапінг може успішно виконати вхід, але не надати застосунку очікувану роль. QA перевіряє як дозволений сценарій, так і користувача без потрібної ролі; окремо фіксує, на якому рівні виникло 403.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Security Testing","Identity and Security","Keycloak realms, clients and identity federation"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(95,'interview-jwt-validation-and-token-lifecycle-126','question','interview','Authentication and Authorization','middle','scenario',94,NULL,'JWT validation and token lifecycle','Які перевірки має виконати API перед прийняттям підписаного JWT?','Сервер має перевірити підпис за дозволеним алгоритмом і довіреним ключем, а також очікувані видавця й аудиторію. За контрактом перевіряються строк дії, час початку чинності та необхідні області або ролі. Декодування JSON-полів саме по собі не підтверджує справжність токена. QA перевіряє прострочений, змінений, підписаний невідомим ключем токен, неправильні issuer/audience та перехід під час ротації ключів. Окремо уточнюють політику відкликання й оновлення токенів, оскільки підпис не гарантує, що обліковий запис досі має доступ.','Які перевірки має виконати API перед прийняттям підписаного JWT?','Сервер має перевірити підпис за дозволеним алгоритмом і довіреним ключем, а також очікувані видавця й аудиторію. За контрактом перевіряються строк дії, час початку чинності та необхідні області або ролі. Декодування JSON-полів саме по собі не підтверджує справжність токена. QA перевіряє прострочений, змінений, підписаний невідомим ключем токен, неправильні issuer/audience та перехід під час ротації ключів. Окремо уточнюють політику відкликання й оновлення токенів, оскільки підпис не гарантує, що обліковий запис досі має доступ.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Authentication and Authorization","Identity and Security","JWT validation and token lifecycle"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(96,'interview-avtentyfikatsiya-y-avtoryzatsiya-56','question','interview','Authentication and Authorization','middle','scenario',95,NULL,'Автентифікація й авторизація','Як тестувати доступ до об’єкта іншого користувача?','Викликати API з валідною сесією користувача A, підставивши ID користувача B для читання/зміни/видалення; перевірити відмову й незмінність даних.
+
+Автентифікація встановлює ідентичність, авторизація вирішує доступ до дії чи ресурсу; правильний login не означає право на кожен об’єкт. Приховування кнопки у фронтенді не є контролем доступу.
+
+Практична перевірка може включати такі дії: Для кожної операції спробуйте anonymous, власника, чужого користувача, роль без дозволу та адміністратора.
+
+Окрему увагу слід приділити ризику: IDOR/BOLA виникає, коли сервер довіряє ID у запиті й не перевіряє власника об’єкта.','Як тестувати доступ до об’єкта іншого користувача?','Викликати API з валідною сесією користувача A, підставивши ID користувача B для читання/зміни/видалення; перевірити відмову й незмінність даних.
+
+Автентифікація встановлює ідентичність, авторизація вирішує доступ до дії чи ресурсу; правильний login не означає право на кожен об’єкт. Приховування кнопки у фронтенді не є контролем доступу.
+
+Практична перевірка може включати такі дії: Для кожної операції спробуйте anonymous, власника, чужого користувача, роль без дозволу та адміністратора.
+
+Окрему увагу слід приділити ризику: IDOR/BOLA виникає, коли сервер довіряє ID у запиті й не перевіряє власника об’єкта.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Authentication and Authorization","Поради QA","Автентифікація й авторизація"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(97,'interview-oauth-2-0-roles-and-authorization-flows-125','question','interview','Authentication and Authorization','middle','technical',96,NULL,'OAuth 2.0 roles and authorization flows','Чому токен доступу OAuth 2.0 сам по собі не є достатнім доказом автентифікації користувача?','OAuth 2.0 визначає делегування доступу до захищених ресурсів, а не універсальний протокол ідентифікації користувача. Значення токена залежить від його видавця, аудиторії та контракту сервера ресурсів. Для автентифікації користувача OpenID Connect додає узгоджені твердження про особу й окремий ID-токен. QA має перевірити дозволені перенаправлення, межі областей доступу, аудиторію токена та поведінку клієнта з недійсними параметрами. Не слід робити висновок про особу лише з того, що клієнт отримав bearer-токен.','Чому токен доступу OAuth 2.0 сам по собі не є достатнім доказом автентифікації користувача?','OAuth 2.0 визначає делегування доступу до захищених ресурсів, а не універсальний протокол ідентифікації користувача. Значення токена залежить від його видавця, аудиторії та контракту сервера ресурсів. Для автентифікації користувача OpenID Connect додає узгоджені твердження про особу й окремий ID-токен. QA має перевірити дозволені перенаправлення, межі областей доступу, аудиторію токена та поведінку клієнта з недійсними параметрами. Не слід робити висновок про особу лише з того, що клієнт отримав bearer-токен.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Authentication and Authorization","Identity and Security","OAuth 2.0 roles and authorization flows"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(98,'interview-pytannya-na-spivbesidi-povil-nyy-api-89','question','interview','Performance Testing','middle','technical',97,NULL,'Питання на співбесіді: повільний API','Як почати діагностику повільного API?','Зафіксувати сценарій і percentiles, знайти trace із розкладом часу та відокремити мережу, черги, БД і зовнішні виклики.
+
+Повільна відповідь може бути наслідком клієнта, мережі, gateway, черги, сервісу, БД або зовнішньої залежності. Середнє значення може приховувати поганий хвіст розподілу latency.
+
+Практична перевірка може включати такі дії: Повторіть із контрольованим навантаженням, перевірте cold/warm cache, payload size, query count, timeout та залежності.
+
+Окрему увагу слід приділити ризику: Збільшити timeout без локалізації може приховати витік ресурсів і погіршити перевантаження.','Як почати діагностику повільного API?','Зафіксувати сценарій і percentiles, знайти trace із розкладом часу та відокремити мережу, черги, БД і зовнішні виклики.
+
+Повільна відповідь може бути наслідком клієнта, мережі, gateway, черги, сервісу, БД або зовнішньої залежності. Середнє значення може приховувати поганий хвіст розподілу latency.
+
+Практична перевірка може включати такі дії: Повторіть із контрольованим навантаженням, перевірте cold/warm cache, payload size, query count, timeout та залежності.
+
+Окрему увагу слід приділити ризику: Збільшити timeout без локалізації може приховати витік ресурсів і погіршити перевантаження.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Performance Testing","Поради QA","Питання на співбесіді: повільний API"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(99,'interview-prometheus-metrics-and-alerting-127','question','interview','Performance Testing','middle','scenario',98,NULL,'Prometheus metrics and alerting','На графіку Prometheus затримка зменшилася, але користувачі продовжують повідомляти про тайм-аути. Що перевірити?','Перевірте коректність запиту до метрик, часову свіжість вибірок, агрегування гістограми та розподіл за типом трафіку. Порівняйте серверні показники з вимірюваннями клієнта й трасуванням наскрізного запиту. Графік може відображати застарілі дані або усереднювати проблемну групу користувачів із більшістю успішних запитів. Також перевірте стан збору метрик і наявність достатньої кількості вибірок. Висновок про поліпшення слід робити лише після зіставлення метрики з фактичним досвідом клієнтів і часткою помилок.','На графіку Prometheus затримка зменшилася, але користувачі продовжують повідомляти про тайм-аути. Що перевірити?','Перевірте коректність запиту до метрик, часову свіжість вибірок, агрегування гістограми та розподіл за типом трафіку. Порівняйте серверні показники з вимірюваннями клієнта й трасуванням наскрізного запиту. Графік може відображати застарілі дані або усереднювати проблемну групу користувачів із більшістю успішних запитів. Також перевірте стан збору метрик і наявність достатньої кількості вибірок. Висновок про поліпшення слід робити лише після зіставлення метрики з фактичним досвідом клієнтів і часткою помилок.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Performance Testing","Monitoring","Prometheus metrics and alerting"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(100,'interview-rate-limiting-i-http-429-61','question','interview','Performance Testing','middle','scenario',99,NULL,'Rate limiting і HTTP 429','Як перевірити rate limit без навантажувального тесту?','У контрольному середовищі виконати малу послідовність запитів навколо порога та перевірити 429, Retry-After і скидання ліміту.
+
+Rate limiting обмежує частоту запитів; 429 Too Many Requests може супроводжуватись Retry-After або іншими даними про очікування. Ліміти інфраструктури та застосунку можуть повертати різні тіла/заголовки; тестуйте очікуваний контракт.
+
+Практична перевірка може включати такі дії: Надішліть запити нижче, на межі та вище дозволу з різними обліковими даними; перевірте відсутність блокування сусідів.
+
+Окрему увагу слід приділити ризику: Надто широкий ключ ліміту може блокувати всіх за одним NAT або проксі.','Як перевірити rate limit без навантажувального тесту?','У контрольному середовищі виконати малу послідовність запитів навколо порога та перевірити 429, Retry-After і скидання ліміту.
+
+Rate limiting обмежує частоту запитів; 429 Too Many Requests може супроводжуватись Retry-After або іншими даними про очікування. Ліміти інфраструктури та застосунку можуть повертати різні тіла/заголовки; тестуйте очікуваний контракт.
+
+Практична перевірка може включати такі дії: Надішліть запити нижче, на межі та вище дозволу з різними обліковими даними; перевірте відсутність блокування сусідів.
+
+Окрему увагу слід приділити ризику: Надто широкий ключ ліміту може блокувати всіх за одним NAT або проксі.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Performance Testing","Поради QA","Rate limiting і HTTP 429"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(101,'interview-sposterezhuvanist-i-rozpodileni-trasuvannya-12','question','interview','Performance Testing','middle','technical',100,NULL,'Спостережуваність і розподілені трасування','Що допоможе знайти повільний сервіс у ланцюгу?','Розподілений trace з часовими сегментами викликів, correlation ID для переходу до логів і метрики затримки/помилок для масштабу проблеми.
+
+Логи пояснюють окремі події, метрики показують агреговану поведінку, а traces пов’язують шлях одного запиту через компоненти. Метрика з високою кардинальністю, як-от user ID як label, може перевантажити систему моніторингу.
+
+Практична перевірка може включати такі дії: Зімітуйте запит крізь кілька сервісів і переконайтеся, що можна знайти його в логах, побачити затримку сегментів і локалізувати помилку.
+
+Окрему увагу слід приділити ризику: Великий потік неструктурованих логів без ідентифікаторів і метрик збільшує витрати, але не полегшує пошук.','Що допоможе знайти повільний сервіс у ланцюгу?','Розподілений trace з часовими сегментами викликів, correlation ID для переходу до логів і метрики затримки/помилок для масштабу проблеми.
+
+Логи пояснюють окремі події, метрики показують агреговану поведінку, а traces пов’язують шлях одного запиту через компоненти. Метрика з високою кардинальністю, як-от user ID як label, може перевантажити систему моніторингу.
+
+Практична перевірка може включати такі дії: Зімітуйте запит крізь кілька сервісів і переконайтеся, що можна знайти його в логах, побачити затримку сегментів і локалізувати помилку.
+
+Окрему увагу слід приділити ризику: Великий потік неструктурованих логів без ідентифікаторів і метрик збільшує витрати, але не полегшує пошук.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Performance Testing","Архітектура","Спостережуваність і розподілені трасування"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(102,'interview-dns-i-domenni-imena-22','question','interview','Networking','middle','technical',101,NULL,'DNS і доменні імена','Як розрізнити DNS-помилку й HTTP 503?','За DNS-помилки домен не резолвиться до адреси; 503 — HTTP-відповідь сервера або проксі, тобто з’єднання вже дійшло до HTTP-рівня.
+
+DNS знаходить мережеві адреси за доменним ім’ям і може також повертати інші записи для пошти, перевірки домену та сервісів. DNS успішно повернув IP — це ще не означає, що порт відкритий або застосунок здоровий.
+
+Практична перевірка може включати такі дії: Перевірте правильний домен середовища, DNS-запис, TTL після зміни та доступність із потрібної мережі.
+
+Окрему увагу слід приділити ризику: Кеш DNS може тимчасово спрямовувати частину клієнтів на стару адресу після релізу.','Як розрізнити DNS-помилку й HTTP 503?','За DNS-помилки домен не резолвиться до адреси; 503 — HTTP-відповідь сервера або проксі, тобто з’єднання вже дійшло до HTTP-рівня.
+
+DNS знаходить мережеві адреси за доменним ім’ям і може також повертати інші записи для пошти, перевірки домену та сервісів. DNS успішно повернув IP — це ще не означає, що порт відкритий або застосунок здоровий.
+
+Практична перевірка може включати такі дії: Перевірте правильний домен середовища, DNS-запис, TTL після зміни та доступність із потрібної мережі.
+
+Окрему увагу слід приділити ризику: Кеш DNS може тимчасово спрямовувати частину клієнтів на стару адресу після релізу.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Networking","API та протоколи","DNS і доменні імена"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(103,'interview-tcp-i-udp-23','question','interview','Networking','middle','technical',102,NULL,'TCP і UDP','Чи гарантує TCP, що бізнес-операція виконалась?','Ні. TCP доставляє потік у межах з’єднання; успіх операції визначають HTTP-відповідь і стан системи.
+
+TCP надає впорядкований потік байтів із повторною доставкою; UDP передає датаграми без гарантії доставки й порядку на рівні протоколу. HTTP/3 працює поверх QUIC, який використовує UDP і надає транспортні можливості для HTTP.
+
+Практична перевірка може включати такі дії: Для TCP-послуги перевірте відмову з’єднання, розрив під час передавання та timeout; для UDP врахуйте втрату й перестановку пакетів.
+
+Окрему увагу слід приділити ризику: Успішне TCP-з’єднання не гарантує, що серверний endpoint відповість коректно.','Чи гарантує TCP, що бізнес-операція виконалась?','Ні. TCP доставляє потік у межах з’єднання; успіх операції визначають HTTP-відповідь і стан системи.
+
+TCP надає впорядкований потік байтів із повторною доставкою; UDP передає датаграми без гарантії доставки й порядку на рівні протоколу. HTTP/3 працює поверх QUIC, який використовує UDP і надає транспортні можливості для HTTP.
+
+Практична перевірка може включати такі дії: Для TCP-послуги перевірте відмову з’єднання, розрив під час передавання та timeout; для UDP врахуйте втрату й перестановку пакетів.
+
+Окрему увагу слід приділити ризику: Успішне TCP-з’єднання не гарантує, що серверний endpoint відповість коректно.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Networking","API та протоколи","TCP і UDP"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(104,'interview-docker-networking-i-published-ports-40','question','interview','Networking','middle','technical',103,NULL,'Docker networking і published ports','Чому localhost усередині контейнера не є хостом?','localhost у контейнері вказує на сам контейнер; доступ до хоста чи сусіднього контейнера налаштовується через мережу й адресу сервісу.
+
+Контейнери в одній Compose-мережі зазвичай звертаються один до одного за DNS-іменем сервісу та внутрішнім портом. У mapping 8080:80 перше число — порт хоста, друге — порт усередині контейнера.
+
+Практична перевірка може включати такі дії: Перевірте доступність з контейнера-клієнта, межі bind address на хості, конфлікти портів і відмову зовнішнього доступу до приватного сервісу.
+
+Окрему увагу слід приділити ризику: Опублікований порт може бути доступний поза localhost залежно від bind і firewall.','Чому localhost усередині контейнера не є хостом?','localhost у контейнері вказує на сам контейнер; доступ до хоста чи сусіднього контейнера налаштовується через мережу й адресу сервісу.
+
+Контейнери в одній Compose-мережі зазвичай звертаються один до одного за DNS-іменем сервісу та внутрішнім портом. У mapping 8080:80 перше число — порт хоста, друге — порт усередині контейнера.
+
+Практична перевірка може включати такі дії: Перевірте доступність з контейнера-клієнта, межі bind address на хості, конфлікти портів і відмову зовнішнього доступу до приватного сервісу.
+
+Окрему увагу слід приділити ризику: Опублікований порт може бути доступний поза localhost залежно від bind і firewall.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Networking","Docker","Docker networking і published ports"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(105,'interview-docker-u-pipeline-76','question','interview','Networking','middle','technical',104,NULL,'Docker у pipeline','Чому Docker socket у CI є чутливим?','Клієнт із доступом до daemon може створювати привілейовані контейнери та фактично отримати контроль над хостом.
+
+Контейнер у CI може фіксувати версію toolchain і наближати тестове середовище до runtime, але сам не гарантує однакового результату. Docker-in-Docker, socket binding та remote builder мають різні моделі ізоляції й довіри.
+
+Практична перевірка може включати такі дії: Побудуйте й запустіть image у pipeline, перевірте exit code, cache, права користувача та відсутність залежності від локального Docker daemon стану.
+
+Окрему увагу слід приділити ризику: Доступ до Docker socket часто дає широкі права на хості агента.','Чому Docker socket у CI є чутливим?','Клієнт із доступом до daemon може створювати привілейовані контейнери та фактично отримати контроль над хостом.
+
+Контейнер у CI може фіксувати версію toolchain і наближати тестове середовище до runtime, але сам не гарантує однакового результату. Docker-in-Docker, socket binding та remote builder мають різні моделі ізоляції й довіри.
+
+Практична перевірка може включати такі дії: Побудуйте й запустіть image у pipeline, перевірте exit code, cache, права користувача та відсутність залежності від локального Docker daemon стану.
+
+Окрему увагу слід приділити ризику: Доступ до Docker socket часто дає широкі права на хості агента.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Networking","CI/CD та Jenkins","Docker у pipeline"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(106,'interview-ipv4-and-ipv6-107','question','interview','Networking','middle','scenario',105,NULL,'IPv4 and IPv6','Сервіс працює в офісній мережі, але не відповідає клієнту, який використовує IPv6. Які перевірки допоможуть знайти причину?','Порівняйте DNS-відповіді A та AAAA, адресу, обрану клієнтом, і доступність відповідного маршруту. Далі перевірте правила міжмережевого екрана, прив''язку сервісу до IPv6-інтерфейсу та налаштування балансувальника. Якщо клієнт підтримує обидві версії IP, з''ясуйте, чи відбувається перехід на IPv4 і скільки часу він займає. Однакова перевірка з IPv4-only, IPv6-only та dual-stack середовищ відокремлює проблему DNS від проблеми маршрутизації або конфігурації сервера. У звіті зазначте фактично використану адресу, а не лише назву домену.','Сервіс працює в офісній мережі, але не відповідає клієнту, який використовує IPv6. Які перевірки допоможуть знайти причину?','Порівняйте DNS-відповіді A та AAAA, адресу, обрану клієнтом, і доступність відповідного маршруту. Далі перевірте правила міжмережевого екрана, прив''язку сервісу до IPv6-інтерфейсу та налаштування балансувальника. Якщо клієнт підтримує обидві версії IP, з''ясуйте, чи відбувається перехід на IPv4 і скільки часу він займає. Однакова перевірка з IPv4-only, IPv6-only та dual-stack середовищ відокремлює проблему DNS від проблеми маршрутизації або конфігурації сервера. У звіті зазначте фактично використану адресу, а не лише назву домену.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Networking","Networking","IPv4 and IPv6"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(107,'interview-routing-and-default-gateways-112','question','interview','Networking','middle','technical',106,NULL,'Routing and default gateways','Сервер отримує TCP SYN, але з''єднання не встановлюється. Яка проблема маршрутизації може спричинити таку поведінку?','Запит може дійти до сервера, а відповідь SYN-ACK — загубитися через відсутній або асиметричний зворотний маршрут. Перевірте таблиці маршрутів на обох кінцях, шлюзи, правила мережевого доступу та стан міжмережевих екранів. Одностороння перевірка шляху недостатня: важливо встановити, чи проходить зворотний трафік до клієнта. Зіставте часові відмітки та адреси в мережевих журналах. Якщо TCP-рукостискання не завершене, аналіз HTTP-коду відповіді ще не є доречним, оскільки HTTP-обмін не розпочався.','Сервер отримує TCP SYN, але з''єднання не встановлюється. Яка проблема маршрутизації може спричинити таку поведінку?','Запит може дійти до сервера, а відповідь SYN-ACK — загубитися через відсутній або асиметричний зворотний маршрут. Перевірте таблиці маршрутів на обох кінцях, шлюзи, правила мережевого доступу та стан міжмережевих екранів. Одностороння перевірка шляху недостатня: важливо встановити, чи проходить зворотний трафік до клієнта. Зіставте часові відмітки та адреси в мережевих журналах. Якщо TCP-рукостискання не завершене, аналіз HTTP-коду відповіді ще не є доречним, оскільки HTTP-обмін не розпочався.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Networking","Networking","Routing and default gateways"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(108,'interview-switching-vlans-and-broadcast-domains-113','question','interview','Networking','middle','scenario',107,NULL,'Switching, VLANs and broadcast domains','Два пристрої в одному офісі мають IP-адреси, але не можуть обмінюватися даними. Що слід перевірити на локальному мережевому сегменті?','Перевірте маски підмереж, членство портів у VLAN, доступність маршруту між VLAN і правила мережевих списків контролю доступу. Потім з''ясуйте, чи не блокує з''єднання локальний міжмережевий екран пристрою. Наявність коректної IP-адреси не гарантує, що два вузли перебувають в одному широкомовному домені або мають дозволений маршрут між сегментами. Порівняйте налаштування проблемного вузла з контрольним пристроєм у тій самій точці мережі. Такий контроль допомагає локалізувати причину між VLAN-конфігурацією, маршрутизацією та правилами доступу.','Два пристрої в одному офісі мають IP-адреси, але не можуть обмінюватися даними. Що слід перевірити на локальному мережевому сегменті?','Перевірте маски підмереж, членство портів у VLAN, доступність маршруту між VLAN і правила мережевих списків контролю доступу. Потім з''ясуйте, чи не блокує з''єднання локальний міжмережевий екран пристрою. Наявність коректної IP-адреси не гарантує, що два вузли перебувають в одному широкомовному домені або мають дозволений маршрут між сегментами. Порівняйте налаштування проблемного вузла з контрольним пристроєм у тій самій точці мережі. Такий контроль допомагає локалізувати причину між VLAN-конфігурацією, маршрутизацією та правилами доступу.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Networking","Networking","Switching, VLANs and broadcast domains"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(109,'interview-http-1-1-http-2-and-http-3-behavior-116','question','interview','Networking','middle','scenario',108,NULL,'HTTP/1.1, HTTP/2 and HTTP/3 behavior','Як перевірити, що однаковий HTTP-ресурс поводиться узгоджено через HTTP/1.1, HTTP/2 та HTTP/3?','Виконайте однакові запити кожною доступною версією протоколу та порівняйте семантику відповіді: статус, заголовки, тіло й обробку помилок. Окремо зафіксуйте фактично узгоджену версію, повторне використання з''єднання, паралельність запитів і переходи між протоколами. Семантика HTTP є спільною, проте способи передавання та підтримка проміжними проксі відрізняються. Тому ізолюйте клієнтський, крайовий і серверний сегменти, перш ніж приписувати розбіжність застосунку. Для порівняння часу відповіді використовуйте однакові умови, дані й кількість повторів.','Як перевірити, що однаковий HTTP-ресурс поводиться узгоджено через HTTP/1.1, HTTP/2 та HTTP/3?','Виконайте однакові запити кожною доступною версією протоколу та порівняйте семантику відповіді: статус, заголовки, тіло й обробку помилок. Окремо зафіксуйте фактично узгоджену версію, повторне використання з''єднання, паралельність запитів і переходи між протоколами. Семантика HTTP є спільною, проте способи передавання та підтримка проміжними проксі відрізняються. Тому ізолюйте клієнтський, крайовий і серверний сегменти, перш ніж приписувати розбіжність застосунку. Для порівняння часу відповіді використовуйте однакові умови, дані й кількість повторів.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Networking","Networking","HTTP/1.1, HTTP/2 and HTTP/3 behavior"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(110,'interview-ports-sockets-and-listeners-118','question','interview','Networking','middle','scenario',109,NULL,'Ports, sockets and listeners','Процес сервера запущений, але клієнти отримують відмову під час підключення. Які перевірки допоможуть знайти причину?','Переконайтеся, що процес слухає потрібний порт на правильній IP-адресі та використовує очікуваний транспорт — TCP або UDP. Потім перевірте публікацію порту контейнера, правила міжмережевого екрана й доступність адреси з клієнтської мережі. Перевірка з localhost не доводить зовнішню доступність: процес може бути прив''язаний лише до loopback-інтерфейсу. Послідовно перевірте локальний сокет, контейнерне відображення та зовнішнє з''єднання. Такий поділ дозволяє локалізувати конфігурацію слухача, контейнера або мережевої політики.','Процес сервера запущений, але клієнти отримують відмову під час підключення. Які перевірки допоможуть знайти причину?','Переконайтеся, що процес слухає потрібний порт на правильній IP-адресі та використовує очікуваний транспорт — TCP або UDP. Потім перевірте публікацію порту контейнера, правила міжмережевого екрана й доступність адреси з клієнтської мережі. Перевірка з localhost не доводить зовнішню доступність: процес може бути прив''язаний лише до loopback-інтерфейсу. Послідовно перевірте локальний сокет, контейнерне відображення та зовнішнє з''єднання. Такий поділ дозволяє локалізувати конфігурацію слухача, контейнера або мережевої політики.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Networking","Networking","Ports, sockets and listeners"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(111,'interview-firewalls-and-network-policy-119','question','interview','Networking','middle','scenario',110,NULL,'Firewalls and network policy','Сервіс доступний із контейнера, але недоступний із ноутбука тестувальника. Як локалізувати блокування мережевою політикою?','Зафіксуйте джерело, призначення, порт і транспорт для обох шляхів, а потім перевірте кожну точку контролю: локальний екран вузла, хмарні правила, мережеві списки доступу, політики кластера та зовнішній шлюз. Порівняйте журнали дозволених і відхилених з''єднань. Доступ із контейнера підтверджує лише його маршрут і не доводить доступність із зовнішньої мережі. Для надійного висновку змінюйте по одному сегменту маршруту або порівнюйте контрольні клієнти. Не розширюйте правило глобально без підтвердження власника політики та потрібного діапазону доступу.','Сервіс доступний із контейнера, але недоступний із ноутбука тестувальника. Як локалізувати блокування мережевою політикою?','Зафіксуйте джерело, призначення, порт і транспорт для обох шляхів, а потім перевірте кожну точку контролю: локальний екран вузла, хмарні правила, мережеві списки доступу, політики кластера та зовнішній шлюз. Порівняйте журнали дозволених і відхилених з''єднань. Доступ із контейнера підтверджує лише його маршрут і не доводить доступність із зовнішньої мережі. Для надійного висновку змінюйте по одному сегменту маршруту або порівнюйте контрольні клієнти. Не розширюйте правило глобально без підтвердження власника політики та потрібного діапазону доступу.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Networking","Networking","Firewalls and network policy"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(112,'interview-websocket-i-dovhi-z-yednannya-67','question','interview','Networking','middle','scenario',111,NULL,'WebSocket і довгі з’єднання','Що тестувати при reconnect WebSocket?','Повторну автентифікацію, відновлення підписок, втрачений діапазон подій, дублікати, heartbeat і контроль числа повторів.
+
+WebSocket підтримує двонаправлений обмін через довге з’єднання; він відрізняється від звичайних окремих HTTP request/response циклів. WebSocket не забезпечує автоматично доставку повідомлення після від’єднання; для цього потрібен окремий протокол стану/повтору.
+
+Практична перевірка може включати такі дії: Розірвіть мережу, відновіть з’єднання, відправте некоректне/велике повідомлення й перевірте, чи клієнт не дублює подію.
+
+Окрему увагу слід приділити ризику: Відкриті з’єднання споживають ресурси; без лімітів і timeout-и клієнт може виснажити сервер.','Що тестувати при reconnect WebSocket?','Повторну автентифікацію, відновлення підписок, втрачений діапазон подій, дублікати, heartbeat і контроль числа повторів.
+
+WebSocket підтримує двонаправлений обмін через довге з’єднання; він відрізняється від звичайних окремих HTTP request/response циклів. WebSocket не забезпечує автоматично доставку повідомлення після від’єднання; для цього потрібен окремий протокол стану/повтору.
+
+Практична перевірка може включати такі дії: Розірвіть мережу, відновіть з’єднання, відправте некоректне/велике повідомлення й перевірте, чи клієнт не дублює подію.
+
+Окрему увагу слід приділити ризику: Відкриті з’єднання споживають ресурси; без лімітів і timeout-и клієнт може виснажити сервер.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Networking","API та протоколи","WebSocket і довгі з’єднання"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(113,'interview-merezhevi-porty-ta-reverse-proxy-104','question','interview','Networking','middle','scenario',112,NULL,'Мережеві порти та reverse proxy','Що тестувати після додавання reverse proxy?','TLS, routing, forwarded headers, limits/timeouts, body upload, auth redirects і відсутність прямого зовнішнього доступу до приватних сервісів.
+
+Reverse proxy приймає зовнішній трафік і маршрутизує його до внутрішніх сервісів, часто завершуючи TLS або додаючи спільні мережеві політики. Застосунок має знати, які proxy є довіреними, а не приймати будь-який forwarded header.
+
+Практична перевірка може включати такі дії: Виконайте запит через proxy і напряму до сервісу в тесті; порівняйте схему, IP, redirects і заголовки.
+
+Окрему увагу слід приділити ризику: Довіра до підробленого X-Forwarded-For може зламати аудит або rate limit.','Що тестувати після додавання reverse proxy?','TLS, routing, forwarded headers, limits/timeouts, body upload, auth redirects і відсутність прямого зовнішнього доступу до приватних сервісів.
+
+Reverse proxy приймає зовнішній трафік і маршрутизує його до внутрішніх сервісів, часто завершуючи TLS або додаючи спільні мережеві політики. Застосунок має знати, які proxy є довіреними, а не приймати будь-який forwarded header.
+
+Практична перевірка може включати такі дії: Виконайте запит через proxy і напряму до сервісу в тесті; порівняйте схему, IP, redirects і заголовки.
+
+Окрему увагу слід приділити ризику: Довіра до підробленого X-Forwarded-For може зламати аудит або rate limit.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Networking","Docker","Мережеві порти та reverse proxy"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(114,'interview-mac-addresses-and-ethernet-switching-108','question','interview','Networking','middle','technical',113,NULL,'MAC addresses and Ethernet switching','Чому віддалений сервер зазвичай не бачить MAC-адресу Ethernet-інтерфейсу ноутбука?','MAC-адреса використовується для доставки кадру в межах локального канального сегмента. Коли маршрутизатор передає пакет до іншої мережі, він знімає вхідний канальний кадр і формує новий кадр для наступного переходу. IP-адреса описує маршрут між мережами, тоді як MAC-адреса стосується поточного каналу. Тому віддалений сервер отримує кадр від свого безпосереднього мережевого вузла, а не з MAC-адресою початкового ноутбука. У локальній діагностиці порівнюйте інтерфейс, VLAN і таблицю сусідів; для віддаленого шляху аналізуйте IP-маршрутизацію.','Чому віддалений сервер зазвичай не бачить MAC-адресу Ethernet-інтерфейсу ноутбука?','MAC-адреса використовується для доставки кадру в межах локального канального сегмента. Коли маршрутизатор передає пакет до іншої мережі, він знімає вхідний канальний кадр і формує новий кадр для наступного переходу. IP-адреса описує маршрут між мережами, тоді як MAC-адреса стосується поточного каналу. Тому віддалений сервер отримує кадр від свого безпосереднього мережевого вузла, а не з MAC-адресою початкового ноутбука. У локальній діагностиці порівнюйте інтерфейс, VLAN і таблицю сусідів; для віддаленого шляху аналізуйте IP-маршрутизацію.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Networking","Networking","MAC addresses and Ethernet switching"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(115,'interview-arp-and-neighbor-discovery-109','question','interview','Networking','middle','technical',114,NULL,'ARP and neighbor discovery','Коли IPv4-клієнт визначає MAC-адресу шлюзу, а не MAC-адресу сервера призначення?','Якщо IP-адреса призначення належить іншій підмережі, таблиця маршрутів обирає наступний вузол — зазвичай шлюз за замовчуванням. ARP у такому разі зіставляє локальну IP-адресу шлюзу з його MAC-адресою. Для вузла в тій самій підмережі клієнт натомість шукає канальну адресу самого вузла. ARP працює в межах локального каналу й не резолвить доменні імена. Перевірте маску підмережі, маршрут і запис у таблиці сусідів; це допомагає відрізнити помилку локальної адресації від проблеми DNS або віддаленої маршрутизації.','Коли IPv4-клієнт визначає MAC-адресу шлюзу, а не MAC-адресу сервера призначення?','Якщо IP-адреса призначення належить іншій підмережі, таблиця маршрутів обирає наступний вузол — зазвичай шлюз за замовчуванням. ARP у такому разі зіставляє локальну IP-адресу шлюзу з його MAC-адресою. Для вузла в тій самій підмережі клієнт натомість шукає канальну адресу самого вузла. ARP працює в межах локального каналу й не резолвить доменні імена. Перевірте маску підмережі, маршрут і запис у таблиці сусідів; це допомагає відрізнити помилку локальної адресації від проблеми DNS або віддаленої маршрутизації.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Networking","Networking","ARP and neighbor discovery"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(116,'interview-dhcp-address-configuration-110','question','interview','Networking','middle','technical',115,NULL,'DHCP address configuration','Тестовий пристрій працює до поновлення мережевої оренди, після чого втрачає доступ до сервісу. Що потрібно порівняти?','Порівняйте параметри мережі до та після поновлення DHCP-оренди: IP-адресу й маску, шлюз, DNS-сервери, строк оренди та час появи збою. Перевірте журнали DHCP-сервера й ретранслятора, а також можливий конфлікт адрес. Якщо змінився лише DNS, перевірте резолв домену; якщо змінилися адреса або шлюз — перевірте маршрут і правила доступу. Така послідовність допомагає відрізнити проблему конфігурації клієнта від несправності самого застосунку. Зафіксуйте параметри середовища, щоб відтворити випадок після наступного поновлення.','Тестовий пристрій працює до поновлення мережевої оренди, після чого втрачає доступ до сервісу. Що потрібно порівняти?','Порівняйте параметри мережі до та після поновлення DHCP-оренди: IP-адресу й маску, шлюз, DNS-сервери, строк оренди та час появи збою. Перевірте журнали DHCP-сервера й ретранслятора, а також можливий конфлікт адрес. Якщо змінився лише DNS, перевірте резолв домену; якщо змінилися адреса або шлюз — перевірте маршрут і правила доступу. Така послідовність допомагає відрізнити проблему конфігурації клієнта від несправності самого застосунку. Зафіксуйте параметри середовища, щоб відтворити випадок після наступного поновлення.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Networking","Networking","DHCP address configuration"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(117,'interview-nat-and-port-translation-111','question','interview','Networking','middle','scenario',116,NULL,'NAT and port translation','Партнерський сервіс бачить іншу IP-адресу клієнта, ніж та, що налаштована на сервері. Чим це може пояснюватися і як перевірити?','Вихідний NAT або проксі може замінювати приватну адресу вузла на спільну зовнішню адресу, іноді також змінюючи порт. Порівняйте локальну адресу сервера з адресою, яку бачить партнер, і перевірте маршрут вихідного трафіку та конфігурацію NAT. Для інтеграційного тесту важливо використовувати адресу виходу, фактично спостережену зовнішньою системою, а не адресу з локальної конфігурації. Додатково перевірте час життя трансляції для довгих з''єднань і поведінку повторного підключення. Це дає змогу відрізнити помилку списку дозволених адрес від збою самого API.','Партнерський сервіс бачить іншу IP-адресу клієнта, ніж та, що налаштована на сервері. Чим це може пояснюватися і як перевірити?','Вихідний NAT або проксі може замінювати приватну адресу вузла на спільну зовнішню адресу, іноді також змінюючи порт. Порівняйте локальну адресу сервера з адресою, яку бачить партнер, і перевірте маршрут вихідного трафіку та конфігурацію NAT. Для інтеграційного тесту важливо використовувати адресу виходу, фактично спостережену зовнішньою системою, а не адресу з локальної конфігурації. Додатково перевірте час життя трансляції для довгих з''єднань і поведінку повторного підключення. Це дає змогу відрізнити помилку списку дозволених адрес від збою самого API.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Networking","Networking","NAT and port translation"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(118,'interview-quic-and-http-3-transport-114','question','interview','Networking','middle','technical',117,NULL,'QUIC and HTTP/3 transport','Сайт доступний у браузері, але HTTP/3 не встановлюється в корпоративній мережі. Яку мережеву причину варто перевірити першою?','HTTP/3 використовує QUIC поверх UDP, тому перш за все перевірте, чи дозволено UDP-трафік до відповідного порту та чи не блокує його міжмережевий екран або проксі. Браузер може перейти на HTTP/2 через TCP, тож сам факт успішного завантаження сторінки не доводить, що HTTP/3 працював. Перевірте узгоджену версію протоколу в засобах розробника браузера та зіставте її з журналами мережевого краю. Для QA важливо розрізняти помилку HTTP/3 від успішного резервного переходу на інший транспорт і вимірювати поведінку обох шляхів окремо.','Сайт доступний у браузері, але HTTP/3 не встановлюється в корпоративній мережі. Яку мережеву причину варто перевірити першою?','HTTP/3 використовує QUIC поверх UDP, тому перш за все перевірте, чи дозволено UDP-трафік до відповідного порту та чи не блокує його міжмережевий екран або проксі. Браузер може перейти на HTTP/2 через TCP, тож сам факт успішного завантаження сторінки не доводить, що HTTP/3 працював. Перевірте узгоджену версію протоколу в засобах розробника браузера та зіставте її з журналами мережевого краю. Для QA важливо розрізняти помилку HTTP/3 від успішного резервного переходу на інший транспорт і вимірювати поведінку обох шляхів окремо.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Networking","Networking","QUIC and HTTP/3 transport"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(119,'interview-packets-mtu-and-path-mtu-discovery-117','question','interview','Networking','middle','technical',118,NULL,'Packets, MTU and path MTU discovery','Невеликі API-запити через VPN проходять, а завантаження великих файлів зупиняється. Який мережевий чинник слід перевірити?','Перевірте MTU шляху та накладні витрати інкапсуляції VPN: великий пакет може перевищувати допустимий розмір і втрачатися або вимагати зменшення розміру фрагмента. Порівняйте передачу різних розмірів корисного навантаження через VPN і прямий маршрут, зафіксуйте повторні передавання та повідомлення про перевищення MTU. Малі запити не виявляють такої проблеми, тому що вкладаються в межу шляху. QA може поступово збільшувати розмір файла й зіставляти результат із мережевими журналами. Це відокремлює дефект передавання великих повідомлень від помилки прикладної валідації.','Невеликі API-запити через VPN проходять, а завантаження великих файлів зупиняється. Який мережевий чинник слід перевірити?','Перевірте MTU шляху та накладні витрати інкапсуляції VPN: великий пакет може перевищувати допустимий розмір і втрачатися або вимагати зменшення розміру фрагмента. Порівняйте передачу різних розмірів корисного навантаження через VPN і прямий маршрут, зафіксуйте повторні передавання та повідомлення про перевищення MTU. Малі запити не виявляють такої проблеми, тому що вкладаються в межу шляху. QA може поступово збільшувати розмір файла й зіставляти результат із мережевими журналами. Це відокремлює дефект передавання великих повідомлень від помилки прикладної валідації.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Networking","Networking","Packets, MTU and path MTU discovery"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(120,'interview-tcp-ip-model-106','question','interview','OSI / TCP-IP','middle','technical',119,NULL,'TCP/IP model','Чому успішна відповідь на ping не доводить, що вебзастосунок доступний?','Ping перевіряє обмін ICMP-повідомленнями з вузлом, але не встановлення з''єднання з прикладним сервісом. Для доступності застосунку окремо перевіряють потрібний TCP- або UDP-порт, TLS-узгодження, маршрут через проксі чи балансувальник і відповідь самого сервісу. Тому успішний ping сумісний із закритим портом, помилкою сертифіката або недоступним процесом. QA варто фіксувати результат кожної перевірки окремо: це допомагає визначити межу збою, а не робити висновок про весь продукт за одним мережевим сигналом.','Чому успішна відповідь на ping не доводить, що вебзастосунок доступний?','Ping перевіряє обмін ICMP-повідомленнями з вузлом, але не встановлення з''єднання з прикладним сервісом. Для доступності застосунку окремо перевіряють потрібний TCP- або UDP-порт, TLS-узгодження, маршрут через проксі чи балансувальник і відповідь самого сервісу. Тому успішний ping сумісний із закритим портом, помилкою сертифіката або недоступним процесом. QA варто фіксувати результат кожної перевірки окремо: це допомагає визначити межу збою, а не робити висновок про весь продукт за одним мережевим сигналом.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","OSI / TCP-IP","Networking","TCP/IP model"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(121,'interview-kliyent-serverna-arkhitektura-97','question','interview','Client-Server Architecture','middle','technical',120,NULL,'Клієнт-серверна архітектура','Який компонент має остаточно перевіряти права?','Сервер, оскільки клієнт контролюється користувачем; UI-перевірка лише покращує зручність.
+
+Клієнт ініціює запит і показує результат; сервер виконує авторитетні бізнес-правила, перевіряє доступ і працює зі спільними даними. Браузер і мобільний застосунок можуть бути різними клієнтами одного API, тому контракт має бути незалежним від UI.
+
+Практична перевірка може включати такі дії: Змініть клієнтський payload напряму, втратьте мережу, повторіть дію й звірте, чи сервер не прийняв несанкціоновані дані.
+
+Окрему увагу слід приділити ризику: Клієнтська валідація може бути обійдена; прихована кнопка не захищає endpoint.','Який компонент має остаточно перевіряти права?','Сервер, оскільки клієнт контролюється користувачем; UI-перевірка лише покращує зручність.
+
+Клієнт ініціює запит і показує результат; сервер виконує авторитетні бізнес-правила, перевіряє доступ і працює зі спільними даними. Браузер і мобільний застосунок можуть бути різними клієнтами одного API, тому контракт має бути незалежним від UI.
+
+Практична перевірка може включати такі дії: Змініть клієнтський payload напряму, втратьте мережу, повторіть дію й звірте, чи сервер не прийняв несанкціоновані дані.
+
+Окрему увагу слід приділити ризику: Клієнтська валідація може бути обійдена; прихована кнопка не захищає endpoint.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Client-Server Architecture","Архітектура","Клієнт-серверна архітектура"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(122,'interview-mikroservisna-arkhitektura-5','question','interview','Microservices','middle','technical',121,NULL,'Мікросервісна архітектура','Які витрати додає перехід до мікросервісів?','Мережеві відмови, узгодження даних, observability, автоматизацію релізів, безпеку між сервісами та підтримку кількох версій контрактів.
+
+Мікросервіс зазвичай є окремо розгортуваним процесом із чіткою бізнес-відповідальністю. Незалежність розгортання купується ціною мережевих, операційних і командних складнощів. Сервіс має витримувати відмову залежності; мережа ненадійна навіть усередині одного датацентру.
+
+Практична перевірка може включати такі дії: Тестуйте API-контракт, таймаути, повтори, часткові відмови, трасування між сервісами й сумісність незалежних релізів.
+
+Окрему увагу слід приділити ризику: Розбиття за технічними шарами породжує ланцюги викликів і координовані релізи, тобто втрачає головну перевагу мікросервісів.','Які витрати додає перехід до мікросервісів?','Мережеві відмови, узгодження даних, observability, автоматизацію релізів, безпеку між сервісами та підтримку кількох версій контрактів.
+
+Мікросервіс зазвичай є окремо розгортуваним процесом із чіткою бізнес-відповідальністю. Незалежність розгортання купується ціною мережевих, операційних і командних складнощів. Сервіс має витримувати відмову залежності; мережа ненадійна навіть усередині одного датацентру.
+
+Практична перевірка може включати такі дії: Тестуйте API-контракт, таймаути, повтори, часткові відмови, трасування між сервісами й сумісність незалежних релізів.
+
+Окрему увагу слід приділити ризику: Розбиття за технічними шарами породжує ланцюги викликів і координовані релізи, тобто втрачає головну перевагу мікросервісів.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Microservices","Архітектура","Мікросервісна архітектура"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(123,'interview-mezhi-servisiv-i-bounded-context-6','question','interview','Microservices','middle','technical',122,NULL,'Межі сервісів і bounded context','Як виявити надто дрібні мікросервіси?','Зверніть увагу на часті синхронні ланцюги, спільні релізи, постійні зміни кількох сервісів заради однієї бізнес-функції та спільні таблиці.
+
+Межу сервісу варто проводити там, де є цілісна бізнес-відповідальність і власна модель даних, а не просто окрема CRUD-таблиця. Межі домену можуть змінюватися після кращого розуміння продукту; архітектура має дозволяти еволюцію.
+
+Практична перевірка може включати такі дії: Перевірте, чи зміни одного домену потребують синхронного релізу іншого, чи дублюються правила та чи є надмірні мережеві переходи.
+
+Окрему увагу слід приділити ризику: Неправильна межа створює distributed monolith: кілька сервісів, які завжди треба змінювати й випускати разом.','Як виявити надто дрібні мікросервіси?','Зверніть увагу на часті синхронні ланцюги, спільні релізи, постійні зміни кількох сервісів заради однієї бізнес-функції та спільні таблиці.
+
+Межу сервісу варто проводити там, де є цілісна бізнес-відповідальність і власна модель даних, а не просто окрема CRUD-таблиця. Межі домену можуть змінюватися після кращого розуміння продукту; архітектура має дозволяти еволюцію.
+
+Практична перевірка може включати такі дії: Перевірте, чи зміни одного домену потребують синхронного релізу іншого, чи дублюються правила та чи є надмірні мережеві переходи.
+
+Окрему увагу слід приділити ризику: Неправильна межа створює distributed monolith: кілька сервісів, які завжди треба змінювати й випускати разом.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Microservices","Архітектура","Межі сервісів і bounded context"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(124,'interview-vybir-mizh-monolitom-ta-mikroservisamy-14','question','interview','Microservices','middle','technical',123,NULL,'Вибір між монолітом та мікросервісами','Які сигнали виправдовують виділення сервісу?','Незалежний темп змін або масштабування, виразна доменна межа й команда-власник, а також готовність підтримувати мережеві контракти та observability.
+
+Порівнюйте не тільки масштабування, а й автономність релізів, склад команди, транзакції, операційну готовність та ціну розподілених помилок. Архітектура може еволюціонувати: модульний моноліт дозволяє перевірити доменні межі до мережевого поділу.
+
+Практична перевірка може включати такі дії: Порівняйте час релізу, частоту конфліктів, масштаб навантаження, точки блокування команд і вартість підтримки інфраструктури.
+
+Окрему увагу слід приділити ризику: Міграція без цілісного плану даних та операційної підтримки може створити більшу кількість точок відмови, ніж усунути.','Які сигнали виправдовують виділення сервісу?','Незалежний темп змін або масштабування, виразна доменна межа й команда-власник, а також готовність підтримувати мережеві контракти та observability.
+
+Порівнюйте не тільки масштабування, а й автономність релізів, склад команди, транзакції, операційну готовність та ціну розподілених помилок. Архітектура може еволюціонувати: модульний моноліт дозволяє перевірити доменні межі до мережевого поділу.
+
+Практична перевірка може включати такі дії: Порівняйте час релізу, частоту конфліктів, масштаб навантаження, точки блокування команд і вартість підтримки інфраструктури.
+
+Окрему увагу слід приділити ризику: Міграція без цілісного плану даних та операційної підтримки може створити більшу кількість точок відмови, ніж усунути.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Microservices","Моноліт і мікросервіси","Вибір між монолітом та мікросервісами"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(125,'interview-stratehiya-strangler-dlya-mihratsii-16','question','interview','Microservices','middle','technical',124,NULL,'Стратегія strangler для міграції','Як мінімізувати ризик поступової міграції?','Маршрутизувати вузькі функції поетапно, зберігати один авторитетний запис, вимірювати розбіжності та мати перевірений шлях відкату.
+
+Strangler-підхід поступово переносить вибрані можливості зі старої системи за фасадом маршрутизації, не вимагаючи одноразового переписування всього продукту. Тимчасова подвійна система потребує чіткого дедлайну й власника застарілого шляху.
+
+Практична перевірка може включати такі дії: Перевірте паралельне порівняння результатів, сумісність старого й нового шляху, міграцію даних та поведінку при відмові нового сервісу.
+
+Окрему увагу слід приділити ризику: Довге подвійне володіння даними породжує невизначеність і помилки синхронізації.','Як мінімізувати ризик поступової міграції?','Маршрутизувати вузькі функції поетапно, зберігати один авторитетний запис, вимірювати розбіжності та мати перевірений шлях відкату.
+
+Strangler-підхід поступово переносить вибрані можливості зі старої системи за фасадом маршрутизації, не вимагаючи одноразового переписування всього продукту. Тимчасова подвійна система потребує чіткого дедлайну й власника застарілого шляху.
+
+Практична перевірка може включати такі дії: Перевірте паралельне порівняння результатів, сумісність старого й нового шляху, міграцію даних та поведінку при відмові нового сервісу.
+
+Окрему увагу слід приділити ризику: Довге подвійне володіння даними породжує невизначеність і помилки синхронізації.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Microservices","Моноліт і мікросервіси","Стратегія strangler для міграції"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(126,'interview-pytannya-na-spivbesidi-mikroservis-nedostupnyy-92','question','interview','Microservices','middle','scenario',125,NULL,'Питання на співбесіді: мікросервіс недоступний','Як тестувати відмову залежного сервісу?','Змоделювати недоступність і повільну відповідь, перевірити межі очікування, контрольований fallback, логи/trace й відновлення.
+
+Відмова одного сервісу може поширитися через довгі ланцюги синхронних викликів і повторів. Локальна помилка може відображатися клієнту як 502/503 залежно від gateway і контракту.
+
+Практична перевірка може включати такі дії: Зупиніть downstream, виміряйте latency/error rate, перевірте, що інші функції продовжують працювати в межах очікуваної деградації.
+
+Окрему увагу слід приділити ризику: Невідмежовані повтори можуть перевантажити відновлюваний сервіс після його повернення.','Як тестувати відмову залежного сервісу?','Змоделювати недоступність і повільну відповідь, перевірити межі очікування, контрольований fallback, логи/trace й відновлення.
+
+Відмова одного сервісу може поширитися через довгі ланцюги синхронних викликів і повторів. Локальна помилка може відображатися клієнту як 502/503 залежно від gateway і контракту.
+
+Практична перевірка може включати такі дії: Зупиніть downstream, виміряйте latency/error rate, перевірте, що інші функції продовжують працювати в межах очікуваної деградації.
+
+Окрему увагу слід приділити ризику: Невідмежовані повтори можуть перевантажити відновлюваний сервіс після його повернення.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Microservices","Поради QA","Питання на співбесіді: мікросервіс недоступний"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(127,'interview-distributed-monolith-15','question','interview','Microservices','middle','technical',126,NULL,'Distributed monolith','Які ознаки distributed monolith?','Часті синхронні залежності, спільні релізи, зміни багатьох сервісів для одного сценарію та спільне володіння даними без чітких контрактів.
+
+Distributed monolith складається з кількох розгортуваних сервісів, які через зв’язність потребують координованих змін і релізів. Мікрофронтенди й окремі репозиторії самі собою не доводять, що система має добрі сервісні межі.
+
+Практична перевірка може включати такі дії: Змініть контракт у тестовому середовищі й перевірте, чи можна розгорнути сумісні версії поетапно без спільного вікна.
+
+Окрему увагу слід приділити ризику: Кількість контейнерів створює видимість мікросервісів, але не незалежність команди або даних.','Які ознаки distributed monolith?','Часті синхронні залежності, спільні релізи, зміни багатьох сервісів для одного сценарію та спільне володіння даними без чітких контрактів.
+
+Distributed monolith складається з кількох розгортуваних сервісів, які через зв’язність потребують координованих змін і релізів. Мікрофронтенди й окремі репозиторії самі собою не доводять, що система має добрі сервісні межі.
+
+Практична перевірка може включати такі дії: Змініть контракт у тестовому середовищі й перевірте, чи можна розгорнути сумісні версії поетапно без спільного вікна.
+
+Окрему увагу слід приділити ризику: Кількість контейнерів створює видимість мікросервісів, але не незалежність команди або даних.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Microservices","Моноліт і мікросервіси","Distributed monolith"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(128,'interview-pytannya-na-spivbesidi-testuvannya-platezhu-87','question','interview','Message Brokers','middle','technical',127,NULL,'Питання на співбесіді: тестування платежу','Які три ризикові випадки тестувати в першу чергу для платежу?','Подвійне списання при повторі, невідомий результат після timeout та коректне узгодження асинхронного callback зі станом замовлення.
+
+Платіжний сценарій має зовнішні відмови, невідомий результат після timeout, повтори та критичні вимоги до відсутності подвійного списання. Sandbox провайдера може не відтворювати всі production затримки й відмови.
+
+Практична перевірка може включати такі дії: Перевірте success/decline/pending, timeout, повтор callback, неправильну суму/валюту, неавторизований доступ, refund і звірку стану.
+
+Окрему увагу слід приділити ризику: Перевірка тільки сторінки успіху пропускає дубль платежу та розбіжність між провайдером і замовленням.','Які три ризикові випадки тестувати в першу чергу для платежу?','Подвійне списання при повторі, невідомий результат після timeout та коректне узгодження асинхронного callback зі станом замовлення.
+
+Платіжний сценарій має зовнішні відмови, невідомий результат після timeout, повтори та критичні вимоги до відсутності подвійного списання. Sandbox провайдера може не відтворювати всі production затримки й відмови.
+
+Практична перевірка може включати такі дії: Перевірте success/decline/pending, timeout, повтор callback, неправильну суму/валюту, неавторизований доступ, refund і звірку стану.
+
+Окрему увагу слід приділити ризику: Перевірка тільки сторінки успіху пропускає дубль платежу та розбіжність між провайдером і замовленням.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Message Brokers","Поради QA","Питання на співбесіді: тестування платежу"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(129,'interview-rabbitmq-exchanges-queues-and-acknowledgements-122','question','interview','Message Brokers','middle','scenario',128,NULL,'RabbitMQ exchanges, queues and acknowledgements','Як відрізнити втрату повідомлення RabbitMQ від затримки його обробки?','Перевірте підтвердження публікації, правильність обміну й прив''язки до черги, глибину черги, активність споживачів і момент підтвердження доставки. Далі з''ясуйте, чи діють строк життя повідомлення, повторне поміщення в чергу або маршрутизація до черги недоставлених повідомлень. Повідомлення може чекати на вільного споживача, бути відхиленим маршрутом або повторно доставлятися після збою. Зіставте ідентифікатор повідомлення та часові відмітки на стороні видавця, брокера й споживача. Це дає змогу визначити, на якому етапі зупинився процес.','Як відрізнити втрату повідомлення RabbitMQ від затримки його обробки?','Перевірте підтвердження публікації, правильність обміну й прив''язки до черги, глибину черги, активність споживачів і момент підтвердження доставки. Далі з''ясуйте, чи діють строк життя повідомлення, повторне поміщення в чергу або маршрутизація до черги недоставлених повідомлень. Повідомлення може чекати на вільного споживача, бути відхиленим маршрутом або повторно доставлятися після збою. Зіставте ідентифікатор повідомлення та часові відмітки на стороні видавця, брокера й споживача. Це дає змогу визначити, на якому етапі зупинився процес.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Message Brokers","Message Brokers","RabbitMQ exchanges, queues and acknowledgements"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(130,'interview-sumisnist-schema-ta-mihratsii-bd-63','question','interview','Distributed Systems','middle','technical',129,NULL,'Сумісність schema та міграції БД','Як провести безпечну зміну назви колонки?','Додати нову колонку, синхронізувати читання/запис, перенести й перевірити дані, переключити клієнти, а стару колонку видалити окремим релізом.
+
+Розгортання коду й схеми часто відбуваються окремими кроками, тому зміни мають бути сумісними на період співіснування версій. Rollback коду не завжди повертає вже мігровані дані; план відновлення має враховувати обидва.
+
+Практична перевірка може включати такі дії: Запустіть старий і новий код зі схемою переходу, перевірте відкат і повторний запуск міграції.
+
+Окрему увагу слід приділити ризику: Одночасне перейменування поля й реліз коду створює вікно несумісності.','Як провести безпечну зміну назви колонки?','Додати нову колонку, синхронізувати читання/запис, перенести й перевірити дані, переключити клієнти, а стару колонку видалити окремим релізом.
+
+Розгортання коду й схеми часто відбуваються окремими кроками, тому зміни мають бути сумісними на період співіснування версій. Rollback коду не завжди повертає вже мігровані дані; план відновлення має враховувати обидва.
+
+Практична перевірка може включати такі дії: Запустіть старий і новий код зі схемою переходу, перевірте відкат і повторний запуск міграції.
+
+Окрему увагу слід приділити ризику: Одночасне перейменування поля й реліз коду створює вікно несумісності.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Distributed Systems","Архітектура","Сумісність schema та міграції БД"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(131,'interview-balans-mizh-consistency-ta-availability-84','question','interview','Distributed Systems','middle','scenario',130,NULL,'Баланс між consistency та availability','Як тестувати eventual consistency?','Виміряти допустимий час поширення, перевірити проміжний стан, eventual результат, повторне читання й UX до завершення синхронізації.
+
+Розподілена система може тимчасово показувати застарілий стан, якщо пріоритетом є доступність під час затримки реплікації. Терміни consistency/availability залежать від конкретної моделі й меж збою; їх не можна звести до одного прапорця.
+
+Практична перевірка може включати такі дії: Після запису одразу прочитайте через різні replicas/сервіси, змоделюйте затримку події й перевірте UX та повторні спроби.
+
+Окрему увагу слід приділити ризику: Приховати eventual consistency без індикації стану може змусити користувача повторювати дію й створити дублі.','Як тестувати eventual consistency?','Виміряти допустимий час поширення, перевірити проміжний стан, eventual результат, повторне читання й UX до завершення синхронізації.
+
+Розподілена система може тимчасово показувати застарілий стан, якщо пріоритетом є доступність під час затримки реплікації. Терміни consistency/availability залежать від конкретної моделі й меж збою; їх не можна звести до одного прапорця.
+
+Практична перевірка може включати такі дії: Після запису одразу прочитайте через різні replicas/сервіси, змоделюйте затримку події й перевірте UX та повторні спроби.
+
+Окрему увагу слід приділити ризику: Приховати eventual consistency без індикації стану може змусити користувача повторювати дію й створити дублі.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Distributed Systems","Архітектура","Баланс між consistency та availability"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(132,'interview-tranzaktsii-mizh-servisamy-ta-saga-96','question','interview','Distributed Systems','middle','technical',131,NULL,'Транзакції між сервісами та saga','Чим компенсація saga відрізняється від DB rollback?','Вона є новою бізнес-операцією, що компенсує вже зафіксований локальний крок; вона не стирає історію транзакції.
+
+Розподілена saga координує локальні транзакції та компенсувальні дії, коли глобальної ACID транзакції між сервісами немає. Saga може бути choreography через події або orchestration через координатор.
+
+Практична перевірка може включати такі дії: Змоделюйте збій після кожного кроку, повтор повідомлення та запізнілий callback; перевірте кінцевий узгоджений стан.
+
+Окрему увагу слід приділити ризику: Компенсація не завжди є точним rollback: надісланий лист або зовнішній платіж має окрему бізнес-дію.','Чим компенсація saga відрізняється від DB rollback?','Вона є новою бізнес-операцією, що компенсує вже зафіксований локальний крок; вона не стирає історію транзакції.
+
+Розподілена saga координує локальні транзакції та компенсувальні дії, коли глобальної ACID транзакції між сервісами немає. Saga може бути choreography через події або orchestration через координатор.
+
+Практична перевірка може включати такі дії: Змоделюйте збій після кожного кроку, повтор повідомлення та запізнілий callback; перевірте кінцевий узгоджений стан.
+
+Окрему увагу слід приділити ризику: Компенсація не завжди є точним rollback: надісланий лист або зовнішній платіж має окрему бізнес-дію.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Distributed Systems","Архітектура","Транзакції між сервісами та saga"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(133,'interview-cqrs-i-okremi-read-models-99','question','interview','Distributed Systems','middle','technical',132,NULL,'CQRS і окремі read models','Як пояснити затримку після команди в CQRS?','Команда записана в write model, а read projection оновлюється асинхронно; UX має врахувати стан обробки та допустимий lag.
+
+CQRS розділяє моделі команд і читання, коли їхні потреби суттєво різняться; це додає синхронізацію та можливу затримку оновлення read model. CQRS не обов’язково означає окремі бази або мікросервіси.
+
+Практична перевірка може включати такі дії: Після команди перевірте eventual оновлення read model, повтор події, побудову з нуля й узгодження після відставання.
+
+Окрему увагу слід приділити ризику: Користувач може не побачити свіжу зміну одразу після успішного запису.','Як пояснити затримку після команди в CQRS?','Команда записана в write model, а read projection оновлюється асинхронно; UX має врахувати стан обробки та допустимий lag.
+
+CQRS розділяє моделі команд і читання, коли їхні потреби суттєво різняться; це додає синхронізацію та можливу затримку оновлення read model. CQRS не обов’язково означає окремі бази або мікросервіси.
+
+Практична перевірка може включати такі дії: Після команди перевірте eventual оновлення read model, повтор події, побудову з нуля й узгодження після відставання.
+
+Окрему увагу слід приділити ризику: Користувач може не побачити свіжу зміну одразу після успішного запису.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Distributed Systems","Архітектура","CQRS і окремі read models"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(134,'interview-vidmovostiykist-i-graceful-degradation-13','question','interview','Debugging and Troubleshooting','middle','scenario',133,NULL,'Відмовостійкість і graceful degradation','Як відрізняється failover від fallback?','Failover перемикає роботу на резервний компонент; fallback дає альтернативний результат або обмежену функціональність, коли основний шлях недоступний.
+
+Відмовостійка система визначає, що робити, коли залежність недоступна: обмежити функцію, використати кеш або показати контрольовану помилку. Резервування без перевіреного failover і процедури відновлення не гарантує доступності.
+
+Практична перевірка може включати такі дії: Вимкніть залежність у тестовому середовищі, перевірте таймаути, fallback, повідомлення клієнта й відновлення після повернення сервісу.
+
+Окрему увагу слід приділити ризику: Fallback зі старими даними може бути небезпечним, якщо продукт показує фінансовий чи безпековий стан як актуальний.','Як відрізняється failover від fallback?','Failover перемикає роботу на резервний компонент; fallback дає альтернативний результат або обмежену функціональність, коли основний шлях недоступний.
+
+Відмовостійка система визначає, що робити, коли залежність недоступна: обмежити функцію, використати кеш або показати контрольовану помилку. Резервування без перевіреного failover і процедури відновлення не гарантує доступності.
+
+Практична перевірка може включати такі дії: Вимкніть залежність у тестовому середовищі, перевірте таймаути, fallback, повідомлення клієнта й відновлення після повернення сервісу.
+
+Окрему увагу слід приділити ризику: Fallback зі старими даними може бути небезпечним, якщо продукт показує фінансовий чи безпековий стан як актуальний.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Debugging and Troubleshooting","Архітектура","Відмовостійкість і graceful degradation"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(135,'interview-taymauty-y-povtorni-zapyty-59','question','interview','Debugging and Troubleshooting','middle','technical',134,NULL,'Таймаути й повторні запити','Чому timeout не означає, що сервер не виконав запит?','Відповідь могла затриматись або загубитись уже після commit. Треба перевірити стан чи повторити з механізмом ідемпотентності.
+
+Таймаут обмежує очікування клієнта, але не завжди скасовує роботу сервера; сервер може завершити її після розриву зв’язку. Retry budget та дедлайн мають бути наскрізними, щоб вкладені клієнти не множили спроби.
+
+Практична перевірка може включати такі дії: Затримайте відповідь, розірвіть мережу після відправлення й перевірте стан ресурсу перед повтором.
+
+Окрему увагу слід приділити ризику: Сліпе повторення POST може дублювати платіж або замовлення.','Чому timeout не означає, що сервер не виконав запит?','Відповідь могла затриматись або загубитись уже після commit. Треба перевірити стан чи повторити з механізмом ідемпотентності.
+
+Таймаут обмежує очікування клієнта, але не завжди скасовує роботу сервера; сервер може завершити її після розриву зв’язку. Retry budget та дедлайн мають бути наскрізними, щоб вкладені клієнти не множили спроби.
+
+Практична перевірка може включати такі дії: Затримайте відповідь, розірвіть мережу після відправлення й перевірте стан ресурсу перед повтором.
+
+Окрему увагу слід приділити ризику: Сліпе повторення POST може дублювати платіж або замовлення.','QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["interview","Debugging and Troubleshooting","Поради QA","Таймаути й повторні запити"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(136,'architecture-kliyent-serverna-arkhitektura-31','article','architecture','Архітектура','middle',NULL,0,1,'Клієнт-серверна архітектура','Клієнт ініціює запит і показує результат; сервер виконує авторитетні бізнес-правила, перевіряє доступ і працює зі спільними даними.','Клієнт ініціює запит і показує результат; сервер виконує авторитетні бізнес-правила, перевіряє доступ і працює зі спільними даними. Браузер і мобільний застосунок можуть бути різними клієнтами одного API, тому контракт має бути незалежним від UI.
+
+Перевіряйте один сценарій на обох межах: вміст запиту, серверну відповідь, оновлення UI й збережений стан. Змініть клієнтський payload напряму, втратьте мережу, повторіть дію й звірте, чи сервер не прийняв несанкціоновані дані.
+
+Клієнтська валідація може бути обійдена; прихована кнопка не захищає endpoint.
+
+Який компонент має остаточно перевіряти права?
+
+Сервер, оскільки клієнт контролюється користувачем; UI-перевірка лише покращує зручність.','Який компонент має остаточно перевіряти права?','Сервер, оскільки клієнт контролюється користувачем; UI-перевірка лише покращує зручність.','OpenAPI Specification','https://spec.openapis.org/oas/latest.html','["architecture","Архітектура","Клієнт-серверна архітектура"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(137,'architecture-komponenty-ta-ikhni-kontrakty-2','article','architecture','Архітектура','middle',NULL,1,1,'Компоненти та їхні контракти','Компонент об’єднує узгоджену відповідальність і надає іншим частинам системи контракт. Добра межа приховує внутрішню реалізацію та обмежує поширення змін.','Компонент об’єднує узгоджену відповідальність і надає іншим частинам системи контракт. Добра межа приховує внутрішню реалізацію та обмежує поширення змін. Компонент може бути модулем у моноліті або окремим розгортуваним сервісом — слово саме по собі не означає мікросервіс.
+
+Для кожного компонента визначте власника, призначення, вхід/вихід, помилки й залежності. Уникайте двосторонніх циклічних залежностей. Тестуйте контракт компонента окремо, потім перевірте інтеграцію з реальними залежностями та поведінку при невалідному вводі й відмовах.
+
+Надмірно дрібне розбиття збільшує кількість викликів, налаштувань і місць для помилок; надто великі компоненти приховують зв’язність.
+
+Як зрозуміти, що компонент має чітку межу?
+
+Його призначення можна пояснити коротко, контракт стабільний, а зміна внутрішньої реалізації не змушує без потреби змінювати споживачів.','Як зрозуміти, що компонент має чітку межу?','Його призначення можна пояснити коротко, контракт стабільний, а зміна внутрішньої реалізації не змушує без потреби змінювати споживачів.','Microsoft Learn: Architecture styles','https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/','["architecture","Архітектура","Компоненти та їхні контракти"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(138,'architecture-arkhitekturni-styli-systemy-1','article','architecture','Архітектура','middle',NULL,2,1,'Архітектурні стилі системи','Архітектурний стиль описує спосіб організації компонентів і взаємодії між ними. Вибір впливає на незалежність змін, масштабування, відмовостійкість і вартість експлуатації.','Архітектурний стиль описує спосіб організації компонентів і взаємодії між ними. Вибір впливає на незалежність змін, масштабування, відмовостійкість і вартість експлуатації. Архітектура не зводиться до схеми серверів: правила модулів, контракти, дані й командна взаємодія також є її частинами.
+
+Починайте з вимог до якості: затримки, доступності, безпеки, команди та темпу змін. Намалюйте контекст системи й основні потоки даних, а рішення зафіксуйте разом із компромісами. Перевірте критичні наскрізні сценарії, межі відповідальності, точки відмови, навантаження, відновлення та спостережуваність. Переконайтеся, що важливі вимоги можна виміряти.
+
+Частий ризик — обрати модну архітектуру до розуміння домену. Це додає складність раніше, ніж з’являється потреба.
+
+Як обґрунтувати архітектурне рішення?
+
+Опишіть контекст і обмеження, порівняйте реальні альтернативи за вимогами якості, вкажіть компроміси й спосіб перевірити рішення на практиці.','Як обґрунтувати архітектурне рішення?','Опишіть контекст і обмеження, порівняйте реальні альтернативи за вимогами якості, вкажіть компроміси й спосіб перевірити рішення на практиці.','Microsoft Learn: Architecture styles','https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/','["architecture","Архітектура","Архітектурні стилі системи"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(139,'architecture-osi-model-and-practical-protocol-mapping-36','article','architecture','Мережеві технології','middle',NULL,3,1,'Модель OSI та практичне зіставлення протоколів','Модель OSI поділяє мережеву взаємодію на сім концептуальних рівнів: фізичний, канальний, мережевий, транспортний, сеансовий, представлення та прикладний.','Модель OSI поділяє мережеву взаємодію на сім концептуальних рівнів: фізичний, канальний, мережевий, транспортний, сеансовий, представлення та прикладний. Цей поділ є навчальною моделлю, а не буквальним описом кожного сучасного мережевого стеку. Він допомагає розмежовувати функції передавання сигналу, локальної доставки кадрів, маршрутизації пакетів, транспортного обміну та прикладних протоколів.
+
+Під час діагностики рухайтеся від доступності фізичного з''єднання й локального сегмента до IP-маршруту, транспортного порту, захищеного з''єднання та прикладного запиту. Зіставляйте спостережувані докази з відповідним рівнем: стан інтерфейсу, MAC-адреси й VLAN, IP-маршрут, TCP або UDP, TLS-переговори та HTTP-відповідь.
+
+Модель OSI не гарантує, що несправність належить лише одному рівню: помилка конфігурації проксі, наприклад, може одночасно впливати на маршрутизацію, TLS і прикладні заголовки.
+
+Запит браузера не отримав HTTP-відповіді. Як послідовно локалізувати можливий рівень мережевої несправності?
+
+Перевірку слід проводити від нижчих рівнів взаємодії до прикладного. Спочатку з''ясуйте, чи резолвиться доменне ім''я та чи має клієнт маршрут до потрібної мережі. Потім перевірте встановлення TCP- або QUIC-з''єднання та узгодження TLS. Лише після успішного проходження цих етапів аналізуйте HTTP-запит і серверну обробку. Відсутність HTTP-відповіді означає, що несправність може виникати до рівня прикладного протоколу. Зафіксуйте час, адресу призначення, помилку браузера й кореляційний ідентифікатор; мережеве захоплення використовуйте лише за наявності доступу та потреби.','Запит браузера не отримав HTTP-відповіді. Як послідовно локалізувати можливий рівень мережевої несправності?','Перевірку слід проводити від нижчих рівнів взаємодії до прикладного. Спочатку з''ясуйте, чи резолвиться доменне ім''я та чи має клієнт маршрут до потрібної мережі. Потім перевірте встановлення TCP- або QUIC-з''єднання та узгодження TLS. Лише після успішного проходження цих етапів аналізуйте HTTP-запит і серверну обробку. Відсутність HTTP-відповіді означає, що несправність може виникати до рівня прикладного протоколу. Зафіксуйте час, адресу призначення, помилку браузера й кореляційний ідентифікатор; мережеве захоплення використовуйте лише за наявності доступу та потреби.','ITU-T X.200: Open Systems Interconnection model','https://www.itu.int/rec/T-REC-X.200/en','["architecture","Мережеві технології","OSI model and practical protocol mapping"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(140,'architecture-tcp-ip-model-37','article','architecture','Мережеві технології','middle',NULL,4,1,'Модель TCP/IP','Модель TCP/IP описує практичний набір мережевих рівнів, на яких ґрунтується взаємодія вузлів в інтернеті.','Модель TCP/IP описує практичний набір мережевих рівнів, на яких ґрунтується взаємодія вузлів в інтернеті. Зазвичай у ній розрізняють канальний, міжмережевий, транспортний і прикладний рівні. IP забезпечує адресацію та передавання пакетів між мережами, TCP або UDP задає транспортну поведінку, а прикладні протоколи визначають формат взаємодії програм.
+
+Використовуйте цю модель, щоб відокремлювати проблему локального каналу від проблеми IP-маршруту, транспорту або прикладного сервісу. Для недоступного вебзастосунку окремо перевірте DNS-розв''язання, досяжність IP-адреси, потрібний порт і транспорт, встановлення TLS та відповідь HTTP.
+
+Успіх на нижчому рівні не доводить працездатність вищого: відповідь на ICMP-запит не підтверджує, що TCP-порт відкритий або вебсервіс коректно обробляє запити.
+
+Чому успішна відповідь на ping не доводить, що вебзастосунок доступний?
+
+Ping перевіряє обмін ICMP-повідомленнями з вузлом, але не встановлення з''єднання з прикладним сервісом. Для доступності застосунку окремо перевіряють потрібний TCP- або UDP-порт, TLS-узгодження, маршрут через проксі чи балансувальник і відповідь самого сервісу. Тому успішний ping сумісний із закритим портом, помилкою сертифіката або недоступним процесом. QA варто фіксувати результат кожної перевірки окремо: це допомагає визначити межу збою, а не робити висновок про весь продукт за одним мережевим сигналом.','Чому успішна відповідь на ping не доводить, що вебзастосунок доступний?','Ping перевіряє обмін ICMP-повідомленнями з вузлом, але не встановлення з''єднання з прикладним сервісом. Для доступності застосунку окремо перевіряють потрібний TCP- або UDP-порт, TLS-узгодження, маршрут через проксі чи балансувальник і відповідь самого сервісу. Тому успішний ping сумісний із закритим портом, помилкою сертифіката або недоступним процесом. QA варто фіксувати результат кожної перевірки окремо: це допомагає визначити межу збою, а не робити висновок про весь продукт за одним мережевим сигналом.','RFC 1122: Requirements for Internet Hosts — Communication Layers','https://www.rfc-editor.org/rfc/rfc1122.html','["architecture","Мережеві технології","TCP/IP model"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(141,'architecture-ipv4-and-ipv6-38','article','architecture','Мережеві технології','middle',NULL,5,1,'Адресація IPv4 та IPv6','IPv4 та IPv6 є версіями протоколу IP, що забезпечують адресацію вузлів і доставку пакетів між мережами.','IPv4 та IPv6 є версіями протоколу IP, що забезпечують адресацію вузлів і доставку пакетів між мережами. IPv4 використовує 32-бітові адреси, тоді як IPv6 має 128-бітовий простір адрес. Подвійний стек дає змогу вузлам працювати з обома версіями, але DNS-записи, маршрути, міжмережеві правила та конфігурація сервісу можуть відрізнятися.
+
+Перевіряйте поведінку застосунку в середовищах IPv4-only, IPv6-only та dual-stack, якщо ці режими входять до вимог продукту. Зіставте DNS-відповіді A й AAAA, адресу фактичного підключення, маршрут, прив''язку сервісу до інтерфейсів і правила мережевого доступу.
+
+Клієнт може спробувати IPv6 раніше за IPv4 і довго чекати на таймаут, якщо IPv6 оголошений, але маршрут або сервіс фактично недоступний.
+
+Сервіс працює в офісній мережі, але не відповідає клієнту, який використовує IPv6. Які перевірки допоможуть знайти причину?
+
+Порівняйте DNS-відповіді A та AAAA, адресу, обрану клієнтом, і доступність відповідного маршруту. Далі перевірте правила міжмережевого екрана, прив''язку сервісу до IPv6-інтерфейсу та налаштування балансувальника. Якщо клієнт підтримує обидві версії IP, з''ясуйте, чи відбувається перехід на IPv4 і скільки часу він займає. Однакова перевірка з IPv4-only, IPv6-only та dual-stack середовищ відокремлює проблему DNS від проблеми маршрутизації або конфігурації сервера. У звіті зазначте фактично використану адресу, а не лише назву домену.','Сервіс працює в офісній мережі, але не відповідає клієнту, який використовує IPv6. Які перевірки допоможуть знайти причину?','Порівняйте DNS-відповіді A та AAAA, адресу, обрану клієнтом, і доступність відповідного маршруту. Далі перевірте правила міжмережевого екрана, прив''язку сервісу до IPv6-інтерфейсу та налаштування балансувальника. Якщо клієнт підтримує обидві версії IP, з''ясуйте, чи відбувається перехід на IPv4 і скільки часу він займає. Однакова перевірка з IPv4-only, IPv6-only та dual-stack середовищ відокремлює проблему DNS від проблеми маршрутизації або конфігурації сервера. У звіті зазначте фактично використану адресу, а не лише назву домену.','RFC 8200: Internet Protocol, Version 6 (IPv6) Specification','https://www.rfc-editor.org/rfc/rfc8200.html','["architecture","Мережеві технології","IPv4 and IPv6"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(142,'architecture-mac-addresses-and-ethernet-switching-39','article','architecture','Мережеві технології','middle',NULL,6,1,'MAC-адреси та комутація Ethernet','MAC-адреса ідентифікує мережевий інтерфейс у межах канального сегмента, а комутатор пересилає Ethernet-кадри до відповідних портів.','MAC-адреса ідентифікує мережевий інтерфейс у межах канального сегмента, а комутатор пересилає Ethernet-кадри до відповідних портів. Комутатор навчається за адресою джерела кадру та підтримує таблицю відповідності MAC-адрес портам. Під час переходу між IP-мережами маршрутизатор формує новий канальний кадр, тому віддалений сервер бачить адресу свого безпосереднього мережевого сусіда, а не початкового клієнта.
+
+Під час проблем у локальному сегменті перевірте стан інтерфейсу, VLAN, таблицю MAC-адрес і відповідність фізичного порту очікуваній мережі. Порівняйте конфігурацію проблемного пристрою з контрольним пристроєм у тому самому сегменті та перевірте, чи коректно оновлюється таблиця комутатора після переміщення вузла.
+
+MAC-адреса сама по собі не визначає маршрут між мережами й не є надійним механізмом автентифікації, оскільки її можна підмінити.
+
+Чому віддалений сервер зазвичай не бачить MAC-адресу Ethernet-інтерфейсу ноутбука?
+
+MAC-адреса використовується для доставки кадру в межах локального канального сегмента. Коли маршрутизатор передає пакет до іншої мережі, він знімає вхідний канальний кадр і формує новий кадр для наступного переходу. IP-адреса описує маршрут між мережами, тоді як MAC-адреса стосується поточного каналу. Тому віддалений сервер отримує кадр від свого безпосереднього мережевого вузла, а не з MAC-адресою початкового ноутбука. У локальній діагностиці порівнюйте інтерфейс, VLAN і таблицю сусідів; для віддаленого шляху аналізуйте IP-маршрутизацію.','Чому віддалений сервер зазвичай не бачить MAC-адресу Ethernet-інтерфейсу ноутбука?','MAC-адреса використовується для доставки кадру в межах локального канального сегмента. Коли маршрутизатор передає пакет до іншої мережі, він знімає вхідний канальний кадр і формує новий кадр для наступного переходу. IP-адреса описує маршрут між мережами, тоді як MAC-адреса стосується поточного каналу. Тому віддалений сервер отримує кадр від свого безпосереднього мережевого вузла, а не з MAC-адресою початкового ноутбука. У локальній діагностиці порівнюйте інтерфейс, VLAN і таблицю сусідів; для віддаленого шляху аналізуйте IP-маршрутизацію.','RFC 826: An Ethernet Address Resolution Protocol','https://www.rfc-editor.org/rfc/rfc826.html','["architecture","Мережеві технології","MAC addresses and Ethernet switching"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(143,'architecture-arp-and-neighbor-discovery-40','article','architecture','Мережеві технології','middle',NULL,7,1,'ARP та виявлення сусідів IPv6','ARP зіставляє IPv4-адресу з MAC-адресою в локальному сегменті, а в IPv6 подібні завдання виконує протокол Neighbor Discovery.','ARP зіставляє IPv4-адресу з MAC-адресою в локальному сегменті, а в IPv6 подібні завдання виконує протокол Neighbor Discovery. Перед надсиланням кадру вузол перевіряє локальний кеш сусідів і, за потреби, надсилає запит у сегмент. Для віддаленої адреси клієнт шукає MAC-адресу шлюзу, а не кінцевого сервера.
+
+Якщо IP-маршрут начебто правильний, але обмін у локальній мережі не працює, перевірте кеш сусідів, відповідь на ARP або Neighbor Solicitation та наявність конфлікту адрес. Очистьте або перечитайте кеш у контрольованому середовищі, повторіть з''єднання та зіставте запит і відповідь із фактичними адресами інтерфейсів.
+
+Застарілий або підмінений запис сусіда може спрямувати трафік не до очікуваного вузла; тому наявність IP-адреси не доводить коректність канального зіставлення.
+
+Коли IPv4-клієнт визначає MAC-адресу шлюзу, а не MAC-адресу сервера призначення?
+
+Якщо IP-адреса призначення належить іншій підмережі, таблиця маршрутів обирає наступний вузол — зазвичай шлюз за замовчуванням. ARP у такому разі зіставляє локальну IP-адресу шлюзу з його MAC-адресою. Для вузла в тій самій підмережі клієнт натомість шукає канальну адресу самого вузла. ARP працює в межах локального каналу й не резолвить доменні імена. Перевірте маску підмережі, маршрут і запис у таблиці сусідів; це допомагає відрізнити помилку локальної адресації від проблеми DNS або віддаленої маршрутизації.','Коли IPv4-клієнт визначає MAC-адресу шлюзу, а не MAC-адресу сервера призначення?','Якщо IP-адреса призначення належить іншій підмережі, таблиця маршрутів обирає наступний вузол — зазвичай шлюз за замовчуванням. ARP у такому разі зіставляє локальну IP-адресу шлюзу з його MAC-адресою. Для вузла в тій самій підмережі клієнт натомість шукає канальну адресу самого вузла. ARP працює в межах локального каналу й не резолвить доменні імена. Перевірте маску підмережі, маршрут і запис у таблиці сусідів; це допомагає відрізнити помилку локальної адресації від проблеми DNS або віддаленої маршрутизації.','RFC 826: An Ethernet Address Resolution Protocol','https://www.rfc-editor.org/rfc/rfc826.html','["architecture","Мережеві технології","ARP and neighbor discovery"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(144,'architecture-dhcp-address-configuration-41','article','architecture','Мережеві технології','middle',NULL,8,1,'DHCP та автоматичне налаштування адреси','DHCP автоматизує надання мережевих параметрів клієнту, зокрема IP-адреси, маски, шлюзу та адрес DNS-серверів.','DHCP автоматизує надання мережевих параметрів клієнту, зокрема IP-адреси, маски, шлюзу та адрес DNS-серверів. Типовий процес IPv4 включає виявлення сервера, пропозицію адреси, запит клієнта й підтвердження оренди. Адреса видається на певний строк, тому повторне підключення або зміна мережі можуть привести до іншої конфігурації.
+
+Порівняйте видані параметри з очікуваними для сегмента та перевірте, чи отримує клієнт коректне поновлення оренди після переходу між мережами. Зафіксуйте адресу, маску, шлюз, DNS, сервер DHCP і строк оренди; повторіть підключення після закінчення оренди та перевірте відсутність конфлікту адрес.
+
+Наявність адреси не гарантує повної мережевої конфігурації: клієнт може отримати адресу, але некоректний шлюз або DNS-сервер.
+
+Тестовий пристрій працює до поновлення мережевої оренди, після чого втрачає доступ до сервісу. Що потрібно порівняти?
+
+Порівняйте параметри мережі до та після поновлення DHCP-оренди: IP-адресу й маску, шлюз, DNS-сервери, строк оренди та час появи збою. Перевірте журнали DHCP-сервера й ретранслятора, а також можливий конфлікт адрес. Якщо змінився лише DNS, перевірте резолв домену; якщо змінилися адреса або шлюз — перевірте маршрут і правила доступу. Така послідовність допомагає відрізнити проблему конфігурації клієнта від несправності самого застосунку. Зафіксуйте параметри середовища, щоб відтворити випадок після наступного поновлення.','Тестовий пристрій працює до поновлення мережевої оренди, після чого втрачає доступ до сервісу. Що потрібно порівняти?','Порівняйте параметри мережі до та після поновлення DHCP-оренди: IP-адресу й маску, шлюз, DNS-сервери, строк оренди та час появи збою. Перевірте журнали DHCP-сервера й ретранслятора, а також можливий конфлікт адрес. Якщо змінився лише DNS, перевірте резолв домену; якщо змінилися адреса або шлюз — перевірте маршрут і правила доступу. Така послідовність допомагає відрізнити проблему конфігурації клієнта від несправності самого застосунку. Зафіксуйте параметри середовища, щоб відтворити випадок після наступного поновлення.','RFC 2131: Dynamic Host Configuration Protocol','https://www.rfc-editor.org/rfc/rfc2131.html','["architecture","Мережеві технології","DHCP address configuration"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(145,'architecture-dns-i-domenni-imena-22','article','architecture','API та протоколи','middle',NULL,9,1,'DNS і доменні імена','DNS знаходить мережеві адреси за доменним ім’ям і може також повертати інші записи для пошти, перевірки домену та сервісів.','DNS знаходить мережеві адреси за доменним ім’ям і може також повертати інші записи для пошти, перевірки домену та сервісів. DNS успішно повернув IP — це ще не означає, що порт відкритий або застосунок здоровий.
+
+При мережевій помилці спершу відділіть проблему резолюції імені від недоступності TCP/TLS чи помилки HTTP. Перевірте правильний домен середовища, DNS-запис, TTL після зміни та доступність із потрібної мережі.
+
+Кеш DNS може тимчасово спрямовувати частину клієнтів на стару адресу після релізу.
+
+Як розрізнити DNS-помилку й HTTP 503?
+
+За DNS-помилки домен не резолвиться до адреси; 503 — HTTP-відповідь сервера або проксі, тобто з’єднання вже дійшло до HTTP-рівня.','Як розрізнити DNS-помилку й HTTP 503?','За DNS-помилки домен не резолвиться до адреси; 503 — HTTP-відповідь сервера або проксі, тобто з’єднання вже дійшло до HTTP-рівня.','QA_bible: practical interview examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["architecture","API та протоколи","DNS і доменні імена"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(146,'architecture-nat-and-port-translation-42','article','architecture','Мережеві технології','middle',NULL,10,1,'NAT і трансляція портів','NAT змінює адреси IP у пакетах на межі мереж, а трансляція портів дає змогу розподіляти з''єднання між внутрішніми вузлами.','NAT змінює адреси IP у пакетах на межі мереж, а трансляція портів дає змогу розподіляти з''єднання між внутрішніми вузлами. У поширеному сценарії багато приватних клієнтів спільно використовують зовнішню адресу, а шлюз відстежує відповідність внутрішніх і зовнішніх з''єднань. Вхідне підключення потребує окремого правила трансляції та дозволу політики доступу.
+
+Для недоступного сервісу ззовні перевірте зовнішню адресу, правило перенаправлення порту, адресу внутрішнього призначення та зворотний маршрут. Зіставте журнал NAT із мережевими журналами сервера та перевірте як успішний, так і заборонений потік із різних зовнішніх джерел.
+
+Трансляція адрес не є механізмом автентифікації чи заміною міжмережевого екрана; помилкове правило може опублікувати внутрішній сервіс назовні.
+
+Партнерський сервіс бачить іншу IP-адресу клієнта, ніж та, що налаштована на сервері. Чим це може пояснюватися і як перевірити?
+
+Вихідний NAT або проксі може замінювати приватну адресу вузла на спільну зовнішню адресу, іноді також змінюючи порт. Порівняйте локальну адресу сервера з адресою, яку бачить партнер, і перевірте маршрут вихідного трафіку та конфігурацію NAT. Для інтеграційного тесту важливо використовувати адресу виходу, фактично спостережену зовнішньою системою, а не адресу з локальної конфігурації. Додатково перевірте час життя трансляції для довгих з''єднань і поведінку повторного підключення. Це дає змогу відрізнити помилку списку дозволених адрес від збою самого API.','Партнерський сервіс бачить іншу IP-адресу клієнта, ніж та, що налаштована на сервері. Чим це може пояснюватися і як перевірити?','Вихідний NAT або проксі може замінювати приватну адресу вузла на спільну зовнішню адресу, іноді також змінюючи порт. Порівняйте локальну адресу сервера з адресою, яку бачить партнер, і перевірте маршрут вихідного трафіку та конфігурацію NAT. Для інтеграційного тесту важливо використовувати адресу виходу, фактично спостережену зовнішньою системою, а не адресу з локальної конфігурації. Додатково перевірте час життя трансляції для довгих з''єднань і поведінку повторного підключення. Це дає змогу відрізнити помилку списку дозволених адрес від збою самого API.','RFC 3022: Traditional IP Network Address Translator','https://www.rfc-editor.org/rfc/rfc3022.html','["architecture","Мережеві технології","NAT and port translation"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(147,'architecture-routing-and-default-gateways-43','article','architecture','Мережеві технології','middle',NULL,11,1,'Маршрутизація та шлюзи за замовчуванням','Маршрутизатор пересилає IP-пакети між мережами, обираючи наступний вузол за адресою призначення та таблицею маршрутів.','Маршрутизатор пересилає IP-пакети між мережами, обираючи наступний вузол за адресою призначення та таблицею маршрутів. Якщо точнішого маршруту немає, вузол використовує шлюз за замовчуванням. Шлях запиту й шлях відповіді можуть відрізнятися, а асиметрична маршрутизація або відсутній зворотний маршрут спричиняють односторонню втрату зв''язку.
+
+Для нестабільного з''єднання фіксуйте вихідну та цільову підмережі, обраний шлюз і маршрут у кожному напрямку. Порівняйте таблиці маршрутів обох вузлів, результат трасування та журнали правил доступу, не обмежуючись перевіркою маршруту лише до сервера.
+
+Маршрут до адреси призначення не доводить, що відповідь повернеться клієнту; до завершення транспортного з''єднання HTTP-діагностика не локалізує мережеву причину.
+
+Сервер отримує TCP SYN, але з''єднання не встановлюється. Яка проблема маршрутизації може спричинити таку поведінку?
+
+Запит може дійти до сервера, а відповідь SYN-ACK — загубитися через відсутній або асиметричний зворотний маршрут. Перевірте таблиці маршрутів на обох кінцях, шлюзи, правила мережевого доступу та стан міжмережевих екранів. Одностороння перевірка шляху недостатня: важливо встановити, чи проходить зворотний трафік до клієнта. Зіставте часові відмітки та адреси в мережевих журналах. Якщо TCP-рукостискання не завершене, аналіз HTTP-коду відповіді ще не є доречним, оскільки HTTP-обмін не розпочався.','Сервер отримує TCP SYN, але з''єднання не встановлюється. Яка проблема маршрутизації може спричинити таку поведінку?','Запит може дійти до сервера, а відповідь SYN-ACK — загубитися через відсутній або асиметричний зворотний маршрут. Перевірте таблиці маршрутів на обох кінцях, шлюзи, правила мережевого доступу та стан міжмережевих екранів. Одностороння перевірка шляху недостатня: важливо встановити, чи проходить зворотний трафік до клієнта. Зіставте часові відмітки та адреси в мережевих журналах. Якщо TCP-рукостискання не завершене, аналіз HTTP-коду відповіді ще не є доречним, оскільки HTTP-обмін не розпочався.','RFC 1812: Requirements for IP Version 4 Routers','https://www.rfc-editor.org/rfc/rfc1812.html','["architecture","Мережеві технології","Routing and default gateways"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(148,'architecture-switching-vlans-and-broadcast-domains-44','article','architecture','Мережеві технології','middle',NULL,12,1,'Комутація, VLAN і широкомовні домени','Комутатор пересилає кадри в локальній мережі, а VLAN логічно розділяє фізичну інфраструктуру на ізольовані широкомовні домени.','Комутатор пересилає кадри в локальній мережі, а VLAN логічно розділяє фізичну інфраструктуру на ізольовані широкомовні домени. Порти комутатора можуть належати різним VLAN або передавати кілька VLAN через тегований канал. Для зв''язку між сегментами потрібна маршрутизація та відповідна політика доступу.
+
+У разі проблеми між двома пристроями зіставте їхні підмережі, належність портів до VLAN, налаштування DHCP і наявність маршруту між сегментами. Порівняйте конфігурацію порту з контрольним пристроєм у потрібній мережі та перевірте проходження дозволеного і забороненого трафіку між VLAN.
+
+Фізичне з''єднання та видана IP-адреса не підтверджують, що пристрій належить правильному VLAN або має дозвіл на обмін даними.
+
+Два пристрої в одному офісі мають IP-адреси, але не можуть обмінюватися даними. Що слід перевірити на локальному мережевому сегменті?
+
+Перевірте маски підмереж, членство портів у VLAN, доступність маршруту між VLAN і правила мережевих списків контролю доступу. Потім з''ясуйте, чи не блокує з''єднання локальний міжмережевий екран пристрою. Наявність коректної IP-адреси не гарантує, що два вузли перебувають в одному широкомовному домені або мають дозволений маршрут між сегментами. Порівняйте налаштування проблемного вузла з контрольним пристроєм у тій самій точці мережі. Такий контроль допомагає локалізувати причину між VLAN-конфігурацією, маршрутизацією та правилами доступу.','Два пристрої в одному офісі мають IP-адреси, але не можуть обмінюватися даними. Що слід перевірити на локальному мережевому сегменті?','Перевірте маски підмереж, членство портів у VLAN, доступність маршруту між VLAN і правила мережевих списків контролю доступу. Потім з''ясуйте, чи не блокує з''єднання локальний міжмережевий екран пристрою. Наявність коректної IP-адреси не гарантує, що два вузли перебувають в одному широкомовному домені або мають дозволений маршрут між сегментами. Порівняйте налаштування проблемного вузла з контрольним пристроєм у тій самій точці мережі. Такий контроль допомагає локалізувати причину між VLAN-конфігурацією, маршрутизацією та правилами доступу.','IEEE 802.1Q VLAN Bridging','https://www.ieee802.org/1/pages/802.1Q.html','["architecture","Мережеві технології","Switching, VLANs and broadcast domains"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(149,'architecture-ports-sockets-and-listeners-49','article','architecture','Мережеві технології','middle',NULL,13,1,'Порти, сокети та процеси, що очікують на з''єднання','Сокет описує кінцеву точку мережевого обміну, а процес-слухач очікує на з''єднання за визначеною адресою, транспортом і портом.','Сокет описує кінцеву точку мережевого обміну, а процес-слухач очікує на з''єднання за визначеною адресою, транспортом і портом. TCP і UDP мають окремі простори портів. Контейнеризація та проксі додають відображення портів, тому внутрішній порт процесу може відрізнятися від порту, доступного клієнтові.
+
+Перевіряйте адресу прив''язки процесу, протокол, відображення контейнера й правила доступу саме для адреси та порту, які використовує тестовий клієнт. Послідовно перевірте локальний інтерфейс, контейнерну мережу, опублікований порт і зовнішній маршрут; окремо перевірте TCP та UDP, якщо обидва потрібні.
+
+Процес, прив''язаний лише до loopback-адреси, може бути доступним усередині вузла, але недосяжним з інших пристроїв.
+
+Процес сервера запущений, але клієнти отримують відмову під час підключення. Які перевірки допоможуть знайти причину?
+
+Переконайтеся, що процес слухає потрібний порт на правильній IP-адресі та використовує очікуваний транспорт — TCP або UDP. Потім перевірте публікацію порту контейнера, правила міжмережевого екрана й доступність адреси з клієнтської мережі. Перевірка з localhost не доводить зовнішню доступність: процес може бути прив''язаний лише до loopback-інтерфейсу. Послідовно перевірте локальний сокет, контейнерне відображення та зовнішнє з''єднання. Такий поділ дозволяє локалізувати конфігурацію слухача, контейнера або мережевої політики.','Процес сервера запущений, але клієнти отримують відмову під час підключення. Які перевірки допоможуть знайти причину?','Переконайтеся, що процес слухає потрібний порт на правильній IP-адресі та використовує очікуваний транспорт — TCP або UDP. Потім перевірте публікацію порту контейнера, правила міжмережевого екрана й доступність адреси з клієнтської мережі. Перевірка з localhost не доводить зовнішню доступність: процес може бути прив''язаний лише до loopback-інтерфейсу. Послідовно перевірте локальний сокет, контейнерне відображення та зовнішнє з''єднання. Такий поділ дозволяє локалізувати конфігурацію слухача, контейнера або мережевої політики.','RFC 1122: Requirements for Internet Hosts — Communication Layers','https://www.rfc-editor.org/rfc/rfc1122.html','["architecture","Мережеві технології","Ports, sockets and listeners"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(150,'architecture-tcp-i-udp-23','article','architecture','API та протоколи','middle',NULL,14,1,'TCP і UDP','TCP надає впорядкований потік байтів із повторною доставкою; UDP передає датаграми без гарантії доставки й порядку на рівні протоколу.','TCP надає впорядкований потік байтів із повторною доставкою; UDP передає датаграми без гарантії доставки й порядку на рівні протоколу. HTTP/3 працює поверх QUIC, який використовує UDP і надає транспортні можливості для HTTP.
+
+Локалізуйте помилки за рівнями: DNS, з’єднання, TLS, HTTP і прикладна логіка. Порт і доступність transport-рівня варто перевіряти окремо. Для TCP-послуги перевірте відмову з’єднання, розрив під час передавання та timeout; для UDP врахуйте втрату й перестановку пакетів.
+
+Успішне TCP-з’єднання не гарантує, що серверний endpoint відповість коректно.
+
+Чи гарантує TCP, що бізнес-операція виконалась?
+
+Ні. TCP доставляє потік у межах з’єднання; успіх операції визначають HTTP-відповідь і стан системи.','Чи гарантує TCP, що бізнес-операція виконалась?','Ні. TCP доставляє потік у межах з’єднання; успіх операції визначають HTTP-відповідь і стан системи.','QA_bible: practical interview examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["architecture","API та протоколи","TCP і UDP"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(151,'architecture-https-i-tls-21','article','architecture','API та протоколи','middle',NULL,15,1,'HTTPS і TLS','HTTPS передає HTTP через TLS, захищаючи конфіденційність та цілісність каналу і перевірку сертифіката сервера.','HTTPS передає HTTP через TLS, захищаючи конфіденційність та цілісність каналу і перевірку сертифіката сервера. Шифрування каналу не означає шифрування даних у базі або кінцевого пристрою.
+
+Не передавайте секрети в URL, використовуйте валідний сертифікат і не вимикайте перевірку TLS у клієнті заради зручності тесту. Переконайтеся в перенаправленні HTTP, відсутності змішаного контенту й секретів у логах та URL; перевірте помилки сертифіката в тестовому середовищі.
+
+TLS не виправляє помилки авторизації, ін''єкції, слабке зберігання пароля чи надмірний доступ.
+
+Від чого захищає TLS і чого він не вирішує?
+
+Захищає дані між клієнтом і сервером від читання/зміни в дорозі й перевіряє сертифікат; не замінює авторизацію та захист застосунку.','Від чого захищає TLS і чого він не вирішує?','Захищає дані між клієнтом і сервером від читання/зміни в дорозі й перевіряє сертифікат; не замінює авторизацію та захист застосунку.','RFC 9110: HTTP Semantics','https://www.rfc-editor.org/rfc/rfc9110.html','["architecture","API та протоколи","HTTPS і TLS"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(152,'architecture-tls-certificates-and-handshake-46','article','architecture','Мережеві технології','middle',NULL,16,1,'Сертифікати TLS і встановлення захищеного з''єднання','TLS захищає прикладний обмін і перевіряє автентичність сервера за сертифікатом до передавання захищених даних.','TLS захищає прикладний обмін і перевіряє автентичність сервера за сертифікатом до передавання захищених даних. Під час встановлення з''єднання клієнт перевіряє ім''я вузла, строк чинності, ланцюжок довіри та сумісність криптографічних параметрів. На вибір сертифіката також впливає SNI, який клієнт передає для ідентифікації потрібного домену.
+
+Досліджуйте помилку в тому самому клієнтському середовищі, де вона виникає, оскільки версія протоколу, системний час і сховище довіри можуть відрізнятися. У контрольованому середовищі перевірте прострочений, недовірений, неповний і виданий для іншого домену сертифікат, а також поновлення чинного сертифіката.
+
+Вимкнення перевірки сертифіката приховує проблему безпеки й не є прийнятним доказом працездатності сервісу.
+
+Один браузер відкриває сайт, а інший повідомляє про помилку сертифіката. Які параметри слід порівняти?
+
+Перевірте системний час, ім''я хоста в сертифікаті, повноту ланцюжка довіри, довірені кореневі центри сертифікації та узгоджену версію TLS. Також зіставте SNI й мережевий маршрут: різні клієнти можуть потрапляти на різні вузли або використовувати різні сховища сертифікатів. Зафіксуйте точний текст помилки й сертифікат, отриманий саме з проблемного клієнта. Не обходьте перевірку сертифіката для підтвердження працездатності: це приховує дефект безпеки. Порівняння контрольного та проблемного середовищ допоможе локалізувати конфігураційну відмінність.','Один браузер відкриває сайт, а інший повідомляє про помилку сертифіката. Які параметри слід порівняти?','Перевірте системний час, ім''я хоста в сертифікаті, повноту ланцюжка довіри, довірені кореневі центри сертифікації та узгоджену версію TLS. Також зіставте SNI й мережевий маршрут: різні клієнти можуть потрапляти на різні вузли або використовувати різні сховища сертифікатів. Зафіксуйте точний текст помилки й сертифікат, отриманий саме з проблемного клієнта. Не обходьте перевірку сертифіката для підтвердження працездатності: це приховує дефект безпеки. Порівняння контрольного та проблемного середовищ допоможе локалізувати конфігураційну відмінність.','RFC 8446: The Transport Layer Security (TLS) Protocol Version 1.3','https://www.rfc-editor.org/rfc/rfc8446.html','["architecture","Мережеві технології","TLS certificates and handshake"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(153,'architecture-firewalls-and-network-policy-50','article','architecture','Мережеві технології','middle',NULL,17,1,'Міжмережеві екрани та мережеві політики','Міжмережевий екран дозволяє або відхиляє мережевий трафік на основі адрес, портів, протоколів, стану з''єднання чи ідентичності.','Міжмережевий екран дозволяє або відхиляє мережевий трафік на основі адрес, портів, протоколів, стану з''єднання чи ідентичності. Правила можуть діяти на вузлі, у хмарній мережі, контейнерному кластері або на зовнішньому мережевому краї. Дозвіл вихідного з''єднання не означає автоматичного дозволу вхідного трафіку.
+
+Для локалізації блокування точно зафіксуйте джерело, призначення, порт і протокол, а потім визначте, який рівень політики записав відмову. Перевірте дозволені й заборонені сценарії з кожної релевантної мережевої зони та звірте фактичні журнали всіх точок контролю.
+
+Надто широке правило може приховати відсутність необхідного вузького дозволу й ненавмисно відкрити сторонні сервіси.
+
+Сервіс доступний із контейнера, але недоступний із ноутбука тестувальника. Як локалізувати блокування мережевою політикою?
+
+Зафіксуйте джерело, призначення, порт і транспорт для обох шляхів, а потім перевірте кожну точку контролю: локальний екран вузла, хмарні правила, мережеві списки доступу, політики кластера та зовнішній шлюз. Порівняйте журнали дозволених і відхилених з''єднань. Доступ із контейнера підтверджує лише його маршрут і не доводить доступність із зовнішньої мережі. Для надійного висновку змінюйте по одному сегменту маршруту або порівнюйте контрольні клієнти. Не розширюйте правило глобально без підтвердження власника політики та потрібного діапазону доступу.','Сервіс доступний із контейнера, але недоступний із ноутбука тестувальника. Як локалізувати блокування мережевою політикою?','Зафіксуйте джерело, призначення, порт і транспорт для обох шляхів, а потім перевірте кожну точку контролю: локальний екран вузла, хмарні правила, мережеві списки доступу, політики кластера та зовнішній шлюз. Порівняйте журнали дозволених і відхилених з''єднань. Доступ із контейнера підтверджує лише його маршрут і не доводить доступність із зовнішньої мережі. Для надійного висновку змінюйте по одному сегменту маршруту або порівнюйте контрольні клієнти. Не розширюйте правило глобально без підтвердження власника політики та потрібного діапазону доступу.','NIST SP 800-41 Rev. 1: Guidelines on Firewalls and Firewall Policy','https://csrc.nist.gov/pubs/sp/800/41/r1/final','["architecture","Мережеві технології","Firewalls and network policy"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(154,'architecture-merezhevi-porty-ta-reverse-proxy-35','article','architecture','Docker','middle',NULL,18,1,'Мережеві порти та зворотний проксі','Зворотний проксі приймає зовнішні запити й спрямовує їх до внутрішніх сервісів, а також може завершувати TLS-з''єднання та застосовувати спільні мережеві політики.','Зворотний проксі приймає зовнішні запити й спрямовує їх до внутрішніх сервісів, а також може завершувати TLS-з''єднання та застосовувати спільні мережеві політики. Сервіс має довіряти лише проксі, визначеним конфігурацією, і коректно перевіряти передані ними заголовки. Порт, доступний зовнішньому клієнтові, може відрізнятися від внутрішнього порту застосунку.
+
+Перевірте заголовки передавання адреси клієнта, перенаправлення між HTTP і HTTPS, таймаути, обмеження розміру запиту та ізоляцію внутрішніх портів. Порівняйте однакові запити через проксі та напряму в контрольованому середовищі й перевірте, що зовнішній клієнт не може оминути належні правила доступу.
+
+Довіра до підробленого заголовка з адресою клієнта може спотворити аудит і порушити обмеження частоти запитів.
+
+Що тестувати після додавання reverse proxy?
+
+TLS, routing, forwarded headers, limits/timeouts, body upload, auth redirects і відсутність прямого зовнішнього доступу до приватних сервісів.','Що тестувати після додавання reverse proxy?','TLS, routing, forwarded headers, limits/timeouts, body upload, auth redirects і відсутність прямого зовнішнього доступу до приватних сервісів.','Docker Docs: Compose','https://docs.docker.com/compose/','["architecture","Docker","Мережеві порти та reverse proxy"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(155,'architecture-balansuval-nyk-i-health-checks-26','article','architecture','Архітектура','middle',NULL,19,1,'Балансувальник навантаження та перевірки готовності','Балансувальник навантаження розподіляє запити між доступними екземплярами сервісу, а перевірка готовності допомагає виключити екземпляр, який не може коректно обробляти трафік.','Балансувальник навантаження розподіляє запити між доступними екземплярами сервісу, а перевірка готовності допомагає виключити екземпляр, який не може коректно обробляти трафік. Перевірка працездатності та перевірка готовності відповідають на різні запитання: перша виявляє критичну несправність процесу, а друга визначає, чи можна вже спрямовувати до нього запити. Надто складна перевірка готовності може створити каскадне вилучення екземплярів під час часткового збою залежності.
+
+Перевірте алгоритм розподілу, вилучення несправного екземпляра, повторне включення після відновлення, таймаути та збереження потрібного стану користувача. Змоделюйте повільний, недоступний і частково готовий екземпляр та перевірте, куди спрямовуються нові запити й як система відновлює обслуговування після повернення вузла.
+
+Якщо перевірка готовності залежить від усіх суміжних компонентів, короткий збій однієї залежності може помилково вивести з ротації весь сервіс.
+
+Чим readiness відрізняється від liveness?
+
+Readiness показує, чи треба спрямовувати трафік; liveness — чи слід перезапустити процес.','Чим readiness відрізняється від liveness?','Readiness показує, чи треба спрямовувати трафік; liveness — чи слід перезапустити процес.','Microsoft Learn: Architecture styles','https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/','["architecture","Архітектура","Балансувальник і health checks"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(156,'architecture-rest-i-resursy-api-17','article','architecture','API та протоколи','middle',NULL,20,1,'REST і ресурси API','REST — архітектурний стиль, а не назва протоколу. REST-подібне HTTP API використовує ресурси, стандартні методи й семантику відповідей.','REST — архітектурний стиль, а не назва протоколу. REST-подібне HTTP API використовує ресурси, стандартні методи й семантику відповідей. REST має додаткові обмеження; багато практичних API називають RESTful у спрощеному значенні.
+
+Описуйте ресурс і його представлення, застосовуйте HTTP-методи послідовно й фіксуйте контракт в OpenAPI. Перевірте, що URI ідентифікує ресурс, метод відповідає операції, коди стану й помилки відповідають контракту.
+
+Називати будь-який JSON endpoint REST API недостатньо: нестандартна семантика методів ускладнює клієнтам кешування й повтори.
+
+Що таке REST і чи є він протоколом?
+
+REST є архітектурним стилем для розподілених систем; HTTP часто слугує протоколом, через який реалізують API в цьому стилі.','Що таке REST і чи є він протоколом?','REST є архітектурним стилем для розподілених систем; HTTP часто слугує протоколом, через який реалізують API в цьому стилі.','RFC 9110: HTTP Semantics','https://www.rfc-editor.org/rfc/rfc9110.html','["architecture","API та протоколи","REST і ресурси API"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(157,'architecture-rest-soap-i-graphql-24','article','architecture','API та протоколи','middle',NULL,21,1,'REST, SOAP і GraphQL','REST зазвичай моделює ресурси через HTTP; SOAP визначає XML-повідомлення та формальний контракт; GraphQL дає клієнту запитати потрібну форму даних через схему.','REST зазвичай моделює ресурси через HTTP; SOAP визначає XML-повідомлення та формальний контракт; GraphQL дає клієнту запитати потрібну форму даних через схему. Різні стилі API мають спільні ризики: доступ, дані, сумісність і контрольовані помилки.
+
+Обирайте техніку тестування за контрактом: OpenAPI для REST, WSDL/XSD для SOAP, schema/resolvers для GraphQL. Перевіряйте контракт, валідацію, авторизацію на рівні полів/ресурсів, помилки та надмірне отримання даних.
+
+Гнучкий GraphQL-запит може стати надто дорогим; SOAP XML може спричинити ризики парсера за неправильної конфігурації.
+
+Як відрізняється контрактне тестування REST і SOAP?
+
+Для REST перевіряють HTTP-коди й OpenAPI-схему; для SOAP — структуру XML, WSDL/XSD та fault-повідомлення. Бізнес-правила й авторизація важливі в обох.','Як відрізняється контрактне тестування REST і SOAP?','Для REST перевіряють HTTP-коди й OpenAPI-схему; для SOAP — структуру XML, WSDL/XSD та fault-повідомлення. Бізнес-правила й авторизація важливі в обох.','OpenAPI Specification','https://spec.openapis.org/oas/latest.html','["architecture","API та протоколи","REST, SOAP і GraphQL"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(158,'architecture-http-metody-get-post-put-patch-i-delete-18','article','architecture','API та протоколи','middle',NULL,22,1,'HTTP-методи GET, POST, PUT, PATCH і DELETE','Методи HTTP несуть семантику: GET читає, POST зазвичай створює або запускає дію, PUT замінює, PATCH частково змінює, DELETE видаляє.','Методи HTTP несуть семантику: GET читає, POST зазвичай створює або запускає дію, PUT замінює, PATCH частково змінює, DELETE видаляє. PATCH не має одного універсального формату тіла: формат і правила визначають контракт API.
+
+Перевіряйте безпечність та ідемпотентність операції за контрактом, включно з повтором після timeout. Для кожного методу перевірте валідний і невалідний ввід, дозволені побічні ефекти та стан ресурсу після повторення.
+
+Небезпечний GET може випадково активуватися префетчем браузера, кешем або сканером посилань.
+
+Чи є POST ідемпотентним за замовчуванням?
+
+Ні. Повтор може створити новий ресурс або повторити дію; використовуйте ключ ідемпотентності, якщо контракт його передбачає.','Чи є POST ідемпотентним за замовчуванням?','Ні. Повтор може створити новий ресурс або повторити дію; використовуйте ключ ідемпотентності, якщо контракт його передбачає.','RFC 9110: HTTP Semantics','https://www.rfc-editor.org/rfc/rfc9110.html','["architecture","API та протоколи","HTTP-методи GET, POST, PUT, PATCH і DELETE"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(159,'architecture-kody-vidpovidi-http-19','article','architecture','API та протоколи','middle',NULL,23,1,'Коди відповіді HTTP','Статуси 2xx позначають успішну обробку, 3xx — перенаправлення, 4xx — проблему запиту або доступу клієнта, 5xx — помилку сервера.','Статуси 2xx позначають успішну обробку, 3xx — перенаправлення, 4xx — проблему запиту або доступу клієнта, 5xx — помилку сервера. 202 Accepted означає прийняття до подальшої обробки, а не обов’язково завершену операцію.
+
+Звіряйте код із фактичним результатом і тілом, а не тестуйте лише «успіх». Для помилок перевіряйте стабільний формат і відсутність чутливих деталей. Перевірте 200/201/202/204 за сценарієм, 400/401/403/404/409/422 і 429, а також контрольовану відповідь 5xx.
+
+Неправильний 200 на помилку змушує клієнта трактувати невдалу операцію як успішну.
+
+Коли API має повертати 201, а коли 202?
+
+201 — ресурс створено; 202 — запит прийнято, але виконання ще не завершене або відкладене.','Коли API має повертати 201, а коли 202?','201 — ресурс створено; 202 — запит прийнято, але виконання ще не завершене або відкладене.','RFC 9110: HTTP Semantics','https://www.rfc-editor.org/rfc/rfc9110.html','["architecture","API та протоколи","Коди відповіді HTTP"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(160,'architecture-http-zaholovky-ta-content-type-20','article','architecture','API та протоколи','middle',NULL,24,1,'HTTP-заголовки та Content-Type','Заголовки передають метадані: Content-Type описує формат тіла, Accept — бажаний формат відповіді, Authorization — облікові дані, Cache-Control — правила кешу.','Заголовки передають метадані: Content-Type описує формат тіла, Accept — бажаний формат відповіді, Authorization — облікові дані, Cache-Control — правила кешу. Vary може змінювати ключ кешування на основі вказаних заголовків запиту.
+
+Тестуйте відсутній, неправильний і несумісний Content-Type та Accept; перевірте, як сервер поводиться з невідомими заголовками. Надішліть коректний JSON, пошкоджений JSON, неправильний charset і тіло з іншим media type, порівняйте код і помилку.
+
+Залежність від неявного формату може зробити API неоднозначним і різним для різних клієнтів.
+
+Чим Content-Type відрізняється від Accept?
+
+Content-Type описує формат тіла запиту/відповіді; Accept повідомляє серверу, який формат відповіді прийнятний клієнту.','Чим Content-Type відрізняється від Accept?','Content-Type описує формат тіла запиту/відповіді; Accept повідомляє серверу, який формат відповіді прийнятний клієнту.','RFC 9110: HTTP Semantics','https://www.rfc-editor.org/rfc/rfc9110.html','["architecture","API та протоколи","HTTP-заголовки та Content-Type"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(161,'architecture-openapi-ta-kontraktne-testuvannya-25','article','architecture','API та протоколи','middle',NULL,25,1,'OpenAPI та контрактне тестування','OpenAPI описує шляхи, операції, параметри, схеми даних і відповіді HTTP API у машинозчитуваному контракті.','OpenAPI описує шляхи, операції, параметри, схеми даних і відповіді HTTP API у машинозчитуваному контракті. Контрактні тести між споживачем і провайдером допомагають розвивати версії незалежно.
+
+Використовуйте специфікацію як основу документації та генерації тестових даних, але перевіряйте її відповідність реальній поведінці. Звірте кожне поле, статус, авторизацію й обмеження; запускайте позитивні та негативні контрактні тести проти середовища.
+
+Застаріла специфікація створює хибне відчуття покриття, якщо тести перевіряють лише сам файл.
+
+Чи достатньо валідної OpenAPI-схеми для якості API?
+
+Ні. Потрібно перевірити реалізацію, бізнес-поведінку, доступ, обмеження, сумісність і нефункціональні ризики.','Чи достатньо валідної OpenAPI-схеми для якості API?','Ні. Потрібно перевірити реалізацію, бізнес-поведінку, доступ, обмеження, сумісність і нефункціональні ризики.','OpenAPI Specification','https://spec.openapis.org/oas/latest.html','["architecture","API та протоколи","OpenAPI та контрактне тестування"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(162,'architecture-http-caching-i-etag-32','article','architecture','API та протоколи','middle',NULL,26,1,'Кешування HTTP та валідатор ETag','HTTP-кешування зменшує повторне передавання незміненого представлення ресурсу, а ETag дає змогу серверу перевіряти його актуальність.','HTTP-кешування зменшує повторне передавання незміненого представлення ресурсу, а ETag дає змогу серверу перевіряти його актуальність. Клієнт зберігає отриманий валідатор і надсилає його в умовному запиті. Якщо ресурс не змінився, сервер може повернути статус 304 без тіла, після чого клієнт використовує кешоване представлення. Заголовки керування кешем визначають строк і область зберігання.
+
+Перевіряйте політику приватності кешованої відповіді, зміну валідатора після оновлення ресурсу та поведінку клієнта за наявності застарілої копії. Отримайте ETag, повторіть запит з умовним заголовком, змініть ресурс і переконайтеся, що сервер повертає актуальне представлення замість помилкового статусу 304.
+
+Неправильно сформований ключ кешу або валідатор може змішати дані різних користувачів чи залишити конфіденційну відповідь доступною після зміни прав.
+
+Що означає 304 Not Modified?
+
+Сервер повідомляє, що умовний запит не потребує нового представлення; клієнт використовує свою валідну кешовану копію.','Що означає 304 Not Modified?','Сервер повідомляє, що умовний запит не потребує нового представлення; клієнт використовує свою валідну кешовану копію.','RFC 9110: HTTP Semantics','https://www.rfc-editor.org/rfc/rfc9110.html','["architecture","API та протоколи","HTTP caching і ETag"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(163,'architecture-websocket-i-dovhi-z-yednannya-28','article','architecture','API та протоколи','middle',NULL,27,1,'WebSocket і довготривалі з''єднання','WebSocket забезпечує двонапрямлений обмін повідомленнями між клієнтом і сервером через довготривале з''єднання.','WebSocket забезпечує двонапрямлений обмін повідомленнями між клієнтом і сервером через довготривале з''єднання. З''єднання починається з узгодження через HTTP, після чого обидві сторони можуть передавати повідомлення без створення окремого HTTP-запиту для кожного повідомлення. Сам протокол не гарантує відновлення пропущених повідомлень після розриву зв''язку.
+
+Перевірте початкове узгодження, автентифікацію, heartbeat, повторне підключення, порядок повідомлень, обмеження розміру та завершення неактивного з''єднання. Імітуйте розрив мережі та відновлення з''єднання, перевірте відновлення підписок і стану, а також відсутність непомітних дублікатів подій.
+
+Велика кількість незакритих з''єднань споживає ресурси; без таймаутів та обмежень сервер може втратити доступність.
+
+Що тестувати при reconnect WebSocket?
+
+Повторну автентифікацію, відновлення підписок, втрачений діапазон подій, дублікати, heartbeat і контроль числа повторів.','Що тестувати при reconnect WebSocket?','Повторну автентифікацію, відновлення підписок, втрачений діапазон подій, дублікати, heartbeat і контроль числа повторів.','QA_bible: practical interview examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','["architecture","API та протоколи","WebSocket і довгі з’єднання"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(164,'architecture-quic-and-http-3-transport-45','article','architecture','Мережеві технології','middle',NULL,28,1,'QUIC і транспорт HTTP/3','QUIC забезпечує захищений транспорт із мультиплексованими потоками поверх UDP і є транспортною основою HTTP/3.','QUIC забезпечує захищений транспорт із мультиплексованими потоками поверх UDP і є транспортною основою HTTP/3. На відміну від HTTP/2 поверх TCP, QUIC інтегрує встановлення захищеного з''єднання з транспортом і зменшує взаємний вплив втрат між незалежними потоками. Мережеві посередники можуть блокувати UDP, через що клієнт переходить на іншу версію HTTP.
+
+Під час порівняння версій HTTP фіксуйте фактично узгоджений протокол і транспорт, а не робіть висновок лише з адреси сайту чи налаштувань браузера. Перевірте доступність UDP, поведінку при його блокуванні, можливість переходу на HTTP/2 та журнали клієнта, мережевого краю й сервера.
+
+Успішне відкриття сторінки не доводить, що було використано HTTP/3: клієнт міг непомітно перейти на HTTP/2 через TCP.
+
+Сайт доступний у браузері, але HTTP/3 не встановлюється в корпоративній мережі. Яку мережеву причину варто перевірити першою?
+
+HTTP/3 використовує QUIC поверх UDP, тому перш за все перевірте, чи дозволено UDP-трафік до відповідного порту та чи не блокує його міжмережевий екран або проксі. Браузер може перейти на HTTP/2 через TCP, тож сам факт успішного завантаження сторінки не доводить, що HTTP/3 працював. Перевірте узгоджену версію протоколу в засобах розробника браузера та зіставте її з журналами мережевого краю. Для QA важливо розрізняти помилку HTTP/3 від успішного резервного переходу на інший транспорт і вимірювати поведінку обох шляхів окремо.','Сайт доступний у браузері, але HTTP/3 не встановлюється в корпоративній мережі. Яку мережеву причину варто перевірити першою?','HTTP/3 використовує QUIC поверх UDP, тому перш за все перевірте, чи дозволено UDP-трафік до відповідного порту та чи не блокує його міжмережевий екран або проксі. Браузер може перейти на HTTP/2 через TCP, тож сам факт успішного завантаження сторінки не доводить, що HTTP/3 працював. Перевірте узгоджену версію протоколу в засобах розробника браузера та зіставте її з журналами мережевого краю. Для QA важливо розрізняти помилку HTTP/3 від успішного резервного переходу на інший транспорт і вимірювати поведінку обох шляхів окремо.','RFC 9000: QUIC: A UDP-Based Multiplexed and Secure Transport','https://www.rfc-editor.org/rfc/rfc9000.html','["architecture","Мережеві технології","QUIC and HTTP/3 transport"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(165,'architecture-http-1-1-http-2-and-http-3-behavior-47','article','architecture','Мережеві технології','middle',NULL,29,1,'Поведінка HTTP/1.1, HTTP/2 та HTTP/3','Версії HTTP зберігають спільну семантику запитів і відповідей, але відрізняються форматом передавання даних та транспортним механізмом.','Версії HTTP зберігають спільну семантику запитів і відповідей, але відрізняються форматом передавання даних та транспортним механізмом. HTTP/1.1 використовує текстове повідомлення та повторне використання з''єднання, HTTP/2 мультиплексує потоки в одному TCP-з''єднанні, а HTTP/3 передає семантику HTTP через QUIC. Проксі та шлюзи можуть підтримувати різні версії на різних ділянках шляху.
+
+Перевіряйте узгодженість статусу, заголовків, тіла й обробки помилок незалежно від версії, а транспорт фіксуйте як частину доказів. Повторіть однакові запити в контрольованих умовах для кожної доступної версії, порівняйте паралельність, повторне використання з''єднань і поведінку проміжних компонентів.
+
+Результат, отриманий лише в браузері, може не показати, на якій ділянці проксі змінив версію протоколу або спричинив розбіжність.
+
+Як перевірити, що однаковий HTTP-ресурс поводиться узгоджено через HTTP/1.1, HTTP/2 та HTTP/3?
+
+Виконайте однакові запити кожною доступною версією протоколу та порівняйте семантику відповіді: статус, заголовки, тіло й обробку помилок. Окремо зафіксуйте фактично узгоджену версію, повторне використання з''єднання, паралельність запитів і переходи між протоколами. Семантика HTTP є спільною, проте способи передавання та підтримка проміжними проксі відрізняються. Тому ізолюйте клієнтський, крайовий і серверний сегменти, перш ніж приписувати розбіжність застосунку. Для порівняння часу відповіді використовуйте однакові умови, дані й кількість повторів.','Як перевірити, що однаковий HTTP-ресурс поводиться узгоджено через HTTP/1.1, HTTP/2 та HTTP/3?','Виконайте однакові запити кожною доступною версією протоколу та порівняйте семантику відповіді: статус, заголовки, тіло й обробку помилок. Окремо зафіксуйте фактично узгоджену версію, повторне використання з''єднання, паралельність запитів і переходи між протоколами. Семантика HTTP є спільною, проте способи передавання та підтримка проміжними проксі відрізняються. Тому ізолюйте клієнтський, крайовий і серверний сегменти, перш ніж приписувати розбіжність застосунку. Для порівняння часу відповіді використовуйте однакові умови, дані й кількість повторів.','RFC 9113: HTTP/2','https://www.rfc-editor.org/rfc/rfc9113.html','["architecture","Мережеві технології","HTTP/1.1, HTTP/2 and HTTP/3 behavior"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(166,'architecture-packets-mtu-and-path-mtu-discovery-48','article','architecture','Мережеві технології','middle',NULL,30,1,'Пакети, MTU та визначення MTU шляху','MTU обмежує розмір пакета, який може бути переданий одним канальним сегментом без фрагментації.','MTU обмежує розмір пакета, який може бути переданий одним канальним сегментом без фрагментації. Ефективний MTU шляху визначається найменшим обмеженням на всьому маршруті. Тунелі та VPN додають службові заголовки й можуть зменшувати допустимий розмір корисного пакета; механізми визначення MTU допомагають клієнтам уникати надмірної фрагментації.
+
+Якщо невеликі запити працюють, а передавання великих тіл зависає, перевірте залежність результату від розміру даних і мережевого маршруту. Поступово збільшуйте розмір запиту через VPN і контрольний прямий маршрут, зіставляючи повторні передавання, втрати та мережеві повідомлення про недопустимий розмір.
+
+Перевірка лише малими повідомленнями не виявляє проблем, що виникають на межі MTU або під час інкапсуляції трафіку.
+
+Невеликі API-запити через VPN проходять, а завантаження великих файлів зупиняється. Який мережевий чинник слід перевірити?
+
+Перевірте MTU шляху та накладні витрати інкапсуляції VPN: великий пакет може перевищувати допустимий розмір і втрачатися або вимагати зменшення розміру фрагмента. Порівняйте передачу різних розмірів корисного навантаження через VPN і прямий маршрут, зафіксуйте повторні передавання та повідомлення про перевищення MTU. Малі запити не виявляють такої проблеми, тому що вкладаються в межу шляху. QA може поступово збільшувати розмір файла й зіставляти результат із мережевими журналами. Це відокремлює дефект передавання великих повідомлень від помилки прикладної валідації.','Невеликі API-запити через VPN проходять, а завантаження великих файлів зупиняється. Який мережевий чинник слід перевірити?','Перевірте MTU шляху та накладні витрати інкапсуляції VPN: великий пакет може перевищувати допустимий розмір і втрачатися або вимагати зменшення розміру фрагмента. Порівняйте передачу різних розмірів корисного навантаження через VPN і прямий маршрут, зафіксуйте повторні передавання та повідомлення про перевищення MTU. Малі запити не виявляють такої проблеми, тому що вкладаються в межу шляху. QA може поступово збільшувати розмір файла й зіставляти результат із мережевими журналами. Це відокремлює дефект передавання великих повідомлень від помилки прикладної валідації.','RFC 8201: Path MTU Discovery for IP version 6','https://www.rfc-editor.org/rfc/rfc8201.html','["architecture","Мережеві технології","Packets, MTU and path MTU discovery"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(167,'architecture-monolitna-arkhitektura-3','article','architecture','Архітектура','middle',NULL,31,1,'Монолітна архітектура','У моноліті застосунок зазвичай збирається й розгортається як один артефакт. Це спрощує локальний запуск, транзакції та діагностику, але збільшує спільну область розгортання.','У моноліті застосунок зазвичай збирається й розгортається як один артефакт. Це спрощує локальний запуск, транзакції та діагностику, але збільшує спільну область розгортання. Моноліт може бути добре модульованим і масштабуватися горизонтально; мікросервіси не є автоматично швидшими чи дешевшими.
+
+Розділяйте моноліт на модулі за бізнес-відповідальністю, приховуйте дані за інтерфейсами й забороняйте імпортувати внутрішні деталі сусідніх модулів. Перевірте, що модульна зміна не ламає інші функції, міграції даних сумісні, а збірка та тести вкладаються у прийнятний час.
+
+Проблема не в одному процесі, а в неконтрольованій зв’язності: спільні таблиці й глобальний стан перетворюють модулі на клубок.
+
+Коли моноліт є доречним вибором?
+
+Коли домен і команда ще формуються, є потреба швидко перевіряти продукт, а єдине розгортання та спільні транзакції знижують операційну складність.','Коли моноліт є доречним вибором?','Коли домен і команда ще формуються, є потреба швидко перевіряти продукт, а єдине розгортання та спільні транзакції знижують операційну складність.','Microsoft Learn: Architecture styles','https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/','["architecture","Архітектура","Монолітна архітектура"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(168,'architecture-modul-nyy-monolit-4','article','architecture','Архітектура','middle',NULL,32,1,'Модульний моноліт','Модульний моноліт має один артефакт розгортання, але всередині підтримує явні межі модулів і напрямки залежностей.','Модульний моноліт має один артефакт розгортання, але всередині підтримує явні межі модулів і напрямки залежностей. Такий підхід часто дає змогу відкласти розподілену інфраструктуру, зберігаючи зрозумілі межі для можливих майбутніх змін.
+
+Визначте публічний інтерфейс кожного доменного модуля, забороніть прямий доступ до чужих таблиць і автоматизуйте перевірки архітектурних правил. Перевіряйте ізольованість модулів, відсутність циклів, сумісність меж і можливість тестувати бізнес-логіку без запуску всієї системи.
+
+Якщо правила існують лише в документації, модулі поступово знову з’єднаються через спільні моделі й утиліти.
+
+Чим модульний моноліт відрізняється від звичайного?
+
+Він має контрольовані внутрішні межі та залежності, хоча збирається і запускається як один застосунок.','Чим модульний моноліт відрізняється від звичайного?','Він має контрольовані внутрішні межі та залежності, хоча збирається і запускається як один застосунок.','Microsoft Learn: Architecture styles','https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/','["architecture","Архітектура","Модульний моноліт"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(169,'architecture-vybir-mizh-monolitom-ta-mikroservisamy-14','article','architecture','Моноліт і мікросервіси','middle',NULL,33,1,'Вибір між монолітом та мікросервісами','Порівнюйте не тільки масштабування, а й автономність релізів, склад команди, транзакції, операційну готовність та ціну розподілених помилок.','Порівнюйте не тільки масштабування, а й автономність релізів, склад команди, транзакції, операційну готовність та ціну розподілених помилок. Архітектура може еволюціонувати: модульний моноліт дозволяє перевірити доменні межі до мережевого поділу.
+
+Якщо проблема — зв’язність коду, спочатку виміряйте її й посильте модульні межі. Виділяйте окремий сервіс лише за наявності чіткої бізнес-потреби. Порівняйте час релізу, частоту конфліктів, масштаб навантаження, точки блокування команд і вартість підтримки інфраструктури.
+
+Міграція без цілісного плану даних та операційної підтримки може створити більшу кількість точок відмови, ніж усунути.
+
+Які сигнали виправдовують виділення сервісу?
+
+Незалежний темп змін або масштабування, виразна доменна межа й команда-власник, а також готовність підтримувати мережеві контракти та observability.','Які сигнали виправдовують виділення сервісу?','Незалежний темп змін або масштабування, виразна доменна межа й команда-власник, а також готовність підтримувати мережеві контракти та observability.','Microsoft Learn: Architecture styles','https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/','["architecture","Моноліт і мікросервіси","Вибір між монолітом та мікросервісами"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(170,'architecture-mezhi-servisiv-i-bounded-context-6','article','architecture','Архітектура','middle',NULL,34,1,'Межі сервісів і контекст предметної області','Межу сервісу варто проводити там, де є цілісна бізнес-відповідальність і власна модель даних, а не просто окрема CRUD-таблиця.','Межу сервісу варто проводити там, де є цілісна бізнес-відповідальність і власна модель даних, а не просто окрема CRUD-таблиця. Межі домену можуть змінюватися після кращого розуміння продукту; архітектура має дозволяти еволюцію.
+
+Знайдіть бізнес-мову, правила, які змінюються разом, та команду-власника. Почніть із модуля й перевірте незалежність перед фізичним розділенням. Перевірте, чи зміни одного домену потребують синхронного релізу іншого, чи дублюються правила та чи є надмірні мережеві переходи.
+
+Неправильна межа створює distributed monolith: кілька сервісів, які завжди треба змінювати й випускати разом.
+
+Як виявити надто дрібні мікросервіси?
+
+Зверніть увагу на часті синхронні ланцюги, спільні релізи, постійні зміни кількох сервісів заради однієї бізнес-функції та спільні таблиці.','Як виявити надто дрібні мікросервіси?','Зверніть увагу на часті синхронні ланцюги, спільні релізи, постійні зміни кількох сервісів заради однієї бізнес-функції та спільні таблиці.','Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','["architecture","Архітектура","Межі сервісів і bounded context"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(171,'architecture-mikroservisna-arkhitektura-5','article','architecture','Архітектура','middle',NULL,35,1,'Мікросервісна архітектура','Мікросервіс зазвичай є окремо розгортуваним процесом із чіткою бізнес-відповідальністю. Незалежність розгортання купується ціною мережевих, операційних і командних складнощів.','Мікросервіс зазвичай є окремо розгортуваним процесом із чіткою бізнес-відповідальністю. Незалежність розгортання купується ціною мережевих, операційних і командних складнощів. Сервіс має витримувати відмову залежності; мережа ненадійна навіть усередині одного датацентру.
+
+Виділяйте сервіс за бізнес-можливістю та відповідальністю команди, а не за кожною таблицею чи технічним шаром. Тестуйте API-контракт, таймаути, повтори, часткові відмови, трасування між сервісами й сумісність незалежних релізів.
+
+Розбиття за технічними шарами породжує ланцюги викликів і координовані релізи, тобто втрачає головну перевагу мікросервісів.
+
+Які витрати додає перехід до мікросервісів?
+
+Мережеві відмови, узгодження даних, observability, автоматизацію релізів, безпеку між сервісами та підтримку кількох версій контрактів.','Які витрати додає перехід до мікросервісів?','Мережеві відмови, узгодження даних, observability, автоматизацію релізів, безпеку між сервісами та підтримку кількох версій контрактів.','Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','["architecture","Архітектура","Мікросервісна архітектура"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(172,'architecture-distributed-monolith-15','article','architecture','Моноліт і мікросервіси','middle',NULL,36,1,'Розподілений моноліт','Distributed monolith складається з кількох розгортуваних сервісів, які через зв’язність потребують координованих змін і релізів.','Distributed monolith складається з кількох розгортуваних сервісів, які через зв’язність потребують координованих змін і релізів. Мікрофронтенди й окремі репозиторії самі собою не доводять, що система має добрі сервісні межі.
+
+Відстежуйте спільні релізи й каскади синхронних викликів; зменшуйте їх через стабільні контракти та володіння доменом. Змініть контракт у тестовому середовищі й перевірте, чи можна розгорнути сумісні версії поетапно без спільного вікна.
+
+Кількість контейнерів створює видимість мікросервісів, але не незалежність команди або даних.
+
+Які ознаки distributed monolith?
+
+Часті синхронні залежності, спільні релізи, зміни багатьох сервісів для одного сценарію та спільне володіння даними без чітких контрактів.','Які ознаки distributed monolith?','Часті синхронні залежності, спільні релізи, зміни багатьох сервісів для одного сценарію та спільне володіння даними без чітких контрактів.','Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','["architecture","Моноліт і мікросервіси","Distributed monolith"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(173,'architecture-stratehiya-strangler-dlya-mihratsii-16','article','architecture','Моноліт і мікросервіси','middle',NULL,37,1,'Поступова міграція за патерном strangler','Strangler-підхід поступово переносить вибрані можливості зі старої системи за фасадом маршрутизації, не вимагаючи одноразового переписування всього продукту.','Strangler-підхід поступово переносить вибрані можливості зі старої системи за фасадом маршрутизації, не вимагаючи одноразового переписування всього продукту. Тимчасова подвійна система потребує чіткого дедлайну й власника застарілого шляху.
+
+Починайте з обмеженого, вимірюваного домену; визначте джерело істини, план зворотного перемикання й критерії завершення. Перевірте паралельне порівняння результатів, сумісність старого й нового шляху, міграцію даних та поведінку при відмові нового сервісу.
+
+Довге подвійне володіння даними породжує невизначеність і помилки синхронізації.
+
+Як мінімізувати ризик поступової міграції?
+
+Маршрутизувати вузькі функції поетапно, зберігати один авторитетний запис, вимірювати розбіжності та мати перевірений шлях відкату.','Як мінімізувати ризик поступової міграції?','Маршрутизувати вузькі функції поетапно, зберігати один авторитетний запис, вимірювати розбіжності та мати перевірений шлях відкату.','Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','["architecture","Моноліт і мікросервіси","Стратегія strangler для міграції"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(174,'architecture-synkhronna-ta-asynkhronna-vzayemodiya-7','article','architecture','Архітектура','middle',NULL,38,1,'Синхронна та асинхронна взаємодія','Синхронний запит чекає відповідь залежності; асинхронне повідомлення роз’єднує час виконання, але додає черги, повтори, дедуплікацію й eventual consistency.','Синхронний запит чекає відповідь залежності; асинхронне повідомлення роз’єднує час виконання, але додає черги, повтори, дедуплікацію й eventual consistency. Асинхронність не означає миттєве масштабування: черга може накопичити backlog швидше, ніж його обробляють.
+
+Використовуйте синхронний виклик для негайної відповіді користувачу, а чергу — коли роботу можна виконати пізніше й потрібна ізоляція навантаження. Перевірте затримку, таймаути, повторну доставку, порядок повідомлень, дублікати, dead-letter queue та відновлення після недоступності споживача.
+
+Без ідемпотентного споживача повторне повідомлення може двічі списати кошти або виконати дію.
+
+Коли обрати подію замість синхронного HTTP-виклику?
+
+Коли відправнику не потрібна негайна відповідь, роботу можна обробити пізніше, а команда готова керувати повторною доставкою та узгодженістю.','Коли обрати подію замість синхронного HTTP-виклику?','Коли відправнику не потрібна негайна відповідь, роботу можна обробити пізніше, а команда готова керувати повторною доставкою та узгодженістю.','Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','["architecture","Архітектура","Синхронна та асинхронна взаємодія"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(175,'architecture-podiyeva-arkhitektura-9','article','architecture','Архітектура','middle',NULL,39,1,'Подієва архітектура','Подія повідомляє, що факт уже стався; команда-публішер не мусить знати всіх споживачів. Це зменшує зв’язність, але ускладнює трасування причин і наслідків.','Подія повідомляє, що факт уже стався; команда-публішер не мусить знати всіх споживачів. Це зменшує зв’язність, але ускладнює трасування причин і наслідків. Transactional outbox допомагає атомарно зберегти зміну в БД і запис про подію, який буде опубліковано окремо.
+
+Називайте події у минулому часі, версіонуйте схему й визначте власника, політику зберігання та правила сумісності. Перевірте повторну доставку, дублікати, порядок, стару схему, повільного споживача, повторне програвання й відновлення offset.
+
+Не використовуйте події як неструктурований канал команд: кілька споживачів можуть по-різному трактувати прихований намір.
+
+Як уникнути втрати події після коміту в базі?
+
+Застосувати transactional outbox або інший гарантований механізм узгодження запису стану з публікацією, а споживачів зробити ідемпотентними.','Як уникнути втрати події після коміту в базі?','Застосувати transactional outbox або інший гарантований механізм узгодження запису стану з публікацією, а споживачів зробити ідемпотентними.','Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','["architecture","Архітектура","Подієва архітектура"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(176,'architecture-volodinnya-danymy-servisu-10','article','architecture','Архітектура','middle',NULL,40,1,'Володіння даними сервісу','У мікросервісному дизайні сервіс має володіти своїми даними; пряме читання чужої бази з’єднує внутрішню реалізацію двох сервісів.','У мікросервісному дизайні сервіс має володіти своїми даними; пряме читання чужої бази з’єднує внутрішню реалізацію двох сервісів. Окрема БД на сервіс не означає обов’язково окремий сервер бази даних; важливе володіння й незалежний контракт.
+
+Публікуйте стабільний контракт для потрібних даних, уникайте спільних таблиць і плануйте версіонування та видалення полів. Переконайтеся, що зміни схеми власника не ламають споживачів, а кешовані або копійовані дані мають зрозумілий строк узгодження.
+
+Спільна БД часто перетворюється на прихований API без версій, власника та контролю доступу.
+
+Чим небезпечне пряме читання таблиць іншого сервісу?
+
+Схема стає неформальним контрактом, її зміни ламають споживача, а власник не може незалежно еволюціонувати модель.','Чим небезпечне пряме читання таблиць іншого сервісу?','Схема стає неформальним контрактом, її зміни ламають споживача, а власник не може незалежно еволюціонувати модель.','Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','["architecture","Архітектура","Володіння даними сервісу"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(177,'architecture-tranzaktsii-mizh-servisamy-ta-saga-30','article','architecture','Архітектура','middle',NULL,41,1,'Транзакції між сервісами та saga','Розподілена saga координує локальні транзакції та компенсувальні дії, коли глобальної ACID транзакції між сервісами немає.','Розподілена saga координує локальні транзакції та компенсувальні дії, коли глобальної ACID транзакції між сервісами немає. Saga може бути choreography через події або orchestration через координатор.
+
+Опишіть стани процесу, компенсацію, timeout і повтор для кожного кроку; визначте, що відбувається при частковому успіху. Змоделюйте збій після кожного кроку, повтор повідомлення та запізнілий callback; перевірте кінцевий узгоджений стан.
+
+Компенсація не завжди є точним rollback: надісланий лист або зовнішній платіж має окрему бізнес-дію.
+
+Чим компенсація saga відрізняється від DB rollback?
+
+Вона є новою бізнес-операцією, що компенсує вже зафіксований локальний крок; вона не стирає історію транзакції.','Чим компенсація saga відрізняється від DB rollback?','Вона є новою бізнес-операцією, що компенсує вже зафіксований локальний крок; вона не стирає історію транзакції.','Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','["architecture","Архітектура","Транзакції між сервісами та saga"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(178,'architecture-balans-mizh-consistency-ta-availability-29','article','architecture','Архітектура','middle',NULL,42,1,'Компроміс між узгодженістю даних і доступністю','Розподілена система може тимчасово показувати застарілий стан, якщо пріоритетом є доступність під час затримки реплікації.','Розподілена система може тимчасово показувати застарілий стан, якщо пріоритетом є доступність під час затримки реплікації. Терміни consistency/availability залежать від конкретної моделі й меж збою; їх не можна звести до одного прапорця.
+
+Для кожного бізнес-сценарію визначте, яка затримка узгодження прийнятна, і які операції потребують негайної гарантії. Після запису одразу прочитайте через різні replicas/сервіси, змоделюйте затримку події й перевірте UX та повторні спроби.
+
+Приховати eventual consistency без індикації стану може змусити користувача повторювати дію й створити дублі.
+
+Як тестувати eventual consistency?
+
+Виміряти допустимий час поширення, перевірити проміжний стан, eventual результат, повторне читання й UX до завершення синхронізації.','Як тестувати eventual consistency?','Виміряти допустимий час поширення, перевірити проміжний стан, eventual результат, повторне читання й UX до завершення синхронізації.','Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','["architecture","Архітектура","Баланс між consistency та availability"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(179,'architecture-cqrs-i-okremi-read-models-33','article','architecture','Архітектура','middle',NULL,43,1,'CQRS та окремі моделі читання','CQRS розділяє моделі команд і читання, коли їхні потреби суттєво різняться; це додає синхронізацію та можливу затримку оновлення read model.','CQRS розділяє моделі команд і читання, коли їхні потреби суттєво різняться; це додає синхронізацію та можливу затримку оновлення read model. CQRS не обов’язково означає окремі бази або мікросервіси.
+
+Не вводьте CQRS без вимірюваної потреби; визначте джерело істини й допустимий lag між записом і читанням. Після команди перевірте eventual оновлення read model, повтор події, побудову з нуля й узгодження після відставання.
+
+Користувач може не побачити свіжу зміну одразу після успішного запису.
+
+Як пояснити затримку після команди в CQRS?
+
+Команда записана в write model, а read projection оновлюється асинхронно; UX має врахувати стан обробки та допустимий lag.','Як пояснити затримку після команди в CQRS?','Команда записана в write model, а read projection оновлюється асинхронно; UX має врахувати стан обробки та допустимий lag.','Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','["architecture","Архітектура","CQRS і окремі read models"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(180,'architecture-komunikatsiyni-kontrakty-y-consumer-driven-tests-34','article','architecture','Архітектура','middle',NULL,44,1,'Контракти взаємодії та тести, керовані споживачем','Контракт взаємодії формалізує очікування споживача щодо повідомлень і поведінки постачальника сервісу.','Контракт взаємодії формалізує очікування споживача щодо повідомлень і поведінки постачальника сервісу. Підхід, керований споживачем, дає змогу перевірити сумісність до спільного розгортання: кожен споживач фіксує потрібну йому частину контракту, а постачальник перевіряє, що її дотримано.
+
+Версіонуйте контракти, запускайте перевірки сумісності в конвеєрі безперервної інтеграції та видаляйте застарілі очікування лише після перевірки всіх активних споживачів. Змініть формат поля або статус відповіді у тестовому постачальнику й перевірте, чи конвеєр виявляє несумісність до випуску.
+
+Контракт, який не оновлюється разом із фактичними клієнтами, перетворюється на застаріле джерело вимог і створює хибне відчуття сумісності.
+
+Що перевіряє consumer-driven contract?
+
+Що provider зберігає конкретні формати й поведінку, які реально очікує consumer, у межах узгодженого контракту.','Що перевіряє consumer-driven contract?','Що provider зберігає конкретні формати й поведінку, які реально очікує consumer, у межах узгодженого контракту.','OpenAPI Specification','https://spec.openapis.org/oas/latest.html','["architecture","Архітектура","Комунікаційні контракти й consumer-driven tests"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(181,'architecture-api-gateway-8','article','architecture','Архітектура','middle',NULL,45,1,'Шлюз API','API Gateway є контрольованою точкою входу для маршрутизації, автентифікації, обмеження частоти або агрегації — залежно від дизайну системи.','API Gateway є контрольованою точкою входу для маршрутизації, автентифікації, обмеження частоти або агрегації — залежно від дизайну системи. Шлюз не скасовує серверну авторизацію: сервіс має перевірити право на власні дані й операції.
+
+Залишайте в шлюзі наскрізні мережеві політики, а доменні правила тримайте у відповідальному сервісі. Тестуйте маршрути, авторизаційні політики, заголовки, timeout, rate limit, великі тіла запиту, недоступний upstream і коректність логів без секретів.
+
+Перевантажений gateway стає новим монолітом і критичною точкою відмови.
+
+Що не варто розміщувати в API Gateway?
+
+Велику доменну бізнес-логіку, яка має змінюватися разом із конкретною бізнес-відповідальністю сервісу.','Що не варто розміщувати в API Gateway?','Велику доменну бізнес-логіку, яка має змінюватися разом із конкретною бізнес-відповідальністю сервісу.','Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','["architecture","Архітектура","API Gateway"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(182,'architecture-masshtabuvannya-i-stateful-komponenty-27','article','architecture','Архітектура','middle',NULL,46,1,'Масштабування та компоненти зі станом','Stateless екземпляри легше додавати за балансувальником; локальна сесія чи файл створюють affinity та ускладнюють заміну вузла.','Stateless екземпляри легше додавати за балансувальником; локальна сесія чи файл створюють affinity та ускладнюють заміну вузла. Stateless не означає відсутності стану в усій системі; це означає, що конкретний екземпляр не є єдиним власником клієнтського стану.
+
+Виносьте спільний стан у відповідне сховище, але враховуйте його доступність, затримку й узгодженість. Перекидайте запити між екземплярами, перезапускайте один вузол і перевіряйте, що користувацька сесія та файли збереглися.
+
+Горизонтальне масштабування application tier не допоможе, якщо єдина БД або черга стала вузьким місцем.
+
+Чому локальні сесії ускладнюють масштабування?
+
+Наступний запит може потрапити на інший екземпляр; потрібна sticky session або спільне сховище, а відмова вузла може втратити локальний стан.','Чому локальні сесії ускладнюють масштабування?','Наступний запит може потрапити на інший екземпляр; потрібна sticky session або спільне сховище, а відмова вузла може втратити локальний стан.','Microsoft Learn: Architecture styles','https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/','["architecture","Архітектура","Масштабування і stateful компоненти"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(183,'architecture-circuit-breaker-i-taymauty-11','article','architecture','Архітектура','middle',NULL,47,1,'Автоматичний вимикач і таймаути','Таймаут обмежує час очікування, а circuit breaker тимчасово припиняє виклики залежності, що систематично падає. Обидва механізми зменшують каскадне виснаження ресурсів.','Таймаут обмежує час очікування, а circuit breaker тимчасово припиняє виклики залежності, що систематично падає. Обидва механізми зменшують каскадне виснаження ресурсів. Retry без idempotency key може зробити дубльований запис, коли відповідь загубилась після успішного виконання.
+
+Задавайте таймаути за бюджетом затримки сценарію; додавайте обмежені повтори з backoff і випадковим jitter лише для повторюваних безпечних операцій. Перевірте відкритий, напіввідкритий і закритий стани breaker, відновлення залежності, ліміти спроб і поведінку для неідемпотентної операції.
+
+Нескінченні або синхронізовані повтори збільшують навантаження саме під час збою.
+
+Чому не можна повторювати кожну помилку?
+
+Помилка може бути постійною або операція вже виконалася; повтор збільшує навантаження та створює побічний ефект. Враховуйте статус, безпечність операції й ліміт спроб.','Чому не можна повторювати кожну помилку?','Помилка може бути постійною або операція вже виконалася; повтор збільшує навантаження та створює побічний ефект. Враховуйте статус, безпечність операції й ліміт спроб.','Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','["architecture","Архітектура","Circuit breaker і таймаути"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(184,'architecture-vidmovostiykist-i-graceful-degradation-13','article','architecture','Архітектура','middle',NULL,48,1,'Відмовостійкість і контрольована деградація функцій','Відмовостійка система визначає, що робити, коли залежність недоступна: обмежити функцію, використати кеш або показати контрольовану помилку.','Відмовостійка система визначає, що робити, коли залежність недоступна: обмежити функцію, використати кеш або показати контрольовану помилку. Резервування без перевіреного failover і процедури відновлення не гарантує доступності.
+
+Визначте критичні та другорядні залежності, бюджети часу й безпечну поведінку при частковій відмові. Вимкніть залежність у тестовому середовищі, перевірте таймаути, fallback, повідомлення клієнта й відновлення після повернення сервісу.
+
+Fallback зі старими даними може бути небезпечним, якщо продукт показує фінансовий чи безпековий стан як актуальний.
+
+Як відрізняється failover від fallback?
+
+Failover перемикає роботу на резервний компонент; fallback дає альтернативний результат або обмежену функціональність, коли основний шлях недоступний.','Як відрізняється failover від fallback?','Failover перемикає роботу на резервний компонент; fallback дає альтернативний результат або обмежену функціональність, коли основний шлях недоступний.','Microsoft Learn: Architecture styles','https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/','["architecture","Архітектура","Відмовостійкість і graceful degradation"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(185,'architecture-sposterezhuvanist-i-rozpodileni-trasuvannya-12','article','architecture','Архітектура','middle',NULL,49,1,'Спостережуваність і розподілені трасування','Логи пояснюють окремі події, метрики показують агреговану поведінку, а traces пов’язують шлях одного запиту через компоненти.','Логи пояснюють окремі події, метрики показують агреговану поведінку, а traces пов’язують шлях одного запиту через компоненти. Метрика з високою кардинальністю, як-от user ID як label, може перевантажити систему моніторингу.
+
+Передавайте correlation/trace ID через межі, логуючи структуровані поля. Не записуйте паролі, токени й зайві персональні дані. Зімітуйте запит крізь кілька сервісів і переконайтеся, що можна знайти його в логах, побачити затримку сегментів і локалізувати помилку.
+
+Великий потік неструктурованих логів без ідентифікаторів і метрик збільшує витрати, але не полегшує пошук.
+
+Що допоможе знайти повільний сервіс у ланцюгу?
+
+Розподілений trace з часовими сегментами викликів, correlation ID для переходу до логів і метрики затримки/помилок для масштабу проблеми.','Що допоможе знайти повільний сервіс у ланцюгу?','Розподілений trace з часовими сегментами викликів, correlation ID для переходу до логів і метрики затримки/помилок для масштабу проблеми.','Microsoft Learn: Architecture styles','https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/','["architecture","Архітектура","Спостережуваність і розподілені трасування"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(186,'tools-prohramna-systema-ta-ii-komponenty-1','article','tools','Фундаментальні поняття','middle',NULL,0,4,'Програмна система та її компоненти','Програмна система — це узгоджена сукупність програм, даних, конфігурацій, інфраструктури та операційних практик, які спільно забезпечують потрібну поведінку.','## Поняття системи
+
+Програмою зазвичай називають опис обчислень у вихідному коді або виконуваний артефакт. Застосунок є програмним продуктом, з яким взаємодіє користувач або інша система. Сервісом називають компонент, що надає визначену функцію через узгоджену межу, наприклад мережевий API чи бібліотечний інтерфейс. Програмна система охоплює всі ці елементи та їхні взаємозалежності: клієнтську частину, серверну логіку, сховища, мережу, конфігурацію, процеси розгортання й спостережуваність. Саме взаємодія визначає фактичну поведінку продукту, тому локально коректний компонент не гарантує коректності системи загалом.
+
+## Компоненти та межі
+
+Компонент має відповідальність, стан і контракт взаємодії. Контракт може бути викликом функції, HTTP-операцією, повідомленням у черзі, схемою даних або операційною домовленістю про тайм-аут і повтор. Межа компонента визначає, які рішення він контролює, а які делегує залежностям. У невеликому застосунку ці межі можуть бути модулями одного процесу; у великій системі — сервісами на окремих вузлах. Фізичне розділення не є обов’язковою ознакою компонентності: важливіше, чи можна зрозуміти контракт і змінити реалізацію без непередбачуваного впливу на сусідів.
+
+## Модель взаємодії
+
+Розгляньмо оформлення замовлення. Браузер надсилає запит до прикладного API, сервер перевіряє правила й записує замовлення до реляційної бази. Після фіксації зміни система може опублікувати подію для складського сервісу, а пошуковий індекс оновиться окремим споживачем. Користувач бачить одну функцію, але її результат утворюють синхронний шлях запиту, транзакція та подальша асинхронна обробка. Якщо будь-яка межа неправильно передає ідентифікатор, версію даних або помилку, наскрізний сценарій порушується.
+
+## Якість системи та роль QA
+
+Архітектура має задовольняти як функціональні вимоги, так і властивості якості: затримку, доступність, безпеку, відновлюваність, масштабованість і супроводжуваність. Ці властивості можуть конфліктувати. Наприклад, синхронна перевірка всіх залежностей спрощує узгодженість відповіді, але збільшує її затримку та кількість точок відмови. QA Engineer досліджує систему на межах: перевіряє контракти, передачу стану, права доступу, повтори після тайм-ауту, поведінку при частковій відмові та відповідність журналів і трас наскрізній операції. Типова хибна модель полягає в тому, що «сервер працює» означає «продукт справний»; насправді працездатність залежить від маршрутизації, конфігурації, зовнішніх сервісів і стану даних.
+
+## Системна межа та інваріанти
+
+Межа системи визначається не лише репозиторієм чи мережею, а й тим, хто відповідає за коректність конкретного факту. Наприклад, сервіс платежів є авторитетним щодо стану транзакції, тоді як каталог є авторитетним щодо опису товару. Кеш, пошуковий індекс і аналітичне сховище можуть містити копії цих відомостей, але не повинні непомітно ставати альтернативними джерелами істини. Явне визначення власності допомагає уникнути суперечливих записів, циклічних залежностей і ситуацій, коли різні команди змінюють той самий домен через різні інтерфейси.
+
+## Наскрізний доказ якості
+
+Для QA одиницею мислення часто стає не окремий екран, а бізнес-операція разом із її змінами стану. Перевірка створення замовлення може вимагати зіставити відповідь API, транзакційний запис, повідомлення у брокері й похідний результат у пошуковому індексі. Кореляційний ідентифікатор пов’язує ці докази, а часова шкала показує причинний порядок. Тест повинен також враховувати межі відповідальності: відмова пошуку не обов’язково означає, що транзакція замовлення не відбулася. Саме розділення критичного й похідного стану дозволяє сформулювати коректне очікування для кожного компонента.
+
+## Еволюція стану та відповідальність компонентів
+
+Компоненти можна розрізняти також за типом стану, яким вони володіють. Доменний сервіс зберігає авторитетну зміну, кеш тимчасово прискорює читання, індекс оптимізує пошук, а журнал подій допомагає передати факт іншим споживачам. Це не рівнозначні копії: кожна має власний строк актуальності та механізм відновлення. У моделі системи потрібно показати, де народжується зміна, які похідні представлення будуються з неї та як перевіряється їхнє оновлення. Якщо користувач бачить старі дані, саме знання про власника факту дозволяє визначити, чи дефект належить транзакційному сервісу, конвеєру подій або механізму інвалідації. Інтеграційний тест має охоплювати цей ланцюг, але перевіряти кожен стан у відповідному джерелі, не вимагаючи від усіх компонентів однакового часу відповіді.
+
+## Системна межа та критерій завершеності
+
+Опис системи має відповідати на питання, за якими ознаками можна вважати операцію завершеною. Для завантаження файла це може бути не поява повідомлення у браузері, а збереження об''єкта, перевірка його цілісності та доступність метаданих. Для реєстрації користувача — не лише відповідь endpoint-а, а й створення профілю, ініціювання підтвердження та дотримання політики доступу. Критерій завершеності розділяє синхронний результат і подальші побічні процеси та визначає, що саме має бути атомарним. QA формулює його як спостережувану властивість, після чого перевіряє негативні гілки й відновлення. Це запобігає ситуації, коли кожен компонент демонструє локальну успішність, але спільний продукт не виконує обіцянку користувачу.
+
+## Документування архітектурних меж
+
+Системна схема має залишатися корисною в роботі, а не лише під час презентації. Для кожного важливого компонента фіксують відповідальність, вхідний контракт, залежності, власника даних і спосіб спостереження за його станом. Рівень деталізації має відповідати рішенню: контекстна схема пояснює зовнішні системи, контейнерна показує виконувані одиниці, а компонентна — внутрішні модулі. Надмірно дрібна діаграма швидко застаріває, тоді як одна узагальнена картинка приховує критичні мережеві межі. QA використовує ці моделі для вибору тестових швів і визначення, які відмови потрібно симулювати. Коли фактичний шлях запиту не відповідає схемі, це сигнал перевірити документацію й приховані залежності.
+
+## Системна перевірка під час змін
+
+Зміна в одному компоненті може впливати на сусідні через контракт, спільний ресурс або часову залежність. Аналіз впливу встановлює, які сценарії варто повторити перед випуском і які компоненти треба включити до regression suite. Карта залежностей корисна лише тоді, коли відображає реальні виклики й власників, тому її слід звіряти з трасами та конфігурацією. QA визначає критичні end-to-end потоки та окремо тестує деградацію необов''язкових підсистем. Це дає змогу підтримувати швидкий зворотний зв''язок без спроби повторювати кожен тест для кожної зміни. Рівень доказу має відповідати ризику: зміна форматування не потребує тесту всієї платіжної системи, але зміна загального API контракту може.',NULL,NULL,'Microsoft Azure Architecture Center: стилі архітектури','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/','["tools","Фундаментальні поняття"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(187,'tools-protses-vykonannya-prohramy-2','article','tools','Фундаментальні поняття','middle',NULL,1,4,'Процес виконання програми','Виконання програми — це робота завантажувача, операційної системи, процесора та середовища виконання над кодом і його станом.','## Від артефакту до процесу
+
+Файл програми сам по собі не виконує інструкцій. Операційна система спочатку перевіряє формат виконуваного файла, завантажує необхідні сегменти у віртуальний адресний простір, налаштовує початкові дані й передає керування точці входу. Динамічний завантажувач може під’єднати спільні бібліотеки, розв’язати символи та застосувати релокації. Якщо програма має середовище виконання, наприклад JVM, початковим кодом для процесора може бути не машинний код прикладної логіки, а код запуску віртуальної машини.
+
+## Інструкції, пам’ять і ресурси
+
+Після старту процесор виконує машинні інструкції, змінює регістри й звертається до пам’яті відповідно до адрес, сформованих програмою. Процес є ізольованим контейнером ресурсів ОС: він має адресний простір, дескриптори файлів, облікові дані та один або більше потоків. Звернення до мережі, файлів і системного часу часто проходить через системний виклик, який перемикає виконання до контрольованого коду ядра. Помилка може виникнути на різних етапах: від відсутньої бібліотеки під час завантаження до відмови файлової системи чи перевищення ліміту відкритих сокетів під час роботи.
+
+## Приклад діагностики
+
+Якщо API-процес запускається локально, але не стартує в контейнері, однаковий вихідний код ще не доводить однаковість середовищ. Можуть відрізнятися архітектура процесора, версія системної бібліотеки, шлях до конфігурації, права користувача, змінні середовища або обмеження пам’яті контейнера. QA зіставляє артефакт, команду запуску, код завершення, системні журнали й фактичні ресурси процесу. Для зависання важливо визначити, чи потік очікує блокування, мережеву відповідь, дискову операцію або планування CPU; сам факт наявності процесу в списку не визначає його корисний стан.
+
+## Практичний погляд QA
+
+Перевірки виконання охоплюють чистий запуск, повторний запуск після аварійного завершення, вичерпання пам’яті та дескрипторів, доступ до тимчасових файлів, сигнали завершення й коректне звільнення ресурсів. Для діагностики корисно пов’язувати прикладний ідентифікатор запиту з PID, часовими мітками та метриками CPU й пам’яті. Віртуальна пам’ять не є синонімом фізичної RAM: процес може мати великий адресний простір, але фактичне навантаження визначається резидентними сторінками й доступними лімітами. Це розрізнення допомагає не трактувати сам розмір адресного простору як доказ витоку пам’яті.
+
+## Планувальник і життєвий цикл
+
+Операційна система розподіляє час процесора між готовими потоками, витісняючи один потік і відновлюючи інший відповідно до пріоритетів та політики планування. Перемикання контексту зберігає регістри й стан виконання, але має витрати; надмірна кількість активних потоків може зменшити корисну пропускну здатність. Під час запуску важливі системні межі: права користувача, ліміти ресурсів, змінні середовища, файлові дескриптори й доступність бібліотек. Після завершення ОС має закрити ресурси процесу, однак зовнішні побічні ефекти, наприклад незавершений платіжний запит, потребують прикладної процедури відновлення.
+
+## Сценарій відновлення
+
+Надійний тест запуску перериває процес у різних точках: до відкриття порту, після приймання запиту, під час запису у файл або після відправлення повідомлення. Для кожного перезапуску перевіряють код завершення, повторне відкриття ресурсу, відсутність дубльованого ефекту й здатність системи повідомити про неповний стан. Ідентичність процесу, системний журнал і кореляційний ID допомагають відокремити збій ОС від винятку застосунку. Якщо контейнер перезапускає процес автоматично, цикл рестартів також може приховати першопричину, тому QA має аналізувати частоту аварій і готовність сервісу, а не лише його присутність.
+
+## Планування ресурсів у контейнерному середовищі
+
+У контейнеризованому середовищі процес може отримати обмеження CPU та пам’яті, відмінні від ресурсів хост-машини. Операційна система планує процеси відповідно до цих обмежень, а перевищення ліміту пам’яті може завершити процес без прикладного винятку. Перезапуск оркестратором повертає процес у роботу, але не пояснює, чому він був завершений і чи завершив попередню операцію. Тому QA при відтворенні враховує exit code, події контейнера, системні ліміти, ресурси вузла й стан зовнішніх залежностей. Сценарій навантаження має перевіряти не лише успішну відповідь, а й контрольовану поведінку при виснаженні ресурсів: чи зберігаються вже підтверджені дані, чи звільняються з’єднання та чи можна безпечно повторити незавершену команду.
+
+## Процес як одиниця відмови та спостереження
+
+Процес є одиницею, яку операційна система може ізолювати, обмежити ресурсами та завершити, але реальна програма може складатися з багатьох процесів, наприклад worker-ів і супервізора. Перезапуск одного процесу відновлює виконання, але може втратити локальну пам''ять, незбережені дані та з''єднання. Тому сервісна готовність повинна враховувати прогрівання й відновлення підключень, а не лише факт створення PID. Логи завершення, exit code, метрики рестартів і системні події дають різні докази; їхня кореляція допомагає відрізнити планове завершення від OOM kill чи аварійного винятку. QA перевіряє поведінку після контрольованого завершення worker-а та підтверджує, що повторно підхоплена робота не створює дубльований ефект.
+
+## Сигнали процесу та готовність сервісу
+
+Моніторинг процесу відрізняє стан операційної системи від стану застосунку. CPU time, RSS, кількість дескрипторів, потоки, exit code і час безперервної роботи описують ресурсний профіль, але не замінюють перевірку бізнес-готовності. Startup probe дає час запустити runtime і завантажити конфігурацію, readiness визначає допуск трафіку, а liveness допомагає виявити завислий процес, який не відновиться сам. Неправильна liveness-перевірка може перезапускати систему через повільну БД і посилити інцидент. QA перевіряє поведінку probe-ів при затримці залежності, недійсній конфігурації та прогріванні, а також те, що процес коректно завершується після сигналу й не приймає нову роботу під час shutdown.
+
+## Конфігурація оточення та повторюваність
+
+Процес отримує конфігурацію з аргументів, змінних оточення, файлів і системних сервісів. Різні значення можуть змінити URL бази, порт прослуховування, ліміти або feature flags навіть за того самого бінарного файлу. Конфігураційний дефект часто проявляється як помилка підключення чи доступу, яку помилково приписують коду. QA фіксує ефективну конфігурацію без розкриття секретів і порівнює її між середовищами. Тестує відсутній ключ, недійсний формат і конфлікт джерел конфігурації. Процес має відмовляти під час старту з зрозумілим повідомленням, якщо критична конфігурація неправильна, а не переходити в небезпечний режим за замовчуванням.',NULL,NULL,'Документація ядра Linux','https://docs.kernel.org/','["tools","Фундаментальні поняття"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(188,'tools-kompilyator-3','article','tools','Фундаментальні поняття','middle',NULL,2,4,'Компілятор','Компілятор перетворює програму з вихідної мови у представлення, придатне для виконання цільовою платформою, і виявляє частину помилок до запуску.','## Передумови та призначення
+
+Процесору потрібні інструкції визначеного набору команд, тоді як людина пише програму мовою з абстракціями, типами та структурою. Компілятор утворює відтворюваний перехід між цими рівнями. На відміну від простого текстового перекладача, він аналізує структуру програми, перевіряє семантичні правила та може оптимізувати обчислення, зберігаючи визначену мовою поведінку. Компіляція може завершуватися машинним кодом, об’єктним файлом, байткодом або іншим проміжним поданням; конкретний ланцюг залежить від мови й платформи.
+
+## Фази компіляції
+
+Лексичний аналізатор групує символи у токени, наприклад ідентифікатори, числа й оператори. Синтаксичний аналіз зіставляє токени з граматикою та будує абстрактне синтаксичне дерево. Семантична перевірка уточнює типи, області видимості, доступність і допустимість операцій. Далі компілятор може перетворити дерево на проміжне представлення, у якому оптимізатор аналізує потік керування, значення й використання пам’яті. Бекенд добирає машинні інструкції для цільової архітектури, а компонувальник пов’язує посилання між об’єктними файлами й бібліотеками. Це концептуальні межі: реальні компілятори можуть об’єднувати або повторювати фази.
+
+## Проміжне подання та оптимізації
+
+Проміжне подання відокремлює фронтенд конкретної мови від бекенду конкретного процесора. Та сама мова може підтримувати кілька цільових архітектур, а кілька мов — спільно використовувати оптимізатор. Оптимізації на кшталт усунення недосяжного коду чи спрощення констант зменшують зайві обчислення, але мають зберігати семантику, включно з побічними ефектами та правилами пам’яті. Прапорці оптимізації можуть змінювати швидкодію, обсяг артефакту й налагоджуваність; вони не повинні непомітно змінювати коректний результат програми.
+
+## Компіляція, інтерпретація та перевірка
+
+Інтерпретатор виконує програму, читаючи її представлення під час роботи; багато сучасних середовищ поєднують інтерпретацію, компіляцію байткоду й JIT-компіляцію. Тому розрізнення «компільована чи інтерпретована мова» часто описує поширений спосіб виконання, а не незмінну властивість мови. QA перевіряє помилки на етапі збирання, детермінованість артефакту, відповідність цільовій платформі, символи налагодження та узгодженість тестованої версії з розгорнутою. Мала програма для компілятора має охоплювати межі типів, кодування, залежності й налаштування збірки. Офіційний навчальний матеріал LLVM наочно показує шлях від лексера й синтаксичного дерева до проміжного представлення та генерації коду.
+
+## Збірка як керований процес
+
+Вихідний код рідко компілюється ізольовано від залежностей. Менеджер збірки визначає порядок модулів, прапорці, цільову архітектуру й версії бібліотек; компонувальник розв’язує зовнішні символи, а пакувальник формує виконуваний артефакт. Динамічне компонування переносить частину залежностей на момент запуску, тоді як статичне може включити їх до артефакту. Невідповідність ABI, неправильний порядок пошуку бібліотек або різні генератори коду можуть проявитися лише в певному середовищі. Отже, успішна компіляція одного файла не дорівнює успішній відтворюваній збірці всього продукту.
+
+## Дефекти на різних фазах
+
+Лексична помилка відрізняється від синтаксичної, семантичної та компонувальної помилки за місцем виникнення й доступними доказами. Невизначений токен виявляється до побудови дерева, несумісний тип — під час семантичного аналізу, а відсутній символ бібліотеки — під час компонування чи завантаження. Автоматизована перевірка має зберігати повний код завершення, версію компілятора й відповідний діагностичний потік. Для компіляторного інструментарію QA також перевіряє детермінованість: однакові джерела й залежності мають давати очікувано однаковий результат, якщо це є вимогою системи збірки.
+
+## Межа між мовою, компілятором і платформою
+
+Специфікація мови визначає допустимий зміст програми, тоді як конкретний компілятор є реалізацією цієї специфікації та може мати власні розширення або відмінності. Цільова платформа додає ще один рівень: ABI, інструкції процесора, бібліотеки та системні виклики. Тому твердження «цей код працює» має контекст версії компілятора, прапорців, залежностей і середовища. Крос-компіляція створює артефакт для іншої цілі, ніж машина побудови, отже локальний успіх не підтверджує запуск на цільовій архітектурі. QA перевіряє матрицю підтримуваних платформ, відмінності локальної та CI збірок і відповідність артефакту вимогам розгортання. Для критичних компонентів корисні перевірки сумісності ABI та контроль походження бінарних залежностей.
+
+## Компонування та сумісність артефакту
+
+Після генерації машинного коду компонувальник з''єднує окремі одиниці трансляції та бібліотеки відповідно до ABI й правил розв''язання символів. Статичне компонування включає код залежності до артефакту, динамічне покладається на сумісну бібліотеку в середовищі запуску; вибір змінює розмір, оновлюваність і ризик несумісності. Крос-компілятор може створити бінарний файл для процесора або ОС, відмінних від машини побудови, отже успішна збірка не перевіряє поведінку цільової платформи. У pipeline зберігають toolchain, параметри й версії бібліотек як частину provenance. QA досліджує дефект на точному артефакті, оскільки перебудова на іншому компіляторі може змінити умови його прояву.
+
+## Діагностичні збірки та відтворення дефекту
+
+Оптимізований бінарний файл може поводитися інакше від діагностичної збірки через inline, видалення невикористаного коду, зміну порядку операцій або припущення оптимізатора. Налагоджувальні символи дають змогу зіставити машинні адреси з вихідним кодом, але їхнє збереження та розповсюдження потребують контролю. Для дефекту, що проявляється тільки в production-конфігурації, QA фіксує digest бінарного артефакту, параметри компіляції, версію runtime й дані запиту. Перевірка ізольованого модуля може допомогти локалізувати проблему, однак остаточне підтвердження виконують на тому самому режимі збірки. Саме відтворюваність середовища перетворює повідомлення «інколи падає» на доказову технічну проблему.
+
+## Компіляторні попередження та статичний аналіз
+
+Компілятор може повідомити про підозрілий код, недосяжну гілку чи перетворення типу, але попередження не є автоматичним доказом дефекту. Проєкт може трактувати обрані попередження як помилки, щоб не накопичувати технічний борг, або поступово посилювати правила. Статичний аналіз досліджує властивості коду без запуску, проте не знає усіх runtime-даних та зовнішніх конфігурацій. QA розглядає такі перевірки як ранній шар захисту й аналізує, чи пропущені правила узгоджені з ризиком продукту. Відсутність повідомлень компілятора не замінює функціонального тесту, так само як успішний тест не доводить безпечність усіх шляхів виконання.',NULL,NULL,'LLVM: посібник зі створення фронтенду мови','https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/index.html','["tools","Фундаментальні поняття"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(189,'tools-seredovyshche-vykonannya-ta-virtual-na-mashyna-4','article','tools','Фундаментальні поняття','middle',NULL,3,4,'Середовище виконання та віртуальна машина','Середовище виконання надає програмі механізми завантаження, виконання, керування пам’яттю, обробки винятків і взаємодії з операційною системою.','## Проміжний код і переносність
+
+Компільований застосунок не завжди містить інструкції саме тієї машини, де його буде запущено. JVM виконує байткод класів Java, а CLR виконує проміжне представлення .NET; під час роботи методи можуть компілюватися у машинний код цільового процесора. Така схема відокремлює вихідну мову від апаратної архітектури та дає середовищу спільну точку для перевірок типів, керування пам’яттю, завантаження модулів і налагодження. Переносність усе одно обмежена нативними залежностями, системними викликами, версіями середовища та особливостями цільової платформи.
+
+## Компоненти та життєвий цикл
+
+Середовище виконання завантажує модулі, перевіряє їхню структуру, розв’язує залежності, створює області пам’яті, підтримує потоки й диспетчеризує винятки. JIT-компілятор може спочатку виконувати байткод інтерпретатором, а зібрану статистику використовувати для компіляції гарячих методів. Це дає змогу оптимізувати типову поведінку конкретного процесу, проте додає прогрівання й витрати CPU під час старту. Специфікація JVM визначає абстрактну машину та логічні області даних, але не нав’язує всім реалізаціям однаковий фізичний розподіл пам’яті чи політику компіляції.
+
+## Практичний приклад
+
+Сервіс на JVM може швидко стартувати на тестовому наборі, але після прогрівання показувати інший профіль затримки, коли JIT-компілятор оптимізує часто викликаний код. Водночас під час дефіциту пам’яті середовище може запускати збирання сміття, що створює паузи або конкурентне навантаження. Перевірка лише холодного запуску не описує поведінку сталого трафіку, а вимірювання лише після прогрівання може приховати деградацію старту. Аналогічно зміна версії runtime може вплинути на доступні сертифікати, TLS, збирач сміття й сумісність бібліотек навіть без зміни прикладного коду.
+
+## Перевірки QA
+
+QA має фіксувати версію середовища й параметри запуску, зіставляти поведінку холодного та прогрітого процесу, аналізувати використання купи, частоту збирання сміття й помилки завантаження класів або збірок. Слід тестувати завершення при некоректних аргументах, відсутній залежності, обмеженій пам’яті й перериванні сигналом. Важливо розрізняти помилку застосунку та помилку середовища: наприклад, виняток через відсутній клас часто вказує на конфлікт складання чи пакування, а не на бізнес-логіку. Середовище керує частиною ресурсів, але не гарантує автоматичного закриття сокетів, файлів і транзакцій.
+
+## Сумісність і конфігурація runtime
+
+Середовище виконання є частиною артефакту постачання, навіть коли воно встановлюється окремо від застосунку. Цільова версія JVM або CLR визначає доступний формат байткоду, поведінку бібліотек, параметри GC і підтримку нативних залежностей. Налаштування пам’яті контейнера можуть впливати на рішення збирача сміття, а різні системні сертифікати — на TLS-з’єднання. Тому зміна runtime є зміною платформи, яку потрібно перевіряти як окремий ризик, а не як прозору інфраструктурну дію.
+
+## Холодний старт і довга робота
+
+Середовище може демонструвати різні характеристики на початку й після тривалого навантаження. Завантаження класів, JIT-компіляція, прогрівання пулів і створення кешів впливають на cold start; під час steady state виявляються накопичення пам’яті, частота GC та деградація з’єднань. QA має вимірювати обидва режими, коли продукт має вимоги до швидкого масштабування чи довготривалої стабільності. Для відтворюваності фіксують параметри середовища й тестову версію; інакше відмінність затримки може бути наслідком іншого прогрівання, а не регресії коду.
+
+## Керування життєвим циклом об’єктів
+
+Runtime визначає, коли об’єкт створюється, як його тип перевіряється і коли звільняється пам’ять. У керованих середовищах збирач сміття знаходить об’єкти, які більше недосяжні з коренів, однак довгоживуче посилання може випадково утримувати кеш, підписку або великий буфер. У середовищах із ручним керуванням пам’яттю помилка володіння може спричинити use-after-free чи подвійне звільнення. Різні механізми мають спільний практичний наслідок: виділення ресурсів повинно мати зрозумілий життєвий цикл. Тестування довгої сесії, повторного відкриття ресурсу й контрольованого завершення виявляє витоки, які не видно в короткому функціональному прогоні. Профіль пам’яті потрібно зіставляти з кількістю запитів і станом кешів, щоб відрізнити штатне зростання від неприпустимого накопичення.
+
+## Виконання нативного коду та межі керованого середовища
+
+JVM і CLR виконують керований байткод через власні механізми завантаження, перевірки типів, JIT та управління пам''яттю. Проте багато застосунків викликають нативні бібліотеки через JNI, P/Invoke чи інші FFI-механізми. Такий виклик перетинає межу моделі пам''яті, типів і обробки помилок; збій нативної бібліотеки може завершити весь процес незалежно від винятків керованого коду. Також нативне виділення пам''яті не завжди видно в heap-профілі runtime. QA відокремлює керовану пам''ять від native memory, перевіряє сумісність архітектури бібліотек та виконує тривалі сценарії, що навантажують нативні залежності. Runtime спрощує управління ресурсами, але не усуває усіх системних меж.
+
+## Завантаження класів і конфлікти залежностей
+
+Runtime знаходить і завантажує класи та бібліотеки за правилами classpath, assembly load context або іншого механізму конкретної платформи. Дві залежності можуть вимагати різні версії однієї бібліотеки, а порядок завантаження здатен приховати конфлікт на одній машині й проявити його на іншій. Динамічне завантаження також впливає на час старту, plugin-архітектуру та ізоляцію коду. QA перевіряє холодний запуск із чистого середовища, відсутність випадкових системних бібліотек, сумісність цільових версій і правильність fallback при недоступній залежності. Звіт про дефект має містити фактичний runtime та список завантажених бібліотек, якщо проблема пов''язана з class loading. Це дозволяє відрізнити помилку бізнес-коду від неповного пакування.
+
+## Оновлення середовища виконання
+
+Оновлення JVM, CLR чи іншого runtime може приносити виправлення безпеки й продуктивності, але змінює базову платформу виконання. Варто перевірити сумісність байткоду, native dependencies, TLS, кодування, параметрів GC та контейнерних лімітів. Відкат runtime може бути складним, якщо артефакт уже зібрано новішою версією. QA запускає регресійні сценарії на цільовій версії, довгий тест пам''яті та контрольні інтеграції з сертифікатами й мережевими бібліотеками. Результати порівнюють на однаковому hardware profile. Перевіряється також поведінка при змішаних версіях runtime у кластері, якщо rollout виконується поступово.',NULL,NULL,'Специфікація віртуальної машини Java','https://docs.oracle.com/javase/specs/jvms/se26/html/index.html','["tools","Фундаментальні поняття"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(190,'tools-pam-yat-komp-yutera-ta-upravlinnya-pam-yattyu-5','article','tools','Фундаментальні поняття','middle',NULL,4,4,'Пам’ять комп’ютера та управління пам’яттю','Керування пам’яттю визначає, як програма отримує, використовує та звільняє ресурси, необхідні для зберігання коду й стану.','## Ієрархія пам’яті
+
+Процесор використовує регістри й кеші для швидкого доступу, тоді як оперативна пам’ять вміщує активні сторінки процесів. Накопичувач зберігає дані довше, але звернення до нього має інші затримки й механізми доступу. Операційна система надає процесу віртуальний адресний простір, який створює ізоляцію та відображається на фізичну пам’ять і, за потреби, сторінки підкачування. Віртуальна адреса не є прямим описом розташування мікросхеми RAM; сторінкова таблиця та апаратний блок трансляції адрес забезпечують відповідність між ними.
+
+## Стек, купа й час життя
+
+Стек потоку зазвичай містить кадри викликів, локальні значення та адреси повернення; його простір звільняється відповідно до вкладеності викликів. Купа надає область для об’єктів, чий час життя не обмежений одним викликом функції. У керованих мовах збирач сміття визначає досяжність об’єктів від коренів і повертає пам’ять, на яку більше немає посилань. У мовах із ручним керуванням розробник або спеціальні абстракції відповідають за звільнення. Жодна з моделей автоматично не усуває витоки: об’єкт залишається досяжним, якщо його випадково утримує кеш, глобальна структура чи слухач подій.
+
+## Проблеми та діагностика
+
+Витік пам’яті проявляється як поступове зростання обсягу зайнятої пам’яті, але схожий симптом можуть створювати кеш із необмеженим розміром, навмисне утримання пулу чи великі тимчасові дані. Вичерпання стека часто спричинене надмірною рекурсією, тоді як часте збирання сміття може вказувати на високий темп короткоживучих виділень. Підкачування сторінок здатне різко збільшити затримку, хоча процес формально продовжує працювати. Тому розслідування зіставляє heap profile, частоту виділень, резидентну пам’ять, паузи GC, обмеження контейнера й навантаження.
+
+## Практика тестування
+
+QA перевіряє довгі сценарії, повторне відкриття й закриття ресурсомістких екранів, одночасне використання багатьох облікових записів і роботу біля встановлених лімітів пам’яті. Для серверного компонента потрібно підтвердити, що після завершення запиту непотрібні дані звільняються, а тимчасове навантаження не спричиняє каскадних перезапусків. Важливо не прирівнювати обсяг виділеної купи до витоку: деякі середовища утримують звільнену пам’ять для повторного використання. Діагноз потребує тренду та профілю об’єктів, а не одиничного знімка. Документація .NET окремо наголошує, що збирач сміття керує керованими об’єктами, але не замінює явного звільнення файлових дескрипторів і з’єднань.
+
+## Виділення, фрагментація та ресурси
+
+Операція виділення пам’яті має керувати адресним простором і відповідністю фізичним сторінкам; дрібні й великі об’єкти можуть оброблятися різними шляхами. Фрагментація виникає, коли вільний обсяг існує, але не утворює зручної неперервної ділянки для певного запиту. У керованих середовищах переміщення об’єктів може компактувати купу, а в системах із ручним керуванням власність і час життя мають бути визначені програмною моделлю. Файлові дескриптори, мережеві з’єднання й GPU-пам’ять є ресурсами з власним життєвим циклом; автоматичний GC не гарантує їх своєчасного закриття.
+
+## Як відрізнити витік від кешу
+
+Тривалий ріст пам’яті сам по собі не доводить витік: система може збільшувати кеш до межі або зберігати пул для повторного використання. Порівнюють кілька знімків купи, типи й кількість досяжних об’єктів, темп виділень, резидентну пам’ять і реакцію після завершення навантаження. Якщо кількість об’єктів певного типу постійно зростає пропорційно запитам, треба знайти посилання-власника. QA відтворює тест достатньо довго, щоб спостерігати тренд, та перевіряє роботу біля контейнерного ліміту; одноразовий короткий тест рідко виявляє накопичувальний дефект.
+
+## Віртуальна пам’ять і помилки доступу
+
+Віртуальна адресація дає процесу логічний адресний простір, який операційна система зіставляє з фізичною пам’яттю та файлами відображення. Сторінки можуть бути завантажені в RAM за потреби або переміщені до вторинного сховища; інтенсивне сторінкове навантаження різко погіршує затримку. Віртуальна пам’ять також ізолює адресні простори процесів, проте не усуває помилки доступу всередині самого процесу. Коли пам’ять вичерпується, поведінка залежить від ОС, контейнерного ліміту, JVM/CLR і налаштувань застосунку. QA аналізує не лише обсяг heap, а й native memory, page faults, swap та системні журнали. Стрес-тест із повільним накопиченням даних допомагає визначити, чи система має межу, зворотний тиск або безпечну відмову до того, як її завершить середовище.
+
+## Витоки, фрагментація та вимірювання
+
+Зростання використаної пам''яті може бути наслідком справжнього витоку, тимчасового піку, кешу з обмеженим строком життя, фрагментації чи затримки повернення сторінок операційній системі. Вимірювання одного моменту не визначає причину. Потрібно спостерігати за трендом після прогрівання, кількістю живих об''єктів, розміром heap, native allocations, паузами GC і системним resident set. У керованій мові витік часто означає утримання непотрібного посилання, а не відсутність автоматичного збору. QA проводить soak test із поступовим збільшенням і стабілізацією навантаження, виконує повторювані операції та перевіряє, чи повертається споживання до очікуваного плато. Граничні сценарії також оцінюють контрольовану відмову й збереження вже підтвердженої роботи.
+
+## Ліміти пам''яті та стабільність сервісу
+
+Пам''ять споживають не лише об''єкти програми, а й стек потоків, нативні бібліотеки, кеші runtime, буфери мережі та пам''ять файлової системи. Контейнерний ліміт може бути нижчим за фізичний RAM, тому локальний запуск із необмеженою пам''яттю не відтворює production. При поступовому витоку система спершу працює нормально, а потім отримує паузи GC, swap або аварійне завершення. QA проводить довгий тест із постійним профілем, аналізує нахил використання після прогрівання й перевіряє відновлення після вичерпання ліміту. Перевірка має включати реакцію верхнього рівня: балансувальник перестає надсилати трафік до нездорової репліки, а повторний запуск не втрачає підтверджений стан.
+
+## Модель пам''яті та видимість стану
+
+У багатопоточних програмах правильність залежить не лише від доступу до адреси, а й від правил видимості записів між CPU ядрами. Memory model визначає, які спостереження дозволені без синхронізації, і чому проста змінна-прапорець не завжди є надійним сигналом для іншого потоку. Volatile, атомарні операції та mutex мають різні гарантії, що залежать від мови. QA рідко доводить модель пам''яті лише чорносистемним тестом, але може відтворювати конкурентний дефект під інструментами аналізу й на різних платформах. Перевірки мають охоплювати завершення потоку, коректну публікацію стану та відсутність читання частково оновленого об''єкта.',NULL,NULL,'Основи збирання сміття .NET','https://learn.microsoft.com/dotnet/standard/garbage-collection/fundamentals','["tools","Фундаментальні поняття"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(191,'tools-protses-i-potik-vidminnosti-ta-vzayemodiya-6','article','tools','Фундаментальні поняття','middle',NULL,5,4,'Процес і потік: відмінності та взаємодія','Процес ізолює виконувану програму та її ресурси, а потоки дають змогу кільком послідовностям інструкцій працювати в межах одного процесу.','## Процес як одиниця ізоляції
+
+Операційна система створює процес із власним віртуальним адресним простором, станом виконання й набором керованих ресурсів. Один процес зазвичай не може напряму читати пам’ять іншого без спеціального механізму міжпроцесної взаємодії. Це зменшує випадкове поширення помилок, однак спільний доступ до файлів, сокетів чи баз даних усе одно може створювати конфлікти. Запуск окремого процесу потребує передавання конфігурації та обміну даними через канали, сокети, черги або інші IPC-механізми.
+
+## Потік як послідовність виконання
+
+Потоки одного процесу спільно використовують його код, глобальні дані й купу, але мають окремий лічильник команд, регістри та стек. Спільна пам’ять полегшує обмін і зменшує копіювання великих структур, але створює необхідність синхронізувати конкурентні зміни. POSIX-модель потоків також показує важливий практичний наслідок: деякі атрибути є спільними на рівні процесу, зокрема відкриті файлові дескриптори, тоді як стек належить окремому потоку. Тому помилка в одному потоці може вплинути на інші, хоча вони мають незалежні стеки.
+
+## Вибір між процесом і потоком
+
+Окремі процеси доречні, коли потрібна сильніша ізоляція, незалежне масштабування або різні версії середовищ; це типовий вибір для окремих сервісів і воркерів. Потоки корисні для паралельних ділянок усередині одного застосунку, де спільний стан важливий і витрати міжпроцесної комунікації небажані. Сучасні системи також використовують асинхронні задачі, зелені потоки чи корутини, абстрагуючи фізичну кількість потоків. Такі абстракції не змінюють базового факту, що процесор виконує обмежену кількість інструкційних потоків і ресурси ОС мають межі.
+
+## Діагностика з позиції QA
+
+Для зависання потрібно визначити, чи заблокований один потік, увесь процес або зовнішній залежний сервіс. Якщо один воркер вичерпав пул потоків, процес може відповідати на health check, але не обробляти нові бізнес-запити. QA відтворює конкуренцію, перевіряє завершення дочірніх процесів, витік дескрипторів, коректність спільних файлів і поведінку при аварійному перезапуску. У журналі корисно фіксувати ідентифікатор процесу й кореляційний ідентифікатор операції; без цього повідомлення кількох потоків можуть виглядати як одна послідовність, хоча насправді виконувалися паралельно.
+
+## Межі пам’яті та передавання стану
+
+Спільна купа робить потоки ефективними для обміну великими даними, але кожен доступ до змінного стану має визначати власника або правило синхронізації. Перенесення повідомлення через чергу задач може бути безпечнішим за передачу посилання на змінний об’єкт, хоча додає копіювання й витрати серіалізації. Окремі процеси дають кращу ізоляцію аварій, але потребують протоколу IPC і відновлення сесії. Отже, вибір процесів чи потоків є рішенням про модель власності, пропускну здатність та радіус поширення помилки, а не тільки про швидкість створення одиниці виконання.
+
+## Практична діагностика конкуренції
+
+Знімок потоків може показати, що один потік виконує CPU-роботу, інший чекає м’ютекс, а третій заблокований на сокеті. Це різні стани з різними діями: підвищення кількості потоків не виправить повільний зовнішній API, а збільшення тайм-ауту не усуне взаємне блокування. QA відтворює конкуренцію із різними порядками запитів та перевіряє, чи завершується процес коректно. Для міжпроцесної взаємодії перевіряють повторне підключення після падіння воркера, цілісність переданих повідомлень і очищення залишених тимчасових ресурсів.
+
+## Спільна пам’ять і вартість координації
+
+Потоки одного процесу бачать спільні об’єкти, що спрощує обмін даними, але вимагає правил синхронізації. Процеси зазвичай ізольовані адресним простором і взаємодіють через IPC, наприклад сокети, канали чи спільну пам’ять. Ізоляція процесів підвищує стійкість до деяких помилок, але передавання даних має вартість серіалізації й копіювання. Вибір між процесами та потоками залежить від вимог до ізоляції, паралелізму, моделі пам’яті та підтримки runtime; це не просте змагання швидкості. QA перевіряє межі завершення: аварія одного worker-а не повинна пошкоджувати стан іншого, а повторне створення процесу не має дублювати побічний ефект. Спостереження за PID, потоками й IPC допомагає пов’язати системний симптом із відповідним рівнем виконання.
+
+## Ізоляція, IPC та життєвий цикл worker-а
+
+Процеси взаємодіють через міжпроцесну комунікацію, яка може бути локальною або мережевою. Черга процесів дозволяє супервізору передавати роботу worker-ам, але протокол має описати завершення, повтор, сигнал shutdown і реакцію на втрату worker-а. Потік усередині процесу дешевше ділиться пам''яттю, проте аварійне пошкодження адресного простору може вплинути на весь процес. Вибір рівня конкурентності має враховувати саме межу відмови та кількість стану, який можна відновити. QA перевіряє graceful shutdown під час активної роботи, завершення дочірніх процесів, повторне підключення IPC і очищення тимчасових ресурсів. Залишені orphan-процеси можуть спотворити подальші результати тестів і створювати приховане навантаження.
+
+## Планування worker-ів і контроль кількості потоків
+
+Пул потоків обмежує створення нових потоків і повторно використовує наявні, але його розмір має відповідати типу роботи. Для CPU-bound задач надмірний паралелізм створює конкуренцію за процесор; для I/O-bound задач довше очікування може виправдовувати більше одночасних операцій, однак лише до межі сокетів і залежностей. Черга пулу також має максимальну місткість, щоб повільне сховище не призвело до необмеженого накопичення задач. QA вимірює queue wait, active workers, відхилення та час завершення при відмові залежності. Тестує, що скасована або помилкова задача повертає worker у пул і не переносить контекст одного користувача до наступного завдання.
+
+## Діагностика завислих потоків
+
+Коли прогрес припиняється, thread dump показує стек кожного потоку та часто його стан очікування. Повторні знімки через інтервал дозволяють відрізнити довгу нормальну операцію від незмінного deadlock. Але стек не завжди містить причину зовнішнього блокування, тому його зіставляють із системними метриками, логами й трасами. QA фіксує момент зависання, кількість активних запитів та стан пулів, а потім перевіряє, чи timeout або watchdog спрацьовує у погоджений строк. Автоматичне перезапускання може тимчасово повернути сервіс, але не є виправленням причини. Повторюваний знімок і контрольований тест роблять гонку або блокування аналізованим артефактом.',NULL,NULL,'POSIX Threads: огляд потоків','https://www.man7.org/linux/man-pages/man7/pthreads.7.html','["tools","Фундаментальні поняття"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(192,'tools-bahatopotochnist-i-konkurentnyy-dostup-7','article','tools','Фундаментальні поняття','middle',NULL,6,4,'Багатопоточність і конкурентний доступ','Багатопоточність дає змогу виконувати кілька потоків роботи в одному процесі, але спільний стан створює гонки та вимоги до синхронізації.','## Конкурентність і паралелізм
+
+Конкурентність означає, що кілька завдань просуваються в часі з чергуванням кроків; паралелізм означає одночасне виконання на різних обчислювальних ядрах. Багатопоточність є одним зі способів реалізувати обидва режими, але не кожна багатопотокова програма прискорюється: завдання може чекати мережу, блокування або повільний диск, а процесор має обмежену кількість ядер. Якщо кілька потоків змінюють спільний стан, результат залежить від порядку їхніх операцій.
+
+## Гонка даних і синхронізація
+
+Нехай два потоки збільшують спільний лічильник. Операція «прочитати, додати одиницю, записати» складається з кількох кроків, і обидва потоки можуть прочитати те саме старе значення. Результатом буде одне збільшення замість двох. Критична секція захищає таку послідовність м’ютексом; семафор дозволяє обмеженій кількості потоків одночасно користуватися ресурсом. Атомарна операція підходить для простих змін, але не завжди замінює блокування, якщо інваріант охоплює кілька значень. Синхронізація має визначати також видимість записів між потоками, а не лише взаємне виключення.
+
+## Взаємне блокування та масштабування
+
+Взаємне блокування виникає, коли потоки утримують ресурси й циклічно чекають один на одного. Його провокують різний порядок захоплення м’ютексів, блокування зовнішньої операції всередині критичної секції або помилкове повторне захоплення. Надто грубе блокування зменшує паралелізм; надто дрібне збільшує складність і ризик некоректних станів. Планування потоків і перемикання контексту теж мають ціну, тому вимірювання потрібне на реальному профілі навантаження, а не на штучному циклі без вводу-виводу.
+
+## QA багатопотокової поведінки
+
+Гонки часто є недетермінованими: дефект з’являється лише за певного чергування. QA збільшує кількість паралельних операцій, варіює затримки, повторює сценарії й перевіряє інваріанти даних після завершення. Для API це може бути одночасне списання коштів, оновлення одного запису або дві спроби створити унікальний ресурс. Важливо перевіряти не тільки відповідь кожного запиту, а й кінцевий стан системи, журнал транзакцій і поведінку при тайм-ауті клієнта. Специфікація мови може визначати гарантії видимості пам’яті, але прикладний тест має підтвердити конкретний бізнес-інваріант.
+
+## Модель пам’яті та happens-before
+
+Синхронізація визначає не лише те, хто входить у критичну секцію, а й коли запис одного потоку стає видимим для іншого. Формальна модель пам’яті задає відношення впорядкування між операціями, які не обов’язково виконуються в тому самому порядку, що й вихідний текст. М’ютекс, volatile-подібна операція чи атомарний примітив мають різні гарантії, і їх не можна довільно взаємозамінювати. Ця деталь пояснює, чому гонка іноді не відтворюється на одному процесорі, але виникає за іншої архітектури або оптимізації компілятора.
+
+## Стратегія перевірки
+
+Для конкурентного сценарію QA спершу визначає інваріант, наприклад «один ідентифікатор може бути списаний лише один раз», потім створює контрольовані паралельні операції та перевіряє кінцевий стан. Повтори з різними затримками, великою кількістю учасників і аварійним завершенням розширюють простір можливих interleaving. Інструменти санітизації та stress-тести можуть знаходити гонки, але проходження тесту не доводить їх відсутності. Для критичних переходів корисно поєднати доказ на рівні блокування, транзакційну гарантію сховища й системний тест конкурентного навантаження.
+
+## Моделі синхронізації та черги роботи
+
+Mutex захищає критичну секцію від одночасного входу, semaphore обмежує кількість власників ресурсу, а condition variable дозволяє очікувати певної умови. Ці примітиви мають різні семантики й повинні застосовуватися з чітким порядком захоплення та звільнення. У прикладних системах блокування часто інкапсулюються у thread-safe чергу, пул worker-ів або атомарну операцію, що робить межу синхронізації зрозумілішою. Конкурентність може збільшити пропускну здатність до моменту насичення спільного ресурсу; після цього більше потоків лише зростають черги очікування. QA порівнює серійне та конкурентне виконання на контрольних даних, перевіряє інваріанти після паралельних операцій і збирає thread dump при зависанні. Важливо фіксувати seed та порядок запуску, коли дефект залежить від часу.
+
+## Реалізація та відтворення рідкісних гонок
+
+Помилка гонки часто залежить від конкретного чергування операцій, тому звичайний послідовний тест її не виявляє. Контрольовані бар''єри, затримки та повторне виконання багатьох ітерацій допомагають примусово наблизитися до небезпечного порядку. Thread sanitizer та інші інструменти можуть виявити частину доступів без синхронізації, але не доводять коректність бізнес-логіки. Замок має захищати інваріант повністю, а не окремий рядок коду; надто широкий lock, навпаки, серіалізує систему. QA зберігає seed, трасу подій, стан початкових даних і журнал потоків, щоб розробник міг повторити збій. Критерієм є збереження інваріанта після конкурентних операцій, а не однаковий порядок відповідей.
+
+## Блокування, справедливість та інваріанти
+
+Правильна синхронізація включає не лише уникнення одночасного запису, а й видимість змін між потоками та справедливість доступу до ресурсу. Деякі блокування допускають голодування, коли один потік довго не отримує виконання; інші можуть бути reentrant або reader-writer із різними компромісами. Атомарна операція над одним лічильником не робить атомарною послідовність перевірки й оновлення кількох об''єктів. QA формулює інваріант, наприклад баланс не має ставати від''ємним, і запускає паралельні зміни з повторюваними даними. Потім звіряє кількість прийнятих команд із кінцевим станом. Сам факт відсутності deadlock у короткому прогоні не доводить відсутність гонки чи голодування.
+
+## Тестування потокобезпечних контрактів
+
+API потокобезпечного компонента повинно описувати, які операції можуть виконуватися паралельно, чи зберігається порядок і хто володіє поверненим об''єктом. Об''єкт, безпечний для одночасного читання, може бути небезпечним для конкурентного читання та запису. Колекція з потокобезпечними методами не робить атомарною складену послідовність перевірки та зміни. QA тестує не лише низькорівневу структуру, а й бізнес-інваріант за одночасних викликів, завершення й повтору. Результат перевіряють після завершення всіх потоків, щоб уникнути проміжного спостереження. Необхідно задавати тайм-аут тесту, інакше deadlock перетворить автоматизовану перевірку на нескінченне зависання.',NULL,NULL,'Специфікація мови Java: модель пам’яті та потоки','https://docs.oracle.com/javase/specs/jls/se26/html/jls-17.html','["tools","Фундаментальні поняття"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(193,'tools-asynkhronne-vykonannya-ta-neblokuval-ni-zapyty-8','article','tools','Фундаментальні поняття','middle',NULL,7,4,'Асинхронне виконання та неблокувальні запити','Асинхронність дозволяє програмі продовжувати корисну роботу, поки операція очікує мережу, диск або іншу повільну залежність.','## Проблема очікування
+
+Звичайний синхронний виклик зупиняє потік до отримання результату. Для швидких обчислень це природна модель, однак мережевий запит може чекати значно довше, ніж процесор виконує обчислення. Якщо сервер створює окремий дорогий потік на кожне очікування, велика кількість одночасних клієнтів виснажує пам’ять і планувальник. Асинхронна модель відокремлює факт очікування від потоку виконання: програма реєструє продовження й повертається до інших задач, а результат обробляється після завершення операції.
+
+## Цикл подій та абстракції
+
+У середовищі з циклом подій один або кілька потоків координують готові до виконання задачі. Операція вводу-виводу передається операційній системі або пулу робіт, а після завершення callback чи проміс повертає керування до прикладної логіки. Async/await зазвичай є синтаксичною формою побудови такого ланцюга; сам по собі він не створює окремий потік і не робить CPU-обчислення паралельними. Блокування циклу подій тривалим обчисленням може затримати всі інші запити, тому важку CPU-роботу часто переносять у пул чи окремий процес.
+
+## Наслідки для HTTP взаємодії
+
+Асинхронний клієнт має обробити успішну відповідь, мережеву помилку, тайм-аут, скасування й запізніле завершення. Повторний запит може бути небезпечним, якщо перший сервер уже виконав зміну, а відповідь загубилася. Тому асинхронність пов’язана з ідемпотентністю, обмеженням часу очікування й контролем кількості одночасних операцій. Порядок завершення запитів не обов’язково відповідає порядку їх надсилання; UI та серверний агрегатор мають коректно обробляти застарілий результат.
+
+## Тестування та хибні припущення
+
+QA варіює швидкість і порядок відповідей, перевіряє скасування запиту після навігації, поведінку при частковій відмові та відсутності відповіді. Для серверів досліджують насичення пулів, затримки циклу подій, витік незавершених промісів і накопичення черг. Неблокувальність не означає необмежену місткість: без backpressure система може прийняти більше роботи, ніж здатна обробити. Документація Node.js наголошує, що довга синхронна операція блокує цикл подій; це пояснює, чому один завислий обробник може одночасно погіршити багато незалежних з’єднань.
+
+## Backpressure та контроль черги
+
+Асинхронна система повинна визначити, що відбувається, коли виробник надсилає роботу швидше, ніж споживач її виконує. Backpressure може сповільнити виробника, обмежити кількість незавершених операцій або відхиляти запити до того, як пам’ять вичерпається. Без такої межі неблокувальний сервер здатен накопичити тисячі промісів чи callback-ів, кожен із яких утримує дані та контекст. Контрольована відмова з вимірюваним лімітом часто безпечніша за прийняття необмеженого обсягу роботи, який зрештою призведе до масового тайм-ауту.
+
+## Порядок, скасування й гонки відповіді
+
+Користувач може змінити сторінку до завершення попереднього запиту, а відповідь старого запиту надійти пізніше й перезаписати актуальний стан інтерфейсу. Скасування на клієнті має бути передане транспортному механізму, але не завжди скасовує серверну дію. Для залежних запитів потрібно визначити, чи паралелити їх, чи зберегти послідовність. QA тестує зворотний порядок відповідей, повтор після тайм-ауту й відміну роботи, перевіряючи стан UI та серверний побічний ефект окремо.
+
+## Неблокувальна модель не скасовує очікування
+
+Асинхронний код дозволяє потоку виконувати іншу роботу, поки операція очікує вводу-виводу, але сама операція все одно має затримку та можливість відмови. Event loop ефективно обслуговує багато з’єднань, коли callback-и короткі; довга CPU-операція блокує цикл так само, як синхронний виклик. У такій системі блокувальна бібліотека може зруйнувати очікувану масштабованість навіть без очевидного блокування інтерфейсу. Скасування промісу часто лише змінює локальне очікування, а сервер продовжує роботу. QA перевіряє скасування на транспортному рівні, завершення запиту на сервері, порядок відповідей, обробку винятків і навантаження на event loop. Метрика затримки циклу подій допомагає відрізнити повільну залежність від блокування самого процесу.
+
+## Структурована конкурентність і межі скасування
+
+Коли асинхронна операція створює дочірні задачі без контролю їхнього життєвого циклу, вони можуть продовжити роботу після завершення запиту або втрати клієнта. Структурована конкурентність пов''язує дочірні задачі з областю виконання й робить завершення, помилки та скасування явними. Cancellation token чи AbortController передає сигнал, але бібліотека має його підтримати, а операція може бути вже незворотною. Для платежу скасування HTTP-клієнта не повинно інтерпретуватися як гарантоване скасування платежу. QA тестує межі скасування до й після фіксації ефекту, перевіряє витоки задач та звільнення пулів. API повинно повідомляти фактичний стан команди через запит статусу, якщо результат невизначений.
+
+## Порядок завершення та узгодження UI
+
+Асинхронні інтерфейси часто допускають кілька одночасних запитів, відповіді на які надходять у відмінному відправленню порядку. Якщо кожна відповідь безумовно змінює стан компонента, старий пошуковий запит може перезаписати результат нового. Скасування попереднього запиту, sequence token або перевірка актуальності стану допомагають уникнути цієї гонки. Водночас запит може завершитися на сервері після скасування клієнта, тому UI не повинен вважати скасування rollback-ом. QA затримує окремі відповіді, змінює фільтр кілька разів, закриває вікно й перевіряє відсутність застарілого оновлення та витоку обробника. Тест оцінює і клієнтське відображення, і серверний побічний ефект.
+
+## Обробка помилок у ланцюзі Promise
+
+Асинхронний ланцюг має чітко передавати помилки до місця, де вони можуть бути оброблені. Забутий await чи необроблене відхилення можуть зникнути з бізнес-потоку або спричинити глобальний handler. Помилка в одному паралельному запиті не завжди означає, що інші запити були скасовані. Потрібно визначити, чи чекати всі результати, переривати решту або повертати частковий результат. QA моделює одночасний успіх і відмову, перевіряє звільнення ресурсів, повідомлення користувачу та відсутність необроблених помилок у консолі. Серверний контракт повинен відповідати фактичному стану кожної дочірньої операції, а не лише першій завершеній відповіді.',NULL,NULL,'Node.js: цикл подій та неблокувальний ввід-вивід','https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick','["tools","Фундаментальні поняття"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(194,'tools-arkhitektura-prohramnoho-zabezpechennya-9','article','tools','Архітектура програмного забезпечення','middle',NULL,8,4,'Архітектура програмного забезпечення','Архітектура описує фундаментальні рішення про компоненти системи, їхні зв’язки, межі відповідальності та компроміси щодо якості.','## Архітектура як набір рішень
+
+Архітектура програмного забезпечення не зводиться до діаграми чи переліку технологій. Вона охоплює структуру компонентів, способи взаємодії, межі даних, середовища виконання та правила зміни системи. Її головне призначення — зробити явними рішення, які дорого змінювати після того, як на них почали спиратися команда, користувачі й інфраструктура. Архітектурний опис корисний тоді, коли пояснює причинний зв’язок між вимогою, рішенням і його наслідками, а не лише фіксує назви фреймворків.
+
+## Вимоги та компроміси
+
+Функціональні вимоги описують поведінку системи, а нефункціональні — властивості на кшталт затримки, доступності, конфіденційності, відновлюваності й вартості зміни. Архітектурні компроміси з’являються, коли одна властивість впливає на іншу: реплікація може підвищити доступність читання, але ускладнити узгодження записів; централізований шлюз спрощує політики доступу, але додає спільну точку навантаження. Рішення слід оцінювати в контексті очікуваного масштабу, команди, регуляторних вимог і наслідків відмови, а не за популярністю стилю.
+
+## Компоненти, зв’язки та потоки
+
+Компоненти взаємодіють через виклики, повідомлення, спільні сховища або файлові потоки. Для кожного зв’язку важливі формат контракту, напрямок залежності, очікувана затримка, семантика помилки й власник даних. Потік одного бізнес-сценарію може починатися у браузері, проходити через мережевий шлюз, прикладний сервіс і базу, а завершуватися подією в брокері. Таке представлення допомагає виявити приховані залежності, циклічні виклики й місця, де локальна помилка стає системною.
+
+## Як оцінює архітектуру QA
+
+QA Engineer використовує архітектурне розуміння, щоб визначати межі тестування, критичні залежності та потрібні докази. Для запиту, що проходить через кілька сервісів, треба розрізняти контракт клієнта, маршрутизацію, бізнес-правило, транзакцію й асинхронне побічне оновлення. Тестова модель має охоплювати звичайний шлях і небезпечні переходи: тайм-аут після фіксації запису, повтор події, відсутність репліки, відмову зовнішнього постачальника. Архітектура не є виправданням для тестування лише інтеграцій; вона допомагає обрати правильні рівні перевірки й локалізувати причину дефекту.
+
+## Архітектурні рішення як гіпотези
+
+Рішення про чергу, базу даних або межу сервісу фактично є гіпотезою про майбутню поведінку системи. Її варто фіксувати разом із контекстом, альтернативами, критеріями перегляду й спостережуваними наслідками. Якщо вибір зроблено через очікуване навантаження, команда має визначити метрику, за якою перевірить це припущення. Якщо головним чинником є незалежність команди, треба описати власника контракту й спосіб керувати сумісністю. Архітектурний запис запобігає перетворенню тимчасового рішення на незрозуміле правило.
+
+## Архітектура та тестова стратегія
+
+Якісні вимоги перетворюються на перевірювані критерії: доступність для визначених сценаріїв, допустима затримка за конкретним профілем або відновлення після втрати вузла в окреслений час. Для кожного критерію треба мати сигнал і відтворюваний тест. QA може брати участь у перегляді архітектурного рішення до реалізації, виявляючи неоднозначність статусів, необроблені повтори чи неможливість спостерігати транзакцію. Це не робить тестування відповідальністю лише QA; воно допомагає команді сформувати спільне, вимірюване розуміння якості.
+
+## Архітектурні властивості та вимірювання
+
+Нефункціональна вимога набуває архітектурного значення лише тоді, коли має межу вимірювання і визначений сценарій використання. Вимога «система швидка» не підказує, чи йдеться про p95 затримку пошуку, пропускну здатність запису або час запуску після масштабування. Так само доступність потребує часової рамки, знаменника та правил виключення планових робіт. Рішення щодо кешу, реплікації чи черги має випливати з таких вимог і створювати спостережуваний ефект. QA може перетворити архітектурні припущення на приймальні перевірки: визначити контрольний профіль, допустимі деградації й джерело метрик. Якщо результат не можна виміряти, команда не зможе об’єктивно встановити, чи допомогло рішення.
+
+## Архітектура як набір перевірюваних гіпотез
+
+Кожне архітектурне рішення має умови, за яких воно приносить користь, і наслідки, які можна спостерігати. Рішення кешувати відповідь може ґрунтуватися на повторюваності читання та допустимій застарілості; рішення виділити сервіс — на незалежному циклі розгортання чи різному масштабі навантаження. Фіксація контексту, альтернатив і критерію перегляду дає змогу оцінити рішення після появи реальних даних. Інакше аргумент «так прийнято» стає незмінним, навіть коли профіль системи вже інший. QA переводить гіпотези в перевірки: вимірює hit ratio та затримку, моделює відмову сервісу, спостерігає за консистентністю. Так тестування стає джерелом архітектурних доказів, а не завершальним етапом після проєктування.
+
+## Архітектурний ризик і рання перевірка
+
+Архітектура концентрує ризики на межах: зовнішній контракт, спільне сховище, шлюз або механізм ідентичності можуть впливати на значну частину продукту. Раннє прототипування чи технічний spike допомагає перевірити сумнівне припущення до побудови повної системи. Такий експеримент має визначити метрику й обмеження; інакше демонстрація одного успішного запиту нічого не говорить про надійність чи масштаб. QA бере участь у визначенні негативних сценаріїв прототипу, наприклад тайм-ауту, повтору та несумісної схеми. Результат документують разом із невідомими аспектами, а не підмінюють ним повну перевірку. Це зменшує ціну архітектурної помилки, виявленої після інтеграції кількох команд.
+
+## Еволюція архітектурного документа
+
+Архітектурні рішення змінюються разом із навантаженням, доменом і командною структурою. Документація має показувати актуальну схему й історію суттєвих рішень, щоб нові учасники розуміли, чому існують компроміси. Водночас її підтримка має бути пропорційною користі; автоматично генеровані карти залежностей можуть доповнювати короткий текстовий контекст. QA використовує рішення для планування тестування та може повідомити, коли фактична система суперечить задокументованій гарантії. Регулярна перевірка архітектурних припущень запобігає залежності від застарілого опису, але не повинна перетворюватися на формальне затвердження кожної дрібної зміни.',NULL,NULL,'Microsoft Azure Architecture Center: стилі архітектури','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/','["tools","Архітектура програмного забезпечення"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(195,'tools-monolitna-arkhitektura-10','article','tools','Архітектура програмного забезпечення','middle',NULL,9,4,'Монолітна архітектура','Моноліт — це застосунок, який постачається як єдина розгортувана одиниця, хоча його внутрішньо можна поділити на чіткі модулі.','## Зміст поняття
+
+Моноліт описує передусім спосіб збирання та розгортання, а не обов’язково хаотичну внутрішню структуру. В одному процесі можуть працювати HTTP-обробники, доменна логіка, доступ до даних і фонові задачі. Такий формат дає змогу викликати модулі без мережевого протоколу й часто дозволяє виконати бізнес-операцію в одній транзакції бази. Термін «моноліт» іноді помилково використовують як синонім поганого коду; насправді добре структурований моноліт може мати сильні межі й бути придатним для значного навантаження.
+
+## Чому система починає як моноліт
+
+На ранній стадії продукту межі домену, характер навантаження й організаційні залежності часто ще невідомі. Єдиний застосунок скорочує кількість розгортаних компонентів, мережевих відмов, схем обміну та операційних процесів. Команда може змінювати функціональність у межах одного артефакту й тестувати наскрізний сценарій без розгортання повного кластера. Ця простота не безкоштовна: спільна база та процес можуть поступово утворити сильне зчеплення, якщо модулі безконтрольно звертаються до чужих таблиць і внутрішніх класів.
+
+## Масштабування та межі
+
+Зазвичай моноліт масштабують горизонтально, запускаючи кілька ідентичних екземплярів за балансувальником, або вертикально збільшуючи ресурси одного вузла. Горизонтальне масштабування потребує винести сесії та інший спільний стан із локальної пам’яті або забезпечити відповідну маршрутизацію. Разом із застосунком розгортаються всі його модулі, тому невелика зміна може вимагати випуску всього артефакту. Окрема ресурсоємна функція може масштабуватися лише разом із рештою системи, що створює неефективне використання ресурсів.
+
+## Тестування моноліту
+
+QA може перевіряти модулі окремо, інтеграцію з реальною базою та наскрізні потоки в одному середовищі. Особливу увагу слід приділяти спільним транзакціям, міграціям схеми, прихованим залежностям між модулями й регресійним наслідкам випуску. Ознакою проблеми є не сам факт єдиного артефакту, а неможливість змінити одну область без знання всіх інших. Martin Fowler окремо зауважує, що передчасний перехід до розподіленої архітектури має ціну; вибір слід робити за виміряною потребою в незалежному масштабуванні, володінні чи ізоляції збоїв.
+
+## Структура модулів усередині моноліту
+
+Моноліт можна організувати за доменними модулями, а не лише за технічними шарами. Модуль замовлень може володіти власною схемою й надавати іншим модулям публічні операції, не дозволяючи їм змінювати внутрішні таблиці. Такі межі можна підкріпити залежностями пакунків, кодовими перевірками й окремими міграціями. Якщо модулі лише умовно відділені, а кожен напряму читає таблиці іншого, зміна схеми стає системною навіть за одного процесу.
+
+## Випуск і відновлення
+
+Єдиний артефакт спрощує атомарне розгортання коду, проте база даних оновлюється окремо й може залишатися спільною для старої та нової версій під час rollout. Міграції мають бути сумісними з перехідним станом: спершу додати поле, потім заповнити його, перевести читання й лише після цього вилучити стару структуру. QA перевіряє оновлення з реальної попередньої версії, аварійне переривання міграції та можливість відновити сумісну конфігурацію. Єдиний процес не скасовує ризик схеми даних.
+
+## Масштабування моноліту та межі його зростання
+
+Моноліт можна масштабувати вертикально, додаючи ресурси одному вузлу, або горизонтально, запускаючи кілька однакових екземплярів за балансувальником. Горизонтальний підхід вимагає винести сесію та інший потрібний між запитами стан у спільне сховище або зробити його відновлюваним. Він також не дає незалежно масштабувати лише один модуль, якщо всі частини мають однаковий процесний профіль. Доцільність розділення виникає не з самого факту великого репозиторію, а з вимірюваного конфлікту між темпом змін, ресурсами, доступністю та межами команд. QA перевіряє сесії між репліками, сумісність спільної схеми й поведінку під час rollout. Розгортання єдиного артефакту спрощує координацію, але впливає на весь продукт.
+
+## Межі транзакції та цілісність монолітних модулів
+
+Спільна база моноліту полегшує локальну транзакцію між модулями, однак це може приховати неявні перехресні залежності. Якщо модуль каталогу читає внутрішню таблицю замовлень, зміна її схеми вплине на обидві частини без зміни публічного API. Модульні правила можна підкріпити окремими схемами, доступом лише через інтерфейс чи перевірками залежностей у build pipeline. Під час поступового виділення сервісу часто потрібно спершу встановити межу володіння даними всередині моноліту, а вже потім змінювати транспорт. QA перевіряє, що інваріанти зберігаються під час рефакторингу та що транзакційні сценарії не змінюють семантику після перенесення частини логіки. Монолітна фізична форма не вимагає монолітної моделі відповідальності.
+
+## Зміни схеми та безперервність релізу
+
+Навіть монолітне розгортання може короткий час співіснувати з двома версіями через кілька екземплярів, rolling update чи повільне завершення старих процесів. Міграція бази має враховувати обидві версії: спершу додати сумісне поле, потім перейти на нього, а видалення старого виконати окремо. Destructive зміна в одному релізі може зламати ще активний екземпляр. QA тестує оновлення з попереднього релізу на копії даних, перерване розгортання та rollback коду проти вже розширеної схеми. Єдиний артефакт не скасовує потреби у сумісності, резервному копіюванні та перевіреному плані відновлення.
+
+## Модульність моноліту та тестова межа
+
+Добре структурований моноліт дозволяє перевіряти модулі у процесі й інтегрувати їх без мережевого транспорту, але спільний runtime може приховувати глобальні змінні й неявний порядок ініціалізації. Тест, що запускає модуль окремо, може не виявити конфлікт спільного кешу чи повторну реєстрацію handler-а при старті всього застосунку. QA поєднує модульні тести з тестом запуску повного процесу, перевіряє міграції та конфігурацію усіх компонентів. При рефакторингу зберігають зовнішні бізнес-контракти, навіть коли внутрішній модульний інтерфейс змінюється. Це дозволяє використовувати монолітну простоту без відмови від явних меж відповідальності.',NULL,NULL,'Martin Fowler: Monolith First','https://martinfowler.com/bliki/MonolithFirst.html','["tools","Архітектура програмного забезпечення"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(196,'tools-bahatosharova-arkhitektura-11','article','tools','Архітектура програмного забезпечення','middle',NULL,10,4,'Багатошарова архітектура','Багатошаровий стиль розділяє представлення, прикладні сценарії, доменні правила та доступ до даних на логічно визначені частини.','## Розподіл відповідальності
+
+Presentation Layer приймає взаємодію з користувачем або зовнішнім клієнтом і перетворює її на виклик застосунку. Прикладний шар координує сценарій і транзакційну межу. Доменний шар виражає бізнес-правила та інваріанти, а шар доступу до даних приховує спосіб читання й запису. У багатьох системах логічні рівні розміщені в одному процесі; слово «шар» не означає автоматично окремий сервер. Фізичний розподіл на вузли додає мережеву затримку й відмови, тому його треба відрізняти від логічної декомпозиції.
+
+## Потік запиту та залежності
+
+Наприклад, запит на зміну адреси проходить перевірку формату у вхідному шарі, застосунковий сценарій визначає поточного користувача, домен перевіряє дозволеність переходу, а репозиторій зберігає результат. Залежність зазвичай спрямовується від зовнішніх шарів до внутрішніх правил. Якщо бізнес-логіка безпосередньо залежить від конкретного HTTP-фреймворку або SQL-запиту, зміна інфраструктури поширюється на ядро продукту. Розмежування дозволяє змінювати представлення та сховище з меншим ризиком, але лише якщо межі справді дотримуються.
+
+## Переваги й обмеження
+
+Шарова структура полегшує розуміння відповідальності та створює природні точки для модульного й інтеграційного тестування. Вона може стати надто жорсткою, якщо кожен виклик проходить через довгі ланцюги абстракцій, або утворити «анемічні» доменні моделі, де правила рознесені між контролерами й сервісами. Важливо також не перетворювати кожен рівень на окремий мережевий вузол без виміряної причини. У багатошарових продуктах межа даних іноді прихована за універсальним DAO, який не дає зрозуміти транзакції, ізоляцію й вартість запитів.
+
+## Перевірки QA
+
+QA тестує контракт кожного зовнішнього шару, валідацію й авторизацію на вході, бізнес-інваріанти всередині та узгодженість фактичного запису в сховище. Корисно окремо перевірити, що помилки бази не перетворюються на неправдиву успішну відповідь, а транспортні коди не підміняють доменні причини відмови. Для міграцій перевіряють стару й нову схему разом із кодом, який може працювати в перехідний період. Багатошаровість дає структуру перевірок, але не замінює наскрізний тест критичного потоку.
+
+## Напрямки залежностей і межі шарів
+
+Шарова схема задає дозволений напрямок викликів: інтерфейс звертається до прикладної логіки, та до доступу до даних, а не навпаки. Це правило зменшує залежність предметної моделі від конкретного веб-фреймворку чи драйвера бази, проте саме по собі не гарантує ізоляції. Якщо контролер містить бізнес-правила, а репозиторій приймає рішення про права доступу, фізична наявність окремих папок не створює архітектурної межі. Важливо визначити контракти між шарами, типи помилок, які вони передають, та власника транзакцій. У великих системах межі можуть бути спрямовані всередину до домену, як у гексагональній архітектурі; це споріднений, але не тотожний поділ.
+
+## Перевірка наскрізного сценарію
+
+Розгляньмо оновлення адреси клієнта. Запит проходить перевірку формату на межі системи, прикладна логіка підтверджує право змінювати профіль, шар даних виконує транзакцію, після чого результат повертається до представлення. Перевірка має встановити, що некоректний формат не змінює базу, відмова авторизації не розкриває дані, а помилка запису не повертається клієнту як успішний результат. Інтеграційний тест доцільно проводити через публічну межу застосунку, тоді як локальні правила тестуються окремо. Це виявляє змішування відповідальності без вимоги перевіряти кожен внутрішній виклик окремим тестом.
+
+## Транзакція як наскрізна відповідальність
+
+У шаровій архітектурі потрібно визначити рівень, який відкриває та завершує транзакцію. Якщо кожен шар самостійно фіксує зміни, один бізнес-сценарій може залишити частковий стан після помилки. Зазвичай прикладна операція координує роботу репозиторіїв у межах транзакції, а шар доступу до даних виконує конкретні запити. Не слід переносити бізнес-правила у процедури сховища без архітектурного обґрунтування або дублювати їх у UI. QA ін’єктує помилку між двома змінами й перевіряє повний rollback, повторне виконання та відсутність побічних ефектів у черзі чи зовнішньому сервісі. Така перевірка допомагає з’ясувати, чи межа шару відповідає реальній межі атомарності.
+
+## Шарова архітектура та тестованість
+
+Чіткі шари дають змогу створити різні рівні тестів, але межа тесту має перевіряти саме контракт відповідального шару. Доменне правило про допустимий перехід стану можна перевірити без мережі й бази, тоді як SQL-запит потребує справжнього драйвера або інтеграційного середовища. Тест контролера, що підміняє всі нижчі шари, підтвердить маршрутизацію в коді, але не гарантує, що схема БД і мапінг полів узгоджені. З іншого боку, повний наскрізний тест на кожне правило створює повільну й крихку перевірку. QA будує піраміду тестів від ізольованих правил до репрезентативних інтеграцій, зберігаючи кілька наскрізних сценаріїв для критичних шляхів.
+
+## Межа шару й механізм залежностей
+
+Залежності між шарами можна організувати через інтерфейси, що належать внутрішньому домену, тоді як адаптери реалізуються на зовнішніх рівнях. Такий напрямок дозволяє прикладним правилам не імпортувати конкретний ORM або веб-фреймворк. Проте надмірна кількість абстракцій створює складність без реальної ізоляції, якщо інтерфейс лише повторює методи конкретного сховища. Архітектурна межа корисна тоді, коли змінюється незалежно: можна замінити транспорт або адаптер, зберігаючи бізнес-семантику. QA оцінює цей контракт через спостережувану поведінку, а не структуру каталогів. Тестова підміна також має відповідати семантиці адаптера, інакше mock може приховати транзакційні чи помилкові особливості справжньої бази.
+
+## Супровід помилок між шарами
+
+Помилка може виникнути в сховищі як порушення обмеження, бути перекладена в прикладний конфлікт і перетворена на відповідь API. Якщо кожен рівень замінює її загальним винятком, діагностичний контекст втрачається; якщо передає внутрішній SQL чи стек користувачу, виникає витік інформації. Шари мають зберігати причинний ланцюг, водночас надаючи зовнішньому клієнту стабільне безпечне повідомлення. QA ін''єктує помилки на рівні репозиторію, перевіряє rollback, код відповіді, логування та correlation ID. Тест охоплює як очікувану відмову, так і те, що система не класифікує її помилково як успішну операцію. Це показує, чи шари утворюють зрозумілий шлях відповідальності.',NULL,NULL,'Microsoft: багатошарова архітектура','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/n-tier','["tools","Архітектура програмного забезпечення"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(197,'tools-mikroservisna-arkhitektura-12','article','tools','Архітектура програмного забезпечення','middle',NULL,11,4,'Мікросервісна архітектура','Мікросервісний стиль розділяє продукт на автономні сервіси навколо бізнес-можливостей, кожен із власним життєвим циклом розробки та розгортання.','## Передумови появи
+
+У великих організаціях один спільний артефакт може ускладнювати незалежну роботу команд, випуск змін і масштабування окремих напрямів. Мікросервісний підхід пропонує розділити систему на невеликі автономні сервіси, що спілкуються через мережеві контракти. Межі бажано проводити навколо бізнес-можливостей і власності над даними, а не за технічними шарами на кшталт «усі контролери в одному сервісі». Незалежне розгортання має сенс лише тоді, коли сервіс справді може змінюватися без координованого випуску всіх сусідів.
+
+## Архітектура та взаємодія
+
+Клієнтський трафік часто надходить через API Gateway, а сервіс знаходить залежності через платформний DNS або сервісне виявлення. Взаємодія може бути синхронною через HTTP чи RPC або асинхронною через брокер повідомлень. Кожен сервіс володіє власним станом і зазвичай не дозволяє іншим компонентам напряму змінювати свою базу. Така автономність зменшує структурне зчеплення, але створює розподілені транзакції, часткові відмови, затримки й потребу в наскрізному трасуванні.
+
+## Переваги та операційна ціна
+
+Незалежне масштабування дає змогу додати ресурси лише до компонента, який справді обмежує пропускну здатність. Команди можуть використовувати різні технології, якщо платформа здатна ними керувати. Водночас число артефактів, конфігурацій, секретів, мережевих маршрутів і розгортань зростає. Недостатньо автоматизована команда може отримати розподілений моноліт: багато сервісів, які змінюються разом і синхронно викликають один одного. Зв’язки між доменами, версіонування контрактів і спільна операційна відповідальність стають центральними архітектурними питаннями.
+
+## Наскрізне тестування
+
+QA перевіряє контракти кожного сервісу окремо, інтеграцію між парами компонентів і критичні бізнес-процеси через реальний маршрут. Для відмови одного сервісу перевіряють тайм-аути, обмежені повтори, fallback або контрольовану деградацію. Після зміни схеми чи API потрібно знати, які версії продюсерів і споживачів одночасно працюють у різних середовищах. Розподілені траси допомагають простежити один запит через кілька вузлів, але їхні ідентифікатори мають передаватися через межі. Перед міграцією до мікросервісів слід переконатися, що команда може надійно збирати, розгортати, спостерігати й відновлювати окремі сервіси.
+
+## Межа сервісу та володіння даними
+
+Поділ на сервіси має спиратися на стабільну бізнес-відповідальність, а не на довільний розподіл таблиць чи класів. Сервіс, який володіє замовленням, визначає допустимі переходи його стану та надає іншим компонентам контракт, через який ці переходи ініціюються. Спільне пряме редагування його таблиці іншим сервісом створює приховану залежність від схеми та підриває незалежне розгортання. Водночас межі не є незмінними: зміни домену можуть показати, що дві частини слід об''єднати або розділити. Важливий критерій — чи може команда змінювати й випускати компонент без синхронного редагування всіх його споживачів.
+
+## Операційна складність і тестування
+
+Розподілений виклик додає мережеву затримку, тайм-аут, часткову відмову та неоднозначний результат: клієнт може не отримати відповідь, хоча сервер завершив операцію. Тому позитивний сценарій між двома сервісами недостатній. QA перевіряє повтори, ідемпотентність, несумісну версію контракту, повільну залежність, часткову недоступність і відновлення після черги помилок. Кореляційний ідентифікатор має дозволяти простежити запит через шлюз, сервіси та брокер. Мікросервісна схема виправдана, коли вигода від автономності, масштабування чи організації роботи перевищує витрати на мережеві контракти та спостережуваність.
+
+## Автономність сервісу й межі узгодженості
+
+Незалежне розгортання потребує сумісних контрактів і того, щоб зміна внутрішньої схеми одного сервісу не примушувала одночасно випускати всі його клієнти. Дані також мають належати чіткій межі: спільне сховище може бути технічно доступним, але прямий доступ споживача створює приховану інтеграцію. Події й API є різними формами контракту, кожна зі своїм керуванням версіями та очікуваною затримкою. Прихований спільний стан у кеші або таблиці здатен знову зв’язати сервіси сильніше, ніж мережевий API. Перевіряючи архітектуру, QA відстежує шлях даних і визначає, де саме має з’явитися остаточний результат, а де допустиме відставання похідної проєкції.
+
+## Розподіл відповідальності між командами
+
+Мікросервісна автономність має організаційний вимір: команда повинна володіти життєвим циклом сервісу, його контрактом, сигналами якості та процедурою відновлення. Якщо розробники випускають код, а інша група є єдиним власником моніторингу й production-доступу, автономність може лишитися формальною. Контракт між командами має включати очікуваний рівень доступності, формат помилок, зміни й підтримку версій. QA перевіряє не тільки інтерфейс, а й операційну готовність: чи можна знайти власника алерта, відтворити запит за trace-id та виконати безпечний rollback. Поділ на сервіси збільшує кількість меж, тому їхня прозорість і відповідальність важливіші за саму кількість процесів.
+
+## Версіонування сервісу й зворотна сумісність
+
+Незалежні релізи означають, що в мережі певний час співіснують різні версії клієнта й сервісу. Безпечна зміна спершу додає можливість, що не ламає старого споживача; далі споживачі переходять, а видалення застарілого контракту відбувається після перевірки фактичного використання. Зворотна сумісність включає поведінку, а не тільки структуру JSON: новий порядок помилок чи інша семантика поля теж є зміною контракту. QA перевіряє матрицю версій і реальні споживачі, особливо мобільні клієнти з повільним циклом оновлення. Мікросервіс, який формально має окремий endpoint, але вимагає синхронного розгортання всіх клієнтів, не досягає повної автономності.
+
+## Наскрізна транзакція через асинхронну межу
+
+Сервіс може успішно записати бізнес-зміну й після цього публікувати подію, але звичайна транзакція БД не охоплює брокер автоматично. Transactional outbox зберігає запис події в тій самій локальній транзакції, а окремий dispatcher доставляє його щонайменше один раз. Такий підхід зберігає зв''язок між фактом і подією, але допускає повторне надсилання. Consumer дедуплікує за ідентифікатором чи виконує ідемпотентне оновлення. QA перевіряє падіння після commit до публікації, після публікації до позначення outbox-запису й повторний запуск dispatcher-а. Це практична умова автономності сервісу, бо зміна не залежить від глобальної транзакції між різними сховищами.',NULL,NULL,'Martin Fowler: Microservices','https://martinfowler.com/articles/microservices.html','["tools","Архітектура програмного забезпечення"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(198,'tools-monolit-modul-nyy-monolit-i-mikroservisy-porivnyannya-13','article','tools','Архітектура програмного забезпечення','middle',NULL,12,4,'Моноліт, модульний моноліт і мікросервіси: порівняння','Архітектурні стилі відрізняються межами розгортання, ізоляцією даних і ціною взаємодії; вибір залежить від реальних потреб команди та продукту.','## Три способи організувати межі
+
+Моноліт розгортається єдиним артефактом і часто має спільний процес. Модульний моноліт зберігає спільне розгортання, але накладає явні межі модулів, забороняє довільний доступ до внутрішніх даних і контролює залежності. Мікросервісна система переносить частину цих меж через мережу та надає сервісам незалежні процеси, розгортання й часто окрему власність над сховищем. Відмінність полягає не лише у кількості компонентів, а в характері узгодження змін і відмов.
+
+## Компроміси вибору
+
+Моноліт зменшує операційну поверхню, полегшує транзакційність і часто прискорює початкову розробку. Його складність зростає, коли модулі не мають дисципліни меж і всі зміни вимагають координації. Модульний моноліт зберігає простий цикл розгортання, водночас створюючи підставу для майбутнього виділення окремої області. Мікросервіси дають автономність і вибіркове масштабування, але додають мережеві збої, узгодження контрактів, розподілені дані та потребу в платформній автоматизації. Жоден стиль не має гарантованої переваги за продуктивністю чи надійністю без вимірювання конкретного навантаження.
+
+## Практичний критерій міграції
+
+Якщо окрема функція регулярно потребує власного масштабу, циклу випуску, власника даних або ізоляції ризику, її межа може бути кандидатом на виділення. Спочатку корисно створити модуль із явним контрактом у межах одного застосунку, виміряти залежності й переконатися, що модуль не покладається на внутрішні деталі сусідів. Після винесення в окремий процес контракт стане мережевим, а транзакція через спільну базу — окремою проблемою. Без підтвердженої потреби розподілення додає складність, не гарантуючи корисної автономності.
+
+## Наслідки для QA та команди
+
+Тестова стратегія моноліту може спиратися на модульні межі й інтеграційне середовище; модульний моноліт потребує перевірки заборонених залежностей; мікросервісна система потребує контрактних перевірок, тестування сумісності версій, моделювання відмов і наскрізних трас. Для будь-якого стилю важливі спостережуваність, повторювані збірки та керовані міграції даних. Martin Fowler застерігає від припущення, що мікросервіси є автоматичним наступним етапом зростання; рішення має враховувати організаційну спроможність підтримувати розподілену систему.
+
+## Модульний моноліт як контрольований компроміс
+
+Модульний моноліт зберігає єдиний процес розгортання, але встановлює явні доменні межі й обмежує доступ між модулями. На відміну від неструктурованого моноліту, модулі мають публічні інтерфейси та контрольовані залежності; на відміну від мікросервісів, виклики зазвичай не перетинають мережу, а транзакція може охопити спільну базу. Це зменшує операційну ціну раннього розділення і залишає можливість виділити окремий сервіс, коли з''явиться вимірювана потреба. Такий перехід не є автоматичним: модуль повинен мати чітку відповідальність, власника даних і контракт, який можна перенести за межу процесу.
+
+## Критерії архітектурного вибору
+
+Порівнювати слід не лише пропускну здатність, а й частоту незалежних змін, різний профіль масштабування, вимоги до ізоляції відмов, компетенції команди, вартість чергувань і відновлення. Моноліт полегшує локальне налагодження й узгоджені транзакції, однак великий спільний випуск може збільшити координацію. Мікросервіси локалізують деякі зміни, проте створюють версіоновані контракти, мережеві збої та складнішу цілісність даних. QA оцінює, чи відповідає тестова стратегія вибраній межі: для моноліту важливі модульна ізоляція та міграції, для сервісної системи — сумісність контрактів, повтори, спостережуваність і сценарії часткової відмови.
+
+## Вартість зміни й шлях переходу
+
+Рішення про декомпозицію потрібно оцінювати на конкретному потоці змін. Якщо команда часто конфліктує в одному модулі, але сервісні межі ще не зрозумілі, модульний моноліт дає змогу спочатку виправити володіння кодом і даними без розподіленого виклику. Подальше виділення компонента має враховувати контракт, міграцію даних, маршрутизацію трафіку, спостереження та план зворотного переходу. Розділення таблиці без узгодження власника часто створює розподілений моноліт, у якому компоненти розгортаються окремо, але кожна зміна потребує їх одночасного оновлення. QA перевіряє не лише фінальну архітектуру, а й проміжні версії під час поетапної міграції.
+
+## Архітектурний компроміс та вартість володіння
+
+Порівняння підходів має включати повну вартість життєвого циклу. Сервіс може зменшити координацію релізів, але збільшити витрати на моніторинг, мережу, тестові середовища, управління секретами й чергування. Моноліт може потребувати більших ресурсів при незалежному масштабуванні окремої функції, зате дає локальну транзакцію та простіше налагодження. Modular monolith корисний, якщо дисципліна меж забезпечується кодом і процесом, а не лише домовленістю. QA додає до оцінки можливість тестувати відмови та час відновлення. Архітектурне рішення є вдалим не через відповідність модному стилю, а коли його переваги підтверджуються реальним профілем змін і вимогами якості.
+
+## Межі домену й узгодженість інтерфейсів
+
+Порівняння архітектур починається з домену: чи можна визначити узгоджену відповідальність компонента, яка має власні поняття й правила? Якщо межу провести за технічним типом, наприклад окремо сервіс читання й сервіс запису без доменної мотивації, кожна операція може потребувати багатьох міжсервісних викликів. Це створює чутливий до затримок ланцюг і складнощі в узгодженні. Модульний моноліт дозволяє перевірити межі без мережевого поділу, однак потребує контролю залежностей. QA може скласти сценарії за доменними операціями й визначити, чи проходять вони через надто багато власників стану. Такий аналіз надає практичний доказ, чи декомпозиція спрощує, чи ускладнює життєвий цикл зміни.
+
+## План міграції моноліту до сервісів
+
+Безпечне розділення може відбуватися через поступове перенаправлення функцій, а не одномоментне переписування. Спершу визначають межу, потім створюють сумісний API або подієвий контракт, переносять читання чи запис, а стару реалізацію прибирають лише після перевірки. Pattern Strangler дає змогу залишати частину моноліту за gateway, але маршрути повинні мати чіткий власник і зворотний шлях. Тестування має враховувати два джерела даних у перехідний час, можливе подвійне читання й розходження стану. QA порівнює відповіді старого й нового шляху на контрольній вибірці та перевіряє ідемпотентність перемикання. Успіх міграції оцінюється не фактом появи сервісу, а зниженням конкретного ризику без втрати поведінки.',NULL,NULL,'Martin Fowler: Monolith First','https://martinfowler.com/bliki/MonolithFirst.html','["tools","Архітектура програмного забезпечення"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(199,'tools-podiyevo-kerovana-arkhitektura-14','article','tools','Архітектура програмного забезпечення','middle',NULL,13,4,'Подієво-керована архітектура','Подієво-керована архітектура використовує факти про вже здійснені зміни, щоб незалежні споживачі могли реагувати на них асинхронно.','## Подія як факт
+
+Подія описує те, що вже сталося, наприклад створення замовлення або підтвердження платежу. Виробник публікує її, а один чи кілька споживачів реагують незалежно. Це відрізняється від команди, яка наказує конкретному компоненту виконати дію: подія має семантику факту й не зобов’язує кожного отримувача виконувати одну й ту саму операцію. Брокер або журнал подій може буферизувати повідомлення, маршрутизувати їх і дозволяти повторне читання відповідно до конкретної технології.
+
+## Слабке зчеплення та ціна затримки
+
+Асинхронна подія зменшує необхідність синхронно знати всі залежні компоненти. Після оформлення замовлення сервіс може опублікувати факт, а склад, сповіщення та аналітика оброблять його власним темпом. Така незалежність збільшує стійкість до короткої недоступності споживача, якщо брокер зберігає повідомлення, але користувач не завжди бачить усі похідні зміни негайно. Система переходить до узгодженості з часом, а отже має визначити допустимий час відставання й спосіб повідомлення про помилки.
+
+## Схема події та доставка
+
+Подія має ідентифікатор, тип, часові дані, версію схеми й бізнес-корисне навантаження. Еволюція структури потребує сумісності старих і нових продюсерів зі споживачами, які можуть розгортатися у різний час. Повторна доставка є звичайною властивістю багатьох систем; споживач має розпізнавати повтор або робити побічний ефект ідемпотентним. Якщо запис бізнес-даних і публікація події виконуються незалежно, збій між цими діями може створити втрачений або «зайвий» факт; транзакційний outbox є одним із підходів до узгодження.
+
+## QA-перевірки
+
+QA тестує затримане й повторне повідомлення, невалідну схему, недоступність брокера, відновлення споживача з попередньої позиції та узгодженість кінцевих представлень. Для кожної події важливо перевірити ідентичність і причинний зв’язок, а не лише кількість повідомлень. Метрики черги чи журналу мають показувати відставання, швидкість помилок і кількість повідомлень у карантині. Подієва модель корисна, коли незалежні реакції виправдовують eventual consistency; її не слід застосовувати лише для заміни зрозумілого локального виклику непрозорим транспортом.
+
+## Життєвий цикл події та її контракт
+
+Подія описує факт, що вже відбувся, наприклад підтвердження оплати, і має відрізнятися від команди, яка просить компонент виконати дію. У повідомленні зазвичай потрібні ідентифікатор події, тип, версія схеми, час виникнення та доменні дані, достатні споживачу. Споживач не повинен припускати, що події надходять рівно один раз або в глобально правильному порядку. Відкладена доставка означає, що перед обробкою стан міг змінитися; контракт має визначити дедуплікацію, правила сумісності та реакцію на невідому версію. Зміна назви поля чи значення переліку може бути несумісною, навіть коли транспорт успішно доставляє байти.
+
+## Виявлення причинного ланцюга
+
+У системі подій користувач може бачити початкову операцію як успішну, тоді як похідна проєкція чи повідомлення з''явиться пізніше. Це не обов''язково дефект, якщо продукт визначає очікувану затримку та проміжний стан. QA фіксує ідентифікатор кореляції, час публікації, позицію чи ідентифікатор повідомлення, час обробки та результат побічної дії. Тестують повторну доставку, тимчасову відмову споживача, некоректне повідомлення й відновлення відставання. Слабка зв''язаність зменшує синхронні залежності, але ускладнює пошук причинності та вимагає явної політики збереження подій, повторного програвання і керування схемою.
+
+## Порядок подій і конкурентні оновлення
+
+Подієві системи часто гарантують порядок лише в межах певного ключа чи partition-а, а не між усіма подіями системи. Якщо дві незалежні події змінюють пов’язаний стан, споживачеві може знадобитися версія агрегату, перевірка причинного номера або правило конфлікту. Часова мітка не завжди є надійним глобальним порядком через різницю годинників і затримку доставки. Подія має описувати факт і його доменний контекст, а не вимагати, щоб споживач сам здогадувався про попередній стан. QA надсилає повідомлення у зміненому порядку, дублює їх і відтворює затримане читання; очікуваний результат визначається бізнес-інваріантом, а не лише черговістю появи в журналі.
+
+## Побудова проєкцій і повторне читання
+
+Event-driven система часто використовує події для побудови матеріалізованих представлень, оптимізованих під запити. Проєкція є похідною, отже її можна відбудувати із журналу лише тоді, коли історія зберігається достатньо довго та формат подій лишається інтерпретованим. Replay має бути контрольованим: він може перевантажити downstream-сховище або повторно викликати зовнішню дію. Відокремлюють побудову похідного індексу, яку можна повторити, від незворотної команди, наприклад платежу. QA перевіряє відтворення з нуля, сумісність старих подій, порядок версій і відсутність дубльованого ефекту. Час до повної побудови індексу є частиною відновлюваності системи.
+
+## Помилки й повторна доставка подій
+
+Подієві споживачі мають класифікувати помилки: тимчасову недоступність залежності зазвичай можна повторити, тоді як порушення схеми може вимагати карантину та виправлення даних. Без обмеженої кількості повторів один повідомлення здатне створити нескінченну роботу; без журналу помилок воно може зникнути непомітно. Backoff і dead-letter потік допомагають ізолювати проблему, але потрібні правила повторного запуску та власник операційного процесу. QA навмисно спричиняє обидва класи помилок і перевіряє, що тимчасова помилка зрештою завершується, а постійна зберігає достатній контекст для діагностики. Після повторного подання потрібно впевнитися, що вже успішно оброблені події не дублюють бізнес-ефект.
+
+## Власник події та зміна контракту
+
+Подію зазвичай визначає сервіс, який володіє фактом, а не кожен споживач окремо. Інакше різні споживачі можуть трактувати однаковий тип по-різному або вимагати несумісні поля. Контракт має бути орієнтований на значення домену, а не на внутрішню структуру таблиці. Додавання поля може бути безпечним лише якщо споживачі ігнорують невідомі поля; зміна значення чи типу потребує окремої оцінки. QA перевіряє compatibility rules, версію producer-а й споживачів, а також replay історичних подій. Спостереження за невідомою версією чи відхиленим повідомленням допомагає виявити проблему до масової втрати похідних представлень.',NULL,NULL,'AWS: подієво-керована архітектура','https://aws.amazon.com/event-driven-architecture/','["tools","Архітектура програмного забезпечення"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(200,'tools-servisno-oriyentovana-arkhitektura-15','article','tools','Архітектура програмного забезпечення','middle',NULL,14,4,'Сервісно-орієнтована архітектура','SOA організовує повторно використовувані бізнес-сервіси навколо явних контрактів і стандартизованої взаємодії між неоднорідними системами.','## Інтеграційна проблема
+
+У великих підприємствах окремі системи з’являються в різний час, використовують різні платформи й зберігають власні дані. Точкові інтеграції між кожною парою компонентів утворюють мережу взаємних залежностей, яку важко змінювати. SOA пропонує розкривати функції як сервіси з формальними контрактами, щоб клієнти спиралися на стабільну межу, а не на внутрішню реалізацію. Мета полягає в повторному використанні бізнес-можливостей і зменшенні прямого зчеплення між інформаційними системами.
+
+## Контракти та інфраструктура
+
+Сервіс має описувати операції, типи повідомлень, правила помилок, автентифікацію та сумісність версій. У корпоративному середовищі можуть застосовуватися реєстри сервісів, адаптери до застарілих систем, оркестратори й інтеграційна шина. Центральний компонент спрощує політики та маршрутизацію, але може стати вузьким місцем і місцем надмірної концентрації логіки. SOA не означає обов’язково використання одного конкретного протоколу чи продукту; архітектурна властивість — сервісні контракти та керована композиція.
+
+## Відмінність від мікросервісів
+
+SOA часто охоплює інтеграцію на рівні цілої організації, де сервіси можуть бути крупними й повторно використовуваними між багатьма доменами. Мікросервісний стиль зазвичай акцентує автономні команди, вузьку бізнес-відповідальність, незалежне розгортання та децентралізовану власність над даними. Межа між підходами не є абсолютною: вони мають спільне поняття сервісного контракту, але різняться типовою гранулярністю та моделлю управління. Централізований ESB може існувати в SOA, тоді як мікросервісна система часто намагається не перетворювати інтеграційний шар на місце бізнес-оркестрації всіх процесів.
+
+## Застосування й тестування
+
+У системі страхування сервіс клієнтів може надавати перевірку ідентичності кільком продуктам, не відкриваючи безпосередньо внутрішню базу. QA перевіряє контрактні схеми, права доступу, семантику тайм-аутів, сумісність під час міграції та вплив недоступності спільного сервісу на споживачів. Централізований моніторинг має дозволяти відрізнити помилку маршрутизації від помилки цільового сервісу. Типова помилка — вважати повторне використання API достатньою умовою слабкого зчеплення; нестабільний контракт або надто широкий спільний сервіс може навпаки пов’язати випуски багатьох команд.
+
+## Контракти, реєстр і оркестрація
+
+Великі SOA-рішення часто використовували спільні контракти, каталоги сервісів та інтеграційні платформи, щоб організації могли повторно застосовувати можливості різних систем. Така стандартизація спрощує взаємодію неоднорідних продуктів і дає змогу централізовано керувати політиками, але створює ризик надмірної залежності від спільної інфраструктури. Якщо кожне перетворення й бізнес-правило зосереджені в ESB, логіка стає непрозорою для власників доменів. Тому потрібно відрізняти спільний транспорт або контракт від централізованого володіння бізнес-процесом; останнє може стати вузьким місцем змін та діагностики.
+
+## Відмінність від мікросервісного підходу
+
+SOA описує ширший стиль інтеграції сервісів у межах підприємства, тоді як мікросервісний підхід зазвичай наголошує на невеликих автономних командах, незалежному розгортанні та локальному володінні даними. Це не взаємовиключні класи: організація може мати мікросервіси всередині доменів і SOA-контракти між корпоративними платформами. Практична перевірка має встановити, хто змінює версію контракту, чи сумісні споживачі, чи можна локалізувати збій інтеграційного вузла та чи не втрачаються повідомлення під час трансформації. Назва архітектури менш важлива за фактичну топологію відповідальності й відмов.
+
+## Стандартизація без надмірного централізму
+
+Корпоративне повторне використання сервісу корисне, коли кілька систем справді потребують однакової можливості, наприклад перевірки податкового ідентифікатора. Воно стає проблемним, коли спільний сервіс перетворюється на універсальний шлюз для непов’язаних процесів і кожна зміна потребує координації багатьох доменів. Контракт має бути стабільним, але не слід приховувати під ним різні бізнес-значення. Архітектурна рада або центр компетенцій можуть встановлювати стандарти, тоді як відповідальність за доменний результат залишається у власника сервісу. QA перевіряє сумісність версій, права, локалізовані помилки, навантаження й політику підтримки застарілих контрактів на реальних споживачах.
+
+## Застосування SOA у неоднорідному середовищі
+
+Підприємство часто має системи різного покоління, що використовують різні протоколи, формати ідентифікації та моделі помилок. Сервісний контракт може надати спільну бізнес-операцію, не вимагаючи одночасно переписувати всі системи. Адаптер повинен зберігати значення домену й не маскувати невідомі стани як успіх. За наявності централізованої інтеграції важливо визначити політику версіонування, доступності й маршрутизації навколо сервісу. QA готує контрактні дані для кожної спадкової системи, перевіряє конвертацію кодувань і помилок та аналізує, чи правильно проходять ідентифікатори кореляції. Абстракція не повинна приховувати технічний борг і обмеження старого постачальника.
+
+## Організаційні межі сервісів
+
+Сервісний ландшафт відображає не тільки технологічні модулі, а й спосіб організації команд. Якщо декілька команд володіють одним сервісом без визначеного рішення щодо змін, релізна автономність зникає. Якщо один сервіс надто малий і не має самостійної операційної відповідальності, витрати на його pipeline, моніторинг та підтримку можуть перевищити користь. SOA дозволяє ширшу повторну інтеграцію в організації, але стандартний сервіс не повинен ставати вузьким місцем погодження кожної зміни. QA уточнює власника контракту, процедуру повідомлення про версію та відповідального за інцидент. Це робить організаційний аспект архітектури перевірюваним і зменшує невизначеність під час інтеграційного дефекту.
+
+## Стандартний сервіс як продукт для споживачів
+
+Спільний корпоративний сервіс повинен мати документацію, версійний контракт, канал підтримки, вимірювану доступність і політику відмов. Його споживачі мають розуміти межі квоти та порядок повідомлення про зміну. Централізована можливість може зменшити дублювання реалізацій, але якщо вона недоступна, одразу страждають усі залежні системи. Резервний шлях або локальний кеш можуть зменшити вплив, але мають узгоджену семантику. QA перевіряє саме споживчий сценарій при деградації спільного сервісу й аналізує, чи відповідає SLA фактичному використанню. Архітектурне повторне використання виправдане, коли керування спільним контрактом не повільніше й не ризикованіше за незалежні реалізації.',NULL,NULL,'The Open Group: сервісно-орієнтована архітектура','https://www.opengroup.org/soa/source-book/soa/p1.htm','["tools","Архітектура програмного забезпечення"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(201,'tools-rozpodileni-systemy-ta-chastkovi-vidmovy-16','article','tools','Архітектура програмного забезпечення','middle',NULL,15,4,'Розподілені системи та часткові відмови','Розподілена система складається з вузлів, які координуються через мережу, де затримки, розриви зв’язку й часткові відмови є нормальними умовами роботи.','## Чому системи розподіляють
+
+Розподілення дає змогу збільшувати обчислювальні ресурси, географічно наближати дані до користувача, ізолювати домени й продовжувати роботу після втрати окремого вузла. Воно також розбиває локальну програму на учасників, які обмінюються повідомленнями через мережу. На відміну від виклику функції в одному процесі, мережевий виклик може затриматися, бути виконаним віддалено без отримання відповіді або завершитися помилкою після часткового побічного ефекту. Система часто не може точно знати, чи вузол зламався, чи лише повільно відповідає.
+
+## Часткові відмови й часові межі
+
+Тайм-аут не скасовує віддалену операцію автоматично: клієнт перестає чекати, але сервер може продовжити роботу. Повторний запит здатен створити дубль, якщо перша операція вже зафіксувала зміни. Відмова DNS, переповнення пулу з’єднань, мережеве розділення та втрата лідера кластера мають різну причину й потребують різних доказів. Надійна система визначає дедлайни, обмежені повтори, ідемпотентні команди, поведінку при недоступності й механізм відновлення, а не покладається на невизначене очікування.
+
+## Узгодженість, доступність і CAP
+
+Коли вузли з копіями даних не можуть обмінюватися повідомленнями, система має визначити, чи відповідати на запит локальними потенційно застарілими даними, чи відмовити до відновлення узгодженого стану. Теорема CAP формалізує обмеження між лінійною узгодженістю, доступністю запитів і допуском мережевого розділення; вона не означає, що система обирає назавжди лише дві властивості в усіх режимах. Відмова від строгої узгодженості може бути прийнятною для каталогу, але неприйнятною для списання коштів. Рішення треба формулювати через конкретний інваріант і сценарій розділення.
+
+## Погляд QA на розподілений стан
+
+QA використовує контрольоване внесення затримки, втрати пакетів, перезапуск вузлів і повторне відтворення повідомлень, щоб перевірити реальну політику відмови. Для кожного сценарію потрібні критерії відновлення: чи завершується запит, чи зберігається даних цілісність, як швидко вузли зближуються та що бачить клієнт у проміжному стані. Трасування корелює кроки між процесами, а метрики показують відставання й місткість черг. CAP не є універсальним правилом для вибору бази даних; коректний архітектурний висновок залежить від моделі загроз і потрібних гарантій конкретної операції.
+
+## Часткові відмови та часові межі
+
+У розподіленій системі відмова не завжди проявляється як явне завершення процесу. Мережеве з''єднання може зависнути, відповідь затриматися за межі дедлайну, а клієнт не знатиме, чи сервер встиг зафіксувати зміни. Тайм-аут є локальним рішенням клієнта припинити очікування, але не гарантує скасування віддаленої операції. Отже, кожна межа потребує бюджету часу, обмеженої кількості повторів і семантики безпечного повторення. Поширення повторів між кількома шарами здатне множити навантаження саме під час деградації, тому політики мають враховувати джиттер, дедлайни та спільний бюджет запиту.
+
+## Компроміси консистентності
+
+CAP-теорема стосується поведінки розподіленого сховища за наявності мережевого розділення: система має обирати між суворою лінійною узгодженістю та відповідями на кожний запит, а не стверджує, що будь-яка система просто обирає дві з трьох властивостей за всіх умов. У нормальній роботі затримка та узгодженість також залежать від протоколу реплікації. QA визначає допустимі спостереження для кожного читання, перевіряє відновлення після втрати вузла, дублікати, повторне застосування команди й відставання репліки. Критерій приймання має розрізняти тимчасово застаріле читання від незворотної втрати підтвердженої транзакції.
+
+## Тайм-аут не є доказом невиконання
+
+Клієнт, який перестав чекати, не може без додаткового протоколу знати, чи запит був виконаний. Сервер міг зафіксувати результат, а відповідь загубилася в мережі. Повтор без ключа ідемпотентності здатний породити другий ефект; відмова від повтору може залишити користувача без підтвердження. Тому розподілена система потребує узгодженої моделі статусу операції: клієнт може запитати її за стабільним ідентифікатором або отримати подію завершення. QA перевіряє розрив з’єднання до запису, після запису та під час відповіді, зіставляючи кожен випадок із фактичним станом. Це практичний прояв часткової відмови, яку неможливо звести до простого «сервер працює або не працює».
+
+## Час, годинники та причинність
+
+У різних вузлах немає гарантовано спільного точного фізичного годинника. Синхронізація NTP зменшує розбіжність, але затримка мережі, корекція часу чи дрейф залишають невизначеність. Тому часові мітки корисні для діагностики, але не завжди задають надійний причинний порядок. Версійні лічильники, offset-и журналу й ідентифікатори причинного ланцюга можуть надати сильніші докази для певної межі. QA співставляє часові дані різних систем із відомою похибкою та не робить висновок про втрату події лише за послідовністю секунд у логах. Для контрактів, що залежать від часу, тестують часову зону, перехід календарної доби й повторну доставку після затримки.
+
+## Fault tolerance як властивість, а не відсутність відмов
+
+Відмовостійкість не означає, що компоненти ніколи не падають; вона означає, що система має визначену поведінку під час їхньої втрати й може відновити роботу в заданих межах. Реплікація, резервування, повтори та ізоляція несправних вузлів створюють різні гарантії й не завжди усувають втрату даних. Треба визначати RTO та RPO, якщо вони важливі: скільки часу відновлення прийнятно і який обсяг останніх даних може бути втрачений. QA проводить відмовні сценарії за погодженими межами, перевіряє failover та процедуру повернення в нормальний стан. Показник доступності без перевірки цілісності оманливий: сервіс може відповідати на запити, але повертати неправильний стан.
+
+## Реплікація та вибір поведінки під час partition
+
+Коли мережеве розділення не дозволяє вузлам обмінюватися станом, система може відмовити в записі, прийняти локальне оновлення з подальшим злиттям або надати обмежене читання. Ця поведінка визначається конкретним протоколом і вимогами домену. CAP описує компроміс у присутності partition для гарантій consistency та availability, але не є меню із двох властивостей за нормальної роботи. QA тестує partition окремо для читання й запису, перевіряє, чи не губиться підтверджене оновлення, та аналізує конфлікти після відновлення. Вимога повинна зазначати, чи доступність означає будь-яку відповідь або коректну відповідь, і який рівень застарілості продукт допускає.',NULL,NULL,'Gilbert і Lynch: формалізація теореми CAP','https://groups.csail.mit.edu/tds/papers/Gilbert/Brewer2.pdf','["tools","Архітектура програмного забезпечення"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(202,'tools-api-ta-kontrakty-vzayemodii-komponentiv-17','article','tools','Взаємодія та інтеграція','middle',NULL,16,4,'API та контракти взаємодії компонентів','API є контрольованою межею, через яку компонент надає функції іншим програмам і фіксує очікувану семантику обміну.','## Інтерфейс як домовленість
+
+Інтерфейс прикладного програмування (API) визначає доступні операції, вхідні дані, результат і правила помилок. Контракт має описувати не лише JSON-схему, а й автентифікацію, авторизацію, коди відповіді, обмеження, часову поведінку та побічні ефекти. Внутрішня реалізація компонента може змінюватися, якщо вона зберігає ці зовнішні гарантії. Відкритий HTTP API, бібліотечний інтерфейс і внутрішній формат повідомлення є різними формами API, хоча потребують однакової уваги до сумісності.
+
+## Синхронні протоколи й схеми
+
+Для HTTP контракт часто описує метод, шлях, параметри, заголовки, тіло й відповіді. OpenAPI дає машинозчитуване представлення операцій і моделей, яке можна використовувати для документації, генерації клієнтів та перевірок. RPC може передавати типізовані повідомлення через компактний протокол; черги обмінюються схемованими подіями з окремими правилами доставки. Версіонування має враховувати одночасну роботу старих і нових клієнтів, тому додавання необов’язкового поля зазвичай безпечніше, ніж перейменування чи зміна семантики наявного поля.
+
+## Семантична сумісність
+
+Схема може залишатися формально валідною, але зміна значення поля порушує споживача. Наприклад, поле price, яке раніше виражало суму в центах, а тепер зберігає десяткові долари, є несумісним навіть за однакового числового типу. Статус успіху також є частиною контракту: клієнт може трактувати 202 як прийняту асинхронну операцію, а не завершену транзакцію. Постачальник і споживач мають погодити обробку невідомих полів, повторів, пагінації й ідемпотентності.
+
+## Контрактне тестування
+
+QA перевіряє позитивні й негативні межі схеми, обов’язковість полів, авторизацію на ресурс, сумісність змін і відповідність реальної відповіді документації. Контрактні тести споживача фіксують лише поведінку, на яку він реально спирається, а перевірка постачальника підтверджує, що вона підтримується. Це не замінює інтеграційного тесту мережі, тайм-ауту чи БД. OpenAPI опис має не включати секрети й не обіцяти гарантій, яких реалізація не виконує; зміна контракту повинна мати план для клієнтів, що розгортаються незалежно.
+
+## Контракт як межа сумісності
+
+API є не лише адресою та набором маршрутів, а публічною домовленістю про операції, поля, коди помилок, авторизацію, часові обмеження та правила еволюції. Контракт має бути достатньо точним, щоб незалежні клієнт і сервер могли реалізувати його без припущень про внутрішню структуру один одного. Відповідь із синтаксично коректним JSON все одно порушує контракт, якщо поле має неправильний зміст або помилка представлена як успіх. Версіонування може відбуватися через URL, заголовки чи сумісне розширення схеми; жоден спосіб не звільняє від плану міграції споживачів і спостереження за реальною сумісністю.
+
+## Перевірка контракту на межі
+
+Тестувальник перевіряє обов''язкові й необов''язкові поля, межі значень, кодування, часові зони, помилки валідації, повтор запиту та права доступу. Особливу увагу приділяють невідомим полям і enum-значенням: клієнт може ігнорувати розширення або відхиляти їх відповідно до контракту. Для критичних інтеграцій контрактні тести перевіряють припущення споживача проти постачальника, а інтеграційні перевіряють реальне з''єднання. Мок, що створений за тим самим помилковим припущенням, може підтвердити себе; тому його очікування мають походити з версійованої специфікації або незалежного прикладу.
+
+## Помилки протоколу та продуктова семантика
+
+HTTP-код і тіло відповіді формують частину контракту, але сам код не завжди пояснює бізнес-наслідок. Статус 202 означає прийняття до обробки, а не завершення операції; 204 не передбачає тіла, а 409 може описувати конфлікт стану. Повторювана помилка має надати стабільний машинно-читаний код, а не залежати від тексту локалізованого повідомлення. Валідація поля має визначати формат і межу значень однаково на клієнті та сервері, при цьому сервер залишається авторитетним. QA перевіряє відповідність специфікації, семантичні інваріанти та те, що помилка не маскується як успішна відповідь.
+
+## Права доступу як частина API-контракту
+
+API має визначати, як автентифікується клієнт, які ролі та дозволи потрібні для операції і що саме розкриває помилка. Відмінність між відсутньою ідентичністю та недостатніми правами важлива для інтеграції й аудиту, але конкретна політика може навмисно приховувати існування ресурсу. Токен може бути чинним, але не мати правильного scope, audience або строку дії. QA перевіряє позитивний доступ, відмову за кожною умовою, повтор із простроченим токеном, спробу змінити чужий ресурс та безпечне кешування авторизаційного результату. Документація контракту не повинна видавати внутрішні назви ролей або технічні деталі, які створюють ризик безпеки.
+
+## Версія API та еволюція ресурсів
+
+API може еволюціонувати через сумісне розширення, явний номер версії чи узгоджений період підтримки старого формату. Обрана стратегія має передбачати не тільки URL, а й схеми помилок, заголовки, авторизацію та поведінку клієнтів. Версійний endpoint може зменшити ризик несумісності, але збільшує кількість варіантів, які команда підтримує. QA перевіряє, що старий клієнт отримує передбачуваний результат, а deprecation повідомляється за контрактом і не відкликається раніше часу. Метрики фактичного використання версій допомагають планувати вилучення. Невідомий API-версійний заголовок або застарілий шлях не повинні непомітно маршрутизуватися до довільної реалізації.
+
+## Дублікати, пагінація та детермінізм API
+
+Колекційний API має задавати стабільну пагінацію, сортування та поведінку при зміні набору даних між сторінками. Offset pagination може пропустити чи повторити записи, коли попередні елементи додаються або вилучаються; cursor pagination спирається на стабільний ключ і часто краще поводиться при рості набору. Повтор запиту з тим самим cursor повинен мати передбачуваний результат відповідно до контракту. QA перевіряє граничний розмір сторінки, відсутні та некоректні cursor-и, фільтри доступу і конкуруючі зміни. Дубльовані записи в різних сторінках можуть бути наслідком недетермінованого сортування, а не помилки UI. Ці аспекти належать до API-коректності навіть за правильної роботи окремого endpoint-а.',NULL,NULL,'Специфікація OpenAPI','https://spec.openapis.org/oas/latest.html','["tools","Взаємодія та інтеграція"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(203,'tools-synkhronna-ta-asynkhronna-komunikatsiya-18','article','tools','Взаємодія та інтеграція','middle',NULL,17,4,'Синхронна та асинхронна комунікація','Синхронна комунікація очікує результат виклику, тоді як асинхронна передає роботу або подію без вимоги негайної відповіді.','## Моделі часу та залежності
+
+У моделі запит-відповідь клієнт звертається до сервісу й утримує контекст очікування, поки отримує результат або тайм-аут. Це природно для пошуку сторінки чи перевірки доступу, де користувач очікує відповідь у межах одного сеансу. Асинхронна взаємодія дає відправнику підтвердження прийняття, а фактичну обробку виконує інший компонент пізніше. Fire-and-forget є крайнім випадком, де відправник не чекає прикладного результату; без протоколу підтвердження він не знає, чи повідомлення було збережено.
+
+## Компроміси взаємодії
+
+Синхронний ланцюг створює часову залежність: затримка одного сервісу накопичується, а його недоступність поширюється на викликачів. Асинхронна черга розв’язує компоненти у часі та може згладжувати пікове навантаження, проте додає затримку до узгодженого результату, повторну доставку, окремий життєвий цикл завдання й складніше відстеження. Виклик із callback може залишатися асинхронним, але все ще бути тісно пов’язаним з адресою конкретного отримувача. Подія через брокер зазвичай відділяє виробника від переліку споживачів сильніше.
+
+## Практичний приклад
+
+Під час оформлення замовлення API може синхронно перевірити доступність товару та записати замовлення, а надсилання листа й оновлення аналітики виконати асинхронно. Якщо відповідь для клієнта вимагає підтвердження від усіх фонових компонентів, то затримка знову стає синхронною залежністю, хоча всередині використовується черга. Проєктувальник має вирішити, які факти повинні бути гарантовані перед відповіддю, а які можуть з’явитися пізніше.
+
+## QA та спостережуваність
+
+QA перевіряє тайм-аути, дублювання, повторне відтворення, затриманий результат і поведінку клієнта після втрати відповіді. Для асинхронної задачі важливо підтвердити кореляційний ідентифікатор, статус прийняття та спосіб отримати кінцевий результат. Метрики мають відрізняти швидку відповідь про прийняття від фактичного завершення роботи. Типова помилка — називати операцію асинхронною, хоча відправник продовжує чекати кінцевий ефект через polling без обмеження часу; це переносить, але не усуває блокування.
+
+## Вибір форми комунікації
+
+Синхронний виклик зручний, коли користувачу потрібне негайне рішення й залежність має прийнятну затримку. Він створює часовий зв''язок: недоступний сервер може зупинити шлях запиту. Асинхронне повідомлення відділяє момент прийняття роботи від моменту завершення, дає буферизацію та повтори, проте вводить проміжні стани й невизначеність часу. Вибір слід робити за бізнес-семантикою: запит балансу перед підтвердженням платежу може вимагати синхронної відповіді, а формування звіту — прийняття завдання з подальшим сповіщенням. Важливо узгодити, що саме означає успіх для клієнта на кожній межі.
+
+## Тайм-аути, повтори й інтерфейс
+
+Невизначений мережевий результат вимагає інтерфейсу, який не спонукає користувача безмежно повторювати операцію. Для довгої задачі API може повернути ідентифікатор прийнятого процесу, а клієнт опитує стан або підписується на оновлення. Повтор створення платежу без ключа ідемпотентності здатен створити другий платіж, навіть якщо перша відповідь загубилася. QA перевіряє закриття вкладки, втрату мережі, повтор після тайм-ауту, порядок повідомлень та відображення станів очікування, завершення й відмови. Спостерігати потрібно не лише транспортний код, а й фактичний бізнес-ефект.
+
+## Зворотний тиск і контроль потоку
+
+Якщо виробник асинхронної роботи швидший за споживача, backlog зростає до вичерпання пам’яті або строку актуальності завдання. Backpressure обмежує незавершену роботу, сповільнює джерело чи повертає контрольовану відмову. Синхронний виклик природно передає частину тиску клієнту через затримку, але може накопичувати з’єднання та потоки очікування. Асинхронна черга роз’єднує часові цикли, проте потрібні ліміти довжини, політика переповнення й сигналізація про відставання. QA вимірює не лише швидкість завершення окремого запиту, а й вік черги та час до стабілізації після піку. Без обмежень система може виглядати доступною, поки накопичує невиконану роботу.
+
+## Транзакційна семантика у комунікації
+
+Синхронний запит часто сприймається як атомарна дія, хоча транспорт лише повертає результат у межах одного обміну. Асинхронне прийняття повідомлення означає, що робота взята до виконання, але не обов''язково завершена. Контракт повинен чітко розрізняти accepted, processing, succeeded, failed і cancelled, коли такі стани потрібні продукту. Невизначеність після тайм-ауту вимагає ідентифікатора команди або ресурсу, за яким можна встановити результат. QA тестує дубльоване подання, відмову під час зміни стану й подальше опитування, перевіряючи, що UI не оголошує успіх завчасно. Обрана форма комунікації визначає, які стани треба показати користувачу.
+
+## Відкладене виконання й видимість стану
+
+Асинхронна операція потребує моделі стану, яка залишається доступною після завершення початкового з''єднання. Клієнт може отримати resource ID і перевіряти його, підписатися на сповіщення чи отримати callback. Кожен спосіб має ризик: polling створює зайві запити, callback потребує захищеного приймача, а push-підписка може втратитися. Повідомлення про завершення не має бути єдиним джерелом істини, якщо клієнт міг його не отримати. QA закриває вкладку, відновлює з''єднання, перевіряє повторне читання стану та поведінку після закінчення строку його зберігання. Інтерфейс повинен розрізняти очікування, невизначеність і остаточну відмову.
+
+## Робота з тайм-аутом на користувацькому боці
+
+Довге завдання не повинно залишати користувача без інформації, але polling надто часто збільшує навантаження й не гарантує швидкого сповіщення. Стратегія може збільшувати інтервал опитування, використовувати push або давати клієнту можливість відкрити ресурс стану пізніше. Потрібні межа очікування, повтор після тимчасової помилки читання та повідомлення про результат, який ще невідомий. Кнопка «повторити» не має бездумно відправляти нову команду, якщо попередній запит міг бути виконаний. QA тестує перезавантаження сторінки, відновлення збереженого operation ID та кілька вкладок. UI, серверний процес і сповіщення мають узгоджено відображати один і той самий стан.',NULL,NULL,'RFC 9110: семантика HTTP','https://www.rfc-editor.org/rfc/rfc9110.html','["tools","Взаємодія та інтеграція"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(204,'tools-cherhy-povidomlen-i-brokery-19','article','tools','Взаємодія та інтеграція','middle',NULL,18,4,'Черги повідомлень і брокери','Черга буферизує роботу для споживача, а брокер приймає повідомлення, зберігає або маршрутизує їх відповідно до правил доставки.','## Проблема прямої інтеграції
+
+Коли виробник напряму викликає кожен залежний сервіс, він має знати адресу й доступність усіх отримувачів, а пікове навантаження передається далі миттєво. Черга повідомлень розділяє відправлення та обробку в часі: виробник передає роботу, брокер утримує її згідно з налаштуваннями, а споживач забирає повідомлення, коли готовий. Брокер може додатково маршрутизувати, реплікувати, обмежувати потік і надавати інструменти повторної доставки.
+
+## Основні ролі та життєвий цикл
+
+Producer формує повідомлення й публікує його до черги або маршрутизатора. Consumer отримує доставку, виконує роботу й підтверджує успіх; за помилки повідомлення може бути повернуте, відкладене чи переміщене в dead-letter область. Exchange, topic або інший маршрутний рівень визначає, кому доставляти дані. Підтвердження видавця відповідає на питання, чи брокер прийняв повідомлення, а підтвердження споживача — чи споживач повідомляє про завершення обробки. Це різні межі гарантії.
+
+## Гарантії та дублювання
+
+Довговічна черга й стійке повідомлення можуть забезпечити збереження після перезапуску, але конкретний результат залежить від типу черги, реплікації та підтверджень. At-most-once допускає втрату, at-least-once допускає повтор, а рівноразовий бізнес-ефект потребує узгодження обробки з побічним записом. Якщо споживач зберіг результат і впав до підтвердження, брокер може доставити ту саму роботу знову. Ідемпотентний обробник або таблиця дедуплікації має захистити кінцевий стан.
+
+## QA-перевірки
+
+Тестувальник перевіряє маршрутизацію за ключем, недоставлене повідомлення, переповнення, відсутність споживачів, аварію брокера й повтор після втрати підтвердження. Для dead-letter черги потрібно встановити причину переміщення та можливість безпечного повторного запуску. Порядок зазвичай обмежений конкретною чергою, партицією чи ключем, а не глобальною системою. Метрики depth і lag слід пов’язувати з часом очікування користувацької роботи, інакше зростаюча затримка може лишатися непоміченою.
+
+## Життєвий цикл повідомлення
+
+Брокер приймає повідомлення, зберігає його відповідно до налаштувань надійності, маршрутизує до одержувача та очікує підтвердження обробки або доставки. Підтвердження від споживача зазвичай означає, що повідомлення можна видалити чи просунути позицію, але точна семантика залежить від брокера. Якщо споживач завершується до підтвердження, повідомлення може бути доставлено повторно. Якщо підтвердження надіслано до фіксації бізнес-ефекту, збій між цими діями може втратити роботу. Тому атомарність між брокером та зовнішньою БД не слід припускати без конкретного механізму; часто потрібні дедуплікація або transactional outbox.
+
+## Черга як контроль навантаження
+
+Буферизація дає змогу тимчасово приймати роботу під час піків, але черга не усуває перевантаження, якщо середня швидкість надходження довго перевищує швидкість обробки. Глибина черги та вік найстарішого повідомлення важливіші за сам факт доступності брокера. Межа повторів має відокремлювати тимчасову помилку від некоректного повідомлення, для якого нескінченні повтори лише блокують ресурси. QA перевіряє маршрутизацію, підтвердження, порядок, переповнення, відновлення споживача й перенаправлення в dead-letter канал. Потрібно також підтвердити, що операційна команда здатна переглянути причину відхилення та безпечно відтворити повідомлення.
+
+## Гарантія доставки та бізнес-узгодженість
+
+Транспортна гарантія брокера закінчується на визначеній межі й не гарантує автоматично правильність бізнес-стану. Підтвердження producer-а стосується прийняття повідомлення, ack споживача — завершення обробки, а стійкість залежить від конфігурації реплік і диску. Якщо запис у БД і публікація події виконуються незалежно, між ними існує аварійне вікно. Transactional outbox зберігає зміну й намір публікації в одній локальній транзакції, після чого окремий процес доставляє запис і може повторити його. QA перевіряє збіг бізнес-операцій і подій, а також поведінку при зупинці dispatcher-а після кожного етапу.
+
+## Безпечна обробка помилкових повідомлень
+
+Dead-letter черга є окремим каналом для повідомлень, які не можуть пройти звичайний шлях після визначених умов. Вона не повинна перетворюватися на непомітне місце втрати роботи: потрібні причина відхилення, лічильник спроб, alert і процедура аналізу та повторного подання. Повідомлення з poison payload може нескінченно повертатися у цикл, якщо retry не має межі чи затримки. QA створює некоректну схему, тимчасову недоступність залежності й повторювану помилку споживача, перевіряючи розділення retryable та permanent failure. Перенаправлення назад до основної черги має бути контрольованим і не створювати нескінченну маршрутизацію.
+
+## Операційна прозорість брокерної системи
+
+Брокерний кластер потребує моніторингу довжини черг, швидкості ingress/egress, кількості повторних доставок, підтверджень, невдалих маршрутів та стану диска. Сам факт, що API брокера відповідає, не означає, що споживачі встигають обробляти навантаження. Зростання віку найстарішого повідомлення може бути важливішим за загальну кількість, якщо SLA визначає час завершення. QA створює навантаження вище звичного коротким піком і перевіряє, чи черга відновлюється, чи спрацьовує alert та чи не втрачаються події при заповненні диска. Окрема перевірка операційної процедури підтверджує безпечне читання DLQ і повтор без розкриття чутливих payload-ів.
+
+## Наслідки дублювання повідомлень
+
+Повторна доставка є нормальним механізмом відновлення, а не обов''язково дефектом брокера. Consumer має визначити idempotency boundary: перевірити event ID, version або унікальний бізнес-ключ перед записом. Дедуплікаційний запис повинен фіксуватися атомарно з результатом обробки, інакше аварія між ними повторить ефект. Занадто довге зберігання ID коштує пам''яті, надто коротке відкриває вікно дубля. QA повторно надсилає ту саму подію послідовно й конкурентно, перериває consumer після commit і перевіряє кількість побічних дій. Звіряють також метрики duplicate detection і dead-letter, щоб приховане відкидання повтору не маскувало реальну потребу переобробити невдале повідомлення.',NULL,NULL,'Документація RabbitMQ','https://www.rabbitmq.com/docs','["tools","Взаємодія та інтеграція"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(205,'tools-shyna-povidomlen-i-enterprise-service-bus-20','article','tools','Взаємодія та інтеграція','middle',NULL,19,4,'Шина повідомлень і Enterprise Service Bus','Інтеграційна шина зменшує кількість точкових з’єднань, централізуючи транспорт, маршрутизацію та перетворення повідомлень між системами.','## Звідки виникла потреба
+
+У корпоративному середовищі десятки систем можуть обмінюватися даними у різних форматах і протоколах. Пряме з’єднання кожної пари створює дедалі більше інтеграцій, а зміна адреси чи схеми змушує оновлювати багатьох клієнтів. Enterprise Service Bus, або ESB, сформував підхід, у якому спільний інфраструктурний шар приймає повідомлення, застосовує адаптери, трансформації та правила маршрутизації, а потім передає їх цільовим сервісам.
+
+## Функції та архітектурна форма
+
+ESB може надавати транспортний протокол, маршрутизацію за вмістом, перетворення схеми, адаптацію застарілих систем, контроль безпеки й моніторинг інтеграцій. Це ширша роль, ніж просте зберігання повідомлень у брокері. Централізований механізм знижує дублювання інтеграційного коду, але може перетворитися на «розумний моноліт», де всі бізнес-правила приховано в конфігурації шини. Тоді зміна центрального шару потребує координації всіх команд, а відмова або перевантаження шини впливає на значну частину системи.
+
+## Порівняння з брокером і подіями
+
+Брокер повідомлень насамперед приймає, зберігає й доставляє повідомлення за власними механізмами черг і маршрутизації. Шина часто додатково трансформує та оркеструє інтеграційний потік між неоднорідними системами. Сучасна подієва архітектура може розподіляти реакції між незалежними споживачами й використовувати брокер як транспорт, не концентруючи всі перетворення в одному вузлі. Це не означає, що ESB завжди застарілий: він може бути доречним для інтеграції великого парку успадкованих систем, але його роль і межі мають бути контрольованими.
+
+## Перевірка інтеграцій
+
+QA досліджує маршрути для кожного типу повідомлення, точність перетворення, обробку невідомих полів, повтори, порядок, тайм-аути й відмову адаптера. Слід перевірити, чи помилка перетворення не губить повідомлення без журналу, а повтор не запускає незворотну бізнес-операцію вдруге. Централізовані правила мають бути версіонованими й відтворюваними на тестовому наборі. Контрольований аналіз траси дозволяє встановити, чи помилка виникла у виробнику, шині, адаптері чи кінцевому сервісі.
+
+## Централізована інтеграція та її ціна
+
+ESB історично намагалася стандартизувати підключення багатьох корпоративних застосунків через спільну інфраструктуру адаптерів і перетворень. Це корисно, коли системи мають різні протоколи та формати, а політики аудиту й маршрутизації повинні застосовуватися послідовно. Проте централізований шар може стати єдиною точкою відмови, операційним вузьким місцем і місцем, де приховано розростається бізнес-логіка. Чим більше трансформацій виконується поза власником домену, тим важче визначити, де виникла семантична помилка. Рішення про шину має включати межі її відповідальності, ізоляцію навантажень і план міграції.
+
+## Відмінність від брокера й подієвої платформи
+
+Звичайний брокер передусім забезпечує доставку або зберігання повідомлень за визначеною моделлю. ESB може додатково надавати маршрутизацію між протоколами, перетворення схем та інтеграційні адаптери. Подієва платформа часто зберігає впорядкований журнал для незалежного повторного читання споживачами, тоді як традиційна черга розподіляє роботу між конкурентними споживачами. Ці межі залежать від продукту й конфігурації, тому терміни не варто трактувати як гарантію функцій. QA перевіряє втрату полів під час трансформації, маршрутизацію помилкових повідомлень, сумісність протоколів та відмову самого інтеграційного шару.
+
+## Трансформація повідомлень і збереження семантики
+
+ESB-адаптер може перетворити зовнішній запит у внутрішнє повідомлення, перейменувати поле, нормалізувати дату та маршрутизувати виклик до спадкової системи. Технічно успішне перетворення може втратити семантику: невідома валюта стає значенням за замовчуванням або відсутній код помилки перетворюється на загальну відмову. Кожне правило трансформації має бути версійоване й мати приклади входу та виходу. QA перевіряє граничні формати, необов’язкові поля, локаль, кодування, часову зону та поведінку при невідомому значенні. Це важливо, оскільки шина часто приховує обробку між зовнішнім запитом і системою-власником даних.
+
+## Вибір інтеграційної топології
+
+Центральна шина, пряма інтеграція point-to-point і брокерна подієва схема мають різні профілі залежностей. Point-to-point просто пояснити для малої кількості систем, але кількість зв''язків швидко зростає. ESB концентрує трансформації й політики, однак централізує зміну та операційний ризик. Події дозволяють незалежним споживачам реагувати на факт, але вимагають керування схемою, повтором і eventual consistency. Практичний вибір може поєднувати ці підходи на різних межах. QA перевіряє не діаграму як таку, а конкретну топологію помилок: що станеться при втраті вузла, де зберігається повідомлення, який компонент має право повторити роботу і як виявляється неповна трансформація.
+
+## Управління змінами інтеграційної шини
+
+Зміна правила маршрутизації чи трансформації в ESB може впливати на кілька систем одночасно, тому конфігурацію треба версіонувати, перевіряти та розгортати контрольовано. Порівняння конфігурацій між середовищами допомагає виявити приховані відмінності endpoint-ів і правил. Можливість відкотити код шини не гарантує відкат уже виконаної трансформації чи зовнішньої операції. QA готує репрезентативні повідомлення кожного споживача, перевіряє маршрути для невідомого типу й сумісність старої та нової конфігурації. Після зміни необхідно простежити кореляцію від зовнішнього запиту до цільового сервісу. Такий підхід особливо важливий, коли шина централізує значну частину інституційної інтеграційної логіки.
+
+## Конфлікт ідемпотентності у централізованій маршрутизації
+
+Шина може повторити повідомлення або переспрямувати його після помилки downstream, тому правила маршрутизації мають зберігати стабільний ідентифікатор операції. Трансформація не повинна генерувати новий ID при кожному повторі чи видаляти поля дедуплікації. Якщо один потік направляється до кількох цільових систем, слід визначити, чи успіх є незалежним для кожної цілі або атомарним для всіх. QA вимикає одну ціль, перевіряє статуси інших і вивчає процедуру replay. Відновлення не має повторити незворотну операцію в уже успішній системі. Це приклад того, як централізований routing впливає на семантику надійності, а не лише на транспорт.',NULL,NULL,'Enterprise Integration Patterns: Message Bus','https://www.enterpriseintegrationpatterns.com/patterns/messaging/MessageBus.html','["tools","Взаємодія та інтеграція"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(206,'tools-rabbitmq-broker-marshrutyzatsiya-ta-pidtverdzhennya-21','article','tools','Взаємодія та інтеграція','middle',NULL,20,4,'RabbitMQ: брокер, маршрутизація та підтвердження','RabbitMQ — брокер повідомлень, у якому обмінники маршрутизують публікації до черг, а споживачі підтверджують обробку.','## Ролі компонентів
+
+Producer надсилає повідомлення до exchange, а не обов’язково безпосередньо в чергу. Exchange застосовує тип маршрутизації й binding-и, які пов’язують його з однією чи кількома чергами. Routing key та, для topic exchange, шаблон ключа впливають на вибір одержувачів. Consumer отримує повідомлення з черги й після успішної роботи надсилає acknowledgement. Такий поділ дозволяє змінювати топологію доставки без вбудовування всіх адрес черг у виробника.
+
+## Доставка та довговічність
+
+Підтвердження видавця повідомляє клієнту, що брокер прийняв публікацію згідно з режимом і властивостями черги; підтвердження споживача дозволяє брокеру вилучити вже опрацьовану доставку. Durable queue зберігає визначення черги, а persistent message позначає повідомлення для збереження, але гарантія пережити збій залежить також від підтверджень і типу черги. Quorum queue реплікує дані між вузлами за протоколом кворуму, тоді як classic queue має іншу модель. Отже, фраза «RabbitMQ зберігає повідомлення» без уточнення режиму доставки є неповною.
+
+## Навантаження, повтори та DLX
+
+Prefetch обмежує кількість непідтверджених повідомлень, які одночасно передаються споживачу, і впливає на баланс між пропускною здатністю та справедливим розподілом роботи. Відхилене або прострочене повідомлення може бути маршрутизоване через dead-letter exchange. Конкретна гарантія dead-lettering залежить від типу черги та конфігурації; документація RabbitMQ описує режими, де повторна публікація використовує підтвердження, і випадки, де можливі втрати або дублювання. Повторний цикл потребує ліміту, інакше отруйне повідомлення безкінечно навантажує систему.
+
+## QA-підхід
+
+Тестуйте окремо маршрутизацію exchange, binding та ключа, підтвердження видавця, ручне й автоматичне підтвердження споживача, повторну доставку, порядок повідомлень та dead-letter поведінку. Відтворіть аварію споживача після запису в БД, але до acknowledgement: коректна система має витримати повтор без подвоєння бізнес-ефекту. Перевірте недоступну цільову чергу DLX, переповнення, зупинку вузла й відновлення кворуму. Логи повинні містити ідентифікатор повідомлення та результат обробки, а метрики — кількість готових і непідтверджених доставок.
+
+## Маршрутизація та контроль навантаження
+
+Producer надсилає повідомлення до exchange, а не обов''язково безпосередньо до черги. Тип exchange визначає, як binding і routing key співвідносять повідомлення з однією чи кількома чергами. Direct routing корисний для точного ключа, topic routing — для шаблонів ієрархічних ключів, fanout — для розсилання всім зв''язаним чергам. Окремо налаштовуються підтвердження публікації, які повідомляють відправнику про прийняття брокером, та підтвердження споживача, що стосуються завершення роботи з доставленим повідомленням. Ці два підтвердження вирішують різні задачі й не повинні змішуватися в тестовому очікуванні.
+
+## Надійність і діагностика
+
+Durable-черга та persistent-повідомлення підвищують шанс збереження після перезапуску, проте гарантія залежить від типу черги, реплікації, підтвердження публікації та стану вузлів. Prefetch обмежує кількість непідтверджених доставок споживачу і впливає на справедливість розподілу та пам''ять. QA перевіряє відновлення після аварійного завершення процесу до і після ack, повторну доставку, відсутність binding, відмову маршрутизації й поведінку DLX. Результат важливо звіряти з бізнес-БД: повідомлення в черзі ще не означає, що бізнес-операція завершена, а порожня черга не доводить, що робота не була втрачена.
+
+## Підтвердження публікації та межа відповідальності
+
+Підтвердження від брокера має сенс лише разом із розумінням, що саме воно підтверджує. Producer може отримати підтвердження про прийняття повідомлення, але це не дорівнює завершенню роботи consumer-а чи запису в бізнес-сховище. Якщо повідомлення не маршрутизовано до жодної черги, publisher confirm усе ще може засвідчити прийняття брокером; для виявлення такого випадку потрібна окрема перевірка маршруту. Налаштування mandatory чи повернення нерозподіленого повідомлення змінюють цей контракт. QA тестує відмову мережі у момент підтвердження, щоб виявити неоднозначність: producer може повторити публікацію, хоча перша спроба вже потрапила в чергу. Споживачеві тому потрібна дедуплікація або ідемпотентна дія.
+
+## Конкурентність споживачів та порядок
+
+Кілька consumer-ів можуть збільшити пропускну здатність черги, але розподіл повідомлень змінює порядок завершення. Навіть якщо брокер видав повідомлення послідовно, перше може оброблятися довше й завершитися після другого. Prefetch впливає на те, скільки повідомлень закріплено за споживачем і наскільки рівномірно розподілена робота. Для операцій, де порядок бізнес-стану критичний, використовують окремий ключ/чергу або послідовну обробку відповідного агрегату. QA створює повідомлення з контрольованими затримками, відключає worker-а під час обробки й перевіряє фінальний порядок змін. Одного перегляду черги недостатньо: треба підтвердити стан у системі, що володіє даними.
+
+## Черга, prefetch і справедливий розподіл
+
+Черга може доставити кілька повідомлень одному consumer-у до підтвердження попередніх, що скорочує витрати на обмін, але створює нерівномірність, якщо одна задача істотно довша за інші. Низький prefetch обмежує незавершену роботу та полегшує повернення повідомлень при падінні, але може знизити пропускну здатність. Значення налаштування залежить від часу обробки, кількості worker-ів, пам''яті та вимоги до порядку. QA порівнює розподіл навантаження між швидким і повільним consumer-ом, перезапускає процес із непідтвердженою доставкою та перевіряє дублювання. Справедливість оцінюється щодо конкретного домену; циклічний розподіл повідомлень не гарантує рівного часу завершення.
+
+## Безпека RabbitMQ та сегментація доступу
+
+RabbitMQ розділяє доступ через користувачів, virtual hosts, permissions і topic permissions. Віртуальний хост ізолює простори імен об''єктів, але спільний вузол і ресурси лишаються операційною залежністю. Producer і consumer повинні мати мінімальні дозволи: можливість читати чергу не має автоматично давати право змінювати exchange чи конфігурацію брокера. TLS та автентифікація залежать від конфігурації listener-а й клієнтської бібліотеки. QA перевіряє доступ до іншого vhost, підписку без read permission, публікацію без write permission та поведінку після ротації секрету. Журнал аудиту має показувати адміністративні зміни, а повідомлення не повинні містити чутливі дані без обґрунтованої потреби.',NULL,NULL,'Документація RabbitMQ','https://www.rabbitmq.com/docs','["tools","Взаємодія та інтеграція"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(207,'tools-apache-kafka-rozpodilenyy-zhurnal-podiy-22','article','tools','Взаємодія та інтеграція','middle',NULL,21,4,'Apache Kafka: розподілений журнал подій','Kafka зберігає потоки подій у реплікованих партиційованих журналах, даючи споживачам змогу читати їх незалежно та повторно.','## Журнал на відміну від черги
+
+У Kafka подія додається до журналу топіка й лишається доступною згідно з політикою зберігання, навіть після читання групою споживачів. Це дозволяє кільком незалежним системам обробляти той самий потік і повторно програвати історію в межах retention. Логічний топік поділяється на партиції, кожна з яких має впорядковані записи й зсуви offset. Порядок гарантується всередині партиції, але між окремими партиціями загального тотального порядку немає.
+
+## Виробники, брокери та групи
+
+Producer серіалізує подію й визначає партицію за ключем або правилом розподілу. Broker зберігає сегменти журналу; репліки копіюють їх відповідно до конфігурації, а лідер партиції обслуговує записи й читання. Consumer читає від свого offset. У consumer group кожна партиція в конкретний момент призначається одному споживачу цієї групи, а зміна складу групи може спричинити rebalancing. Кількість партицій, ключ і кількість активних споживачів тому впливають на паралелізм та порядок.
+
+## Доставка й повторне опрацювання
+
+Offset відображає позицію читання, а не автоматично завершений бізнес-ефект. Якщо споживач зберіг зміну в зовнішній БД, але впав до фіксації offset, після перезапуску він може обробити подію знову. Гарантії idempotence та транзакцій Kafka охоплюють визначені межі взаємодії з самим журналом, але довільний зовнішній запис потребує окремого узгодження. Consumer lag показує відставання групи за позицією, проте його треба інтерпретувати разом із віком найстарішої події й швидкістю надходження.
+
+## QA та порівняння з брокером
+
+QA перевіряє, що події з одним бізнес-ключем зберігають потрібний порядок у межах партиції, повторне читання не дублює побічний ефект, а rebalancing не втрачає дані. Сценарії охоплюють недоступність брокера, зміну кількості споживачів, затриману обробку, старий offset, несумісну схему й заповнення диска. Kafka добре підходить для потоків подій, повторного читання та багатьох незалежних споживачів. Традиційна черга часто природніша для розподілу окремих завдань між воркерами й вилучення після підтвердження; це різні моделі, а не рейтинг якості.
+
+## Розподіл журналу та порядок
+
+Topic складається з partition-ів, кожен із яких є впорядкованим журналом записів. Producer може обирати partition за ключем, що зберігає порядок для записів одного ключа, але порядок між різними partition-ами не є глобальним. Consumer group розподіляє partition-и між учасниками групи; зміна кількості споживачів або доступності вузлів спричиняє rebalance. Offset позначає позицію читання, і його фіксація окремо від побічного ефекту споживача створює вікно для повторної обробки чи втрати. Тому типова практична гарантія будується навколо at-least-once доставки й ідемпотентної логіки, а не припущення про єдине виконання.
+
+## Зберігання та операційні сигнали
+
+Kafka зберігає записи згідно з політикою retention або компактування, тому прочитане повідомлення не обов''язково видаляється після ack. Реплікація та підтвердження запису визначають, коли producer вважає запис прийнятим, але гарантія залежить від конфігурації кластера та ISR. Consumer lag показує відставання від кінця журналу, проте не пояснює самостійно причину: повільна обробка, ребаланс, затримка залежності чи недостатня кількість partition-ів мають різні ознаки. QA формує сценарії перезапуску споживача, повторного читання з offset, розширення partition-ів, зміни схеми та відновлення після тимчасового відставання.
+
+## Partition key як архітектурне рішення
+
+Ключ партиціювання визначає локальність порядку та здатність системи розподіляти навантаження. Якщо всі повідомлення мають один ключ, один partition стає послідовним вузьким місцем, навіть коли в кластері є багато брокерів. Якщо ключ нестабільний або його схема змінюється, події одного бізнес-об''єкта можуть потрапити до різних partition-ів. Кількість partition-ів впливає на паралелізм споживачів і розмір метаданих, тому її зміна потребує планування. QA створює дані з перекошеним розподілом ключів, перевіряє порядок у межах ключа та вимірює lag кожного partition-а. Один агрегований lag може приховати гарячу партицію, яка затримує конкретний домен.
+
+## Гарантії реплікації та відновлення читання
+
+Replication у Kafka підтримує копії partition-ів на різних брокерах, але фактор реплікації сам собою не визначає, скільки копій мають підтвердити запис. Producer acks, мінімальна кількість синхронних реплік та стан ISR утворюють спільну конфігурацію надійності. Налаштування з вищою стійкістю може додати затримку або тимчасово відхилити запис, якщо недостатньо реплік. Після перемикання лідера consumer може побачити повтор чи зміну доступної позиції відповідно до гарантій. QA імітує втрату брокера, перевіряє producer error, нове лідерство й доступність підтверджених записів. У результатах тесту фіксують конфігурацію топіка та кластера, без якої твердження про durability не має повного змісту.
+
+## Retention, compaction і повторна обробка
+
+Політика retention визначає, як довго записи доступні для споживача, але фактичне звільнення диску залежить від сегментів і їхнього очищення. Log compaction зберігає останнє значення для ключа за визначеною семантикою, а не повну історію кожної зміни. Це робить Kafka корисною для відбудови поточного стану, але може бути непридатним для аудиту кожного переходу, якщо старі значення видаляються. QA перевіряє replay у межах retention, поведінку нового consumer-а та відновлення після тривалої відсутності. Тест також повинен враховувати, що offset, старіший за збережений діапазон, може бути недоступним. Політика зберігання є функціональним контрактом для відновлення й аналітики.
+
+## Безпека Kafka та ізоляція даних
+
+Kafka security може включати TLS шифрування, SASL автентифікацію та ACL для операцій із кластерами, топіками й групами. Налаштований producer повинен мати лише право запису в потрібний topic, а consumer — читати визначений набір та використовувати групу відповідно до політики. Некоректна ACL часто проявляється як помилка metadata чи timeout, якщо клієнт приховує первинну відмову. QA перевіряє ізоляцію tenant-ів, доступ до schema registry, шифрування між брокерами та ротацію сертифікатів. Тест негативної авторизації має підтвердити, що дані не доступні через інший topic чи consumer group, а діагностичні повідомлення не розкривають секрети.',NULL,NULL,'Документація Apache Kafka','https://kafka.apache.org/documentation/','["tools","Взаємодія та інтеграція"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(208,'tools-rabbitmq-i-kafka-arkhitekturni-vidminnosti-ta-vybir-23','article','tools','Взаємодія та інтеграція','middle',NULL,22,4,'RabbitMQ і Kafka: архітектурні відмінності та вибір','RabbitMQ та Kafka обидві передають повідомлення, але їхні базові моделі зберігання, читання, маршрутизації й споживання відрізняються.','## Різні моделі даних
+
+RabbitMQ насамперед моделює брокерну доставку через exchange і черги: повідомлення маршрутизується до черг, а підтвердження споживача впливає на вилучення. Kafka моделює довговічний журнал, де записи зберігаються за політикою часу чи обсягу, а споживачі ведуть власні позиції читання. Тому Kafka підтримує кілька незалежних груп, що читають один потік, і повторне програвання, а RabbitMQ надає гнучке маршрутизування та природний розподіл роботи між споживачами черги.
+
+## Порядок, зберігання та масштаб
+
+У Kafka порядок локальний для партиції, а ключі визначають сумісне розміщення подій і паралелізм. У RabbitMQ порядок залежить від типу черги, кількості споживачів, повторних доставок і конфігурації; він не повинен припускатися глобальним за наявності конкурентної обробки. У Kafka повторне читання є штатною властивістю журналу, а в черговій моделі повтор зазвичай виникає через відмову до acknowledgement. Реплікація та довговічність обох систем налаштовуються й мають різні гарантії, тому назва продукту сама по собі не визначає втрату даних.
+
+## Критерії застосування
+
+Якщо бізнес-процес роздає короткоживучі задачі, потребує складних маршрутів, контрольованих підтверджень і помилкової черги, RabbitMQ часто природно відповідає моделі. Якщо продукт зберігає потік подій, обробляє його незалежними групами, потребує replay або високої паралельності за партиціями, Kafka може бути відповідним вибором. В обох випадках потрібні обмеження, схема, моніторинг, план збереження й визначення повторної обробки. Вартість експлуатації й знайомство команди можуть бути важливішими за абстрактну пропускну здатність.
+
+## Порівняльне QA
+
+Щоб порівняти рішення, сформулюйте вимоги до порядку, часу зберігання, незалежних споживачів, маршрутизації, повторів і відновлення. Відтворіть навантаження з реальним розміром повідомлень і профілем затримок, а не використовуйте синтетичну кількість операцій як єдиний критерій. Перевіряйте підтвердження на кожній межі, дублювання бізнес-ефектів, заповнення диска й поведінку при втраті лідера чи споживача. Правильний висновок часто полягає в тому, що обидва продукти можуть бути доречні для різних потоків одного рішення.
+
+## Різні моделі роботи з повідомленнями
+
+RabbitMQ зазвичай застосовують як брокер маршрутизації робочих повідомлень, які конкурентні споживачі отримують і підтверджують; Kafka — як збережений журнал, який групи споживачів читають незалежно у власному темпі. Це опис домінантних моделей, а не абсолютна межа: сучасні брокери мають додаткові можливості, а Kafka також використовується для чергових сценаріїв. Вибір залежить від потреб повторного читання, маршрутизації, довготривалого збереження, пропускної здатності, порядку та операційної моделі. Слід порівнювати конкретні гарантії та конфігурацію, а не гасла про швидкість чи універсальність.
+
+## Порівняльний тестовий дизайн
+
+Для обох систем важливо перевірити підтвердження, повтори, дублікати, зупинку споживача й відновлення. Для RabbitMQ фокусують тест на маршрутах exchange, чергах, ack/nack, DLX і розподілі між споживачами. Для Kafka перевіряють ключ partition-а, межі порядку, offset, consumer group та повторне читання. У кожному випадку задають однаковий бізнес-сценарій і звіряють кінцевий стан у сховищі, а не лише факт доставки. Якщо повідомлення є історією подій, retention і можливість replay мають бізнес-значення; якщо це коротка задача, важливішими можуть бути маршрутизація, пріоритет і контроль черги.
+
+## Неправильний вибір і ціна міграції
+
+Перенесення між RabbitMQ і Kafka не зводиться до зміни бібліотеки. Потрібно змінити модель підтвердження, повторного читання, retention, ключів порядку, dead-letter і моніторингу, а також мігрувати поточні повідомлення або визначити момент переходу. Два брокери можуть тимчасово працювати паралельно, але це підвищує ризик подвійної обробки й потребує узгодження джерела істини. Вибір варто робити за профілем повідомлення, вимогою replay, маршрутизацією, швидкістю обробки, експлуатаційною компетенцією та відновленням. QA порівнює поведінку на тих самих сценаріях відмов і звіряє бізнес-ефекти, а не тільки throughput синтетичного producer-а.
+
+## Семантика повторного читання
+
+Повторне читання збереженого Kafka-журналу дозволяє побудувати нову проєкцію або відновити споживача, тоді як у традиційній черзі повідомлення часто зникає після успішного підтвердження. В обох моделях повторення можливе, але механізм і термін збереження різні. У Kafka consumer керує offset-ом, а в RabbitMQ черга і політика ack визначають повторну доставку. Вибір потрібно узгодити з вимогою аудиту, довготривалого replay і поведінкою зовнішніх побічних дій. QA перевіряє запуск нового consumer group, replay з заданої точки та ізоляцію від уже існуючого споживача. Якщо обробка створює лист чи платіж, replay повинен мати окремий режим без повторного side effect або ідемпотентну дедуплікацію.
+
+## Торгівля між маршрутизацією та масштабуванням
+
+RabbitMQ надає багаті правила маршрутизації повідомлень до черг, тоді як Kafka типово розподіляє запис по partition-ах і дозволяє групам незалежно читати журнал. Така відмінність впливає на модель володіння: у черзі роботу часто забирає один з конкурентних worker-ів, а Kafka-група призначає partition учаснику. Конкурентність і порядок таким чином мають різні межі. У Kafka consumer groups дають паралелізм лише до числа partition-ів, у RabbitMQ масштабування залежить від черги, вузлів і споживачів. QA оцінює реальні вимоги до маршруту, повторного читання, часу утримання повідомлень і поведінки при зміні кількості worker-ів, а не вибирає продукт лише за узагальненим терміном «черга».
+
+## Відновлення та оцінювання експлуатаційного навантаження
+
+Підтримка брокера включає моніторинг, резервування, оновлення версій, керування топологією й процедури повернення повідомлень. RabbitMQ може вимагати аналізу стану черг, quorum і DLX, тоді як Kafka потребує контролю partition assignment, ISR, consumer lag та retention. Команди мають оцінити кваліфікацію й інструменти, доступні для чергування, а не тільки функціональні можливості продукту. QA може виконати навчальний інцидент: зупинити consumer, відновити його, перевірити backlog і підсумковий бізнес-стан. Успіх підтверджують відсутністю втрати та небезпечного дубля, а також тим, що відповідальна команда може знайти проблему за телеметрією й безпечно повторити роботу.',NULL,NULL,'Документація RabbitMQ','https://www.rabbitmq.com/docs','["tools","Взаємодія та інтеграція"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(209,'tools-keshuvannya-kontseptsiya-ta-stratehii-24','article','tools','Керування даними','middle',NULL,23,4,'Кешування: концепція та стратегії','Кеш зберігає копію часто потрібного результату ближче до споживача, зменшуючи час повторного доступу та навантаження на джерело істини.','## Проблема повторної роботи
+
+Застосунок може багаторазово обчислювати той самий результат або читати незмінні дані з віддаленої бази. Кеш зберігає копію в пам’яті процесу, окремому сховищі чи на краю мережі. Cache hit відбувається, коли запит знаходить придатний запис; cache miss змушує звернутися до джерела й зазвичай заповнити кеш. Виграш залежить від частоти повторного читання, вартості обчислення, розміру даних і допустимого віку копії. Сам факт швидшого сховища не гарантує нижчої загальної затримки, якщо ключі майже не повторюються або інвалідація надто дорога.
+
+## Основні стратегії
+
+У Cache-Aside застосунок спершу читає кеш, а після промаху завантажує джерело й сам записує результат до кешу. У Write-Through запис проходить до кешу й джерела в узгодженій послідовності, що може спростити читання, але збільшує затримку запису. Write-Back підтверджує зміну в кеші й переносить її до основного сховища пізніше, що створює ризик втрати при збою та потребує журналювання. Кожен варіант відрізняється точкою, де система визнає операцію завершеною.
+
+## TTL та інвалідація
+
+Час життя (TTL) обмежує період, протягом якого запис може вважатися придатним, але спливання TTL не гарантує миттєвого оновлення всіх копій. Інвалідація після зміни джерела є складною проблемою: пропущене повідомлення, помилкова версія ключа або паралельне оновлення створюють застаріле значення. Надто короткий TTL збільшує промахи й навантаження; надто довгий підвищує ризик старих даних. Для критичних даних кеш має бути прискорювачем, а не неявним джерелом істини, якщо система не визначила іншу модель консистентності.
+
+## Перевірка з позиції QA
+
+QA вимірює поведінку при першому запиті, повторному читанні, спливі TTL, паралельному оновленні та недоступності кеша. Перевірте, що помилкове значення не залишається після запису до джерела й що cache stampede не створює одночасних дорогих перерахунків. Важливо тестувати ключі, які залежать від користувача або прав доступу: спільний кеш не повинен повертати дані іншого суб’єкта. Метрики hit ratio корисні лише разом із затримкою, помилками, навантаженням джерела та часткою застарілих результатів.
+
+## Розміщення кешу та життєвий цикл даних
+
+Кеш може існувати в процесі клієнта, браузері, reverse proxy, application service або окремому сховищі. Кожен рівень має інший обсяг спільного стану, час життя та ризик застарівання. TTL обмежує тривалість збереження запису, але не гарантує актуальності до завершення цього часу. Інвалідація після зміни джерела, версіонований ключ або коротший TTL є різними способами контролювати компроміс між свіжістю та навантаженням. Кешування відповіді авторизованого запиту потребує включити до ключа всі чинники, що впливають на результат, інакше дані одного користувача можуть бути повернуті іншому.
+
+## Ефект холодного старту й узгодженість
+
+Після очищення кешу система може одночасно перенаправити багато однакових запитів до основної БД; це cache stampede. Механізми single-flight, розподілений lock або випадковий розкид строків життя здатні зменшити сплеск, але мають власні сценарії відмови. Write-through оновлює кеш разом із записом, тоді як write-back відкладає синхронізацію і підвищує ризик втрати при аварії. QA перевіряє послідовність читання до й після зміни, паралельні промахи, тайм-аут кешу, недоступність сховища та безпечне повернення до джерела. Метрики hit ratio треба співвідносити з коректністю даних і латентністю, а не оптимізувати ізольовано.
+
+## Вибір ключа й захист від витоку даних
+
+Ключ кешу є частиною коректності та безпеки. Якщо результат залежить від tenant-а, ролі, мови, валютного контексту чи версії даних, ці виміри мають враховуватися в ключі або в політиці ізоляції кешу. Надто широке спільне ключування може повернути користувачу дані іншого клієнта, а надто деталізоване знижує hit ratio і збільшує пам''ять. Зміна схеми ключа потребує контролю старих записів та їхнього строку життя. QA створює паралельні сесії з різними правами й перевіряє, що прогрівання кешу одним профілем не змінює результат іншого. Також потрібно переконатися, що sensitive response не потрапляє до спільного HTTP-кешу без коректних директив.
+
+## Узгодження запису та інвалідації кешу
+
+Найважче завдання кешування часто не читання, а забезпечення того, щоб зміна авторитетних даних своєчасно відобразилася у всіх копіях. Інвалідація може відбуватися в тій самій транзакції, через повідомлення після commit або через короткий TTL. Перший варіант має зв''язати два сховища, другий може затриматися чи загубитися без надійної доставки, а третій допускає застарілість у визначеному вікні. Cache-aside залишає відповідальність за завантаження застосунку; write-through переносить її до шляху запису. QA перевіряє гонку між читанням старої версії та інвалідацією, повторну доставку події й падіння між commit та очищенням. Вимога повинна вказувати допустимий час застарілості.
+
+## Вимірювання користі кешу
+
+Кеш корисний лише якщо зменшує навантаження або latency без неприйнятної втрати актуальності й ізоляції даних. Hit ratio може виглядати високим, але система все одно буде повільною через дорогий miss path чи мережевий hop до окремого кеша. Тому вимірюють hit/miss, час відповіді, навантаження джерела, розмір записів, витіснення та кількість інвалідацій. QA порівнює холодний і прогрітий сценарії, різні профілі ключів і зміну даних під час активного читання. Кешовані помилки також становлять ризик: тимчасову відмову не слід зберігати довше, ніж дозволяє продуктова політика. Вимірювання має показувати ефект для користувача та джерела, а не одну ізольовану частку влучань.
+
+## Політика кешу як частина контракту
+
+Продуктові команди мають узгодити, наскільки застаріле значення дозволене, як користувач бачить оновлення та що відбувається при недоступності кешу. Для інформаційної картки кешовані дані можуть бути прийнятними протягом хвилини; для авторизаційного статусу така затримка може створити серйозний ризик. Cache-Control заголовки визначають поведінку браузера й проміжних проксі, тоді як внутрішній application cache має окрему інвалідацію. QA вимірює фактичний строк до оновлення після зміни, окремо перевіряє клієнтський та серверний кеші й документує джерело кожного результату. Без такого контракту користувачеві важко відрізнити дефект від допустимого відставання.',NULL,NULL,'Redis: типи даних','https://redis.io/docs/latest/develop/data-types/','["tools","Керування даними"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(210,'tools-redis-struktury-danykh-kesh-i-zberezhennya-25','article','tools','Керування даними','middle',NULL,24,4,'Redis: структури даних, кеш і збереження','Redis — сервер структур даних у пам’яті, що підтримує атомарні операції над ключами та може застосовуватися для кешу, черг, лічильників і потоків.','## Проблема та модель
+
+Повторне звернення до повільнішої бази, конкуренція за лічильники й короткоживучий стан вебсеансу потребують швидкого спільного сховища. Redis надає клієнтам протокольний доступ до набору ключів і типізованих значень, основна робоча копія яких зберігається в оперативній пам’яті. Клієнт надсилає команду серверу, сервер виконує її над структурою даних і повертає результат. Багато команд над одним ключем є атомарними відносно інших команд у межах серверного виконання, що корисно для лічильника чи переходу стану, але не створює автоматично транзакцію між Redis і зовнішньою базою.
+
+## Структури та застосування
+
+Strings зручні для тексту, бінарних значень і простих лічильників; hashes представляють поля одного об’єкта; lists зберігають послідовність; sets — унікальну множину; sorted sets упорядковують елементи за оцінкою; streams моделюють послідовний журнал записів. Вибір структури визначає набір доступних операцій і витрати пам’яті. Для кешу застосунок формує ключ, зберігає серіалізоване значення з TTL і повертає його до завершення строку. Redis також може бути основою координації, лімітування чи коротких черг, але кожне застосування має власні вимоги до довговічності й доставки.
+
+## Persistence, реплікація й кластер
+
+Redis підтримує RDB-знімки та AOF-журналювання, а їхні режими задають різний компроміс між витратами запису й втратою останніх змін при аварії. Реплікація створює копії, але сама по собі не дорівнює синхронному консенсусу чи гарантованому нульовому відставанню. Redis Cluster розподіляє простір ключів по слотах і вузлах; багатоключові операції обмежені розміщенням ключів у сумісних слотах. Конкретні можливості й гарантії відрізняються між Redis Open Source та комерційними платформами, тому документація продукту має відповідати фактичному розгортанню.
+
+## Практичний сценарій і тестування
+
+Сторінка профілю може читати дані з PostgreSQL, зберігати копію в Redis на короткий час і скидати кеш під час зміни профілю. QA перевіряє промах, потрапляння, TTL, інвалідацію після запису, холодний запуск, відновлення після рестарту та поведінку при недоступності Redis. Для лічильників тестують одночасні збільшення й переповнення; для кешованих прав — ізоляцію між користувачами; для реплікації — затримку читання після запису. Redis не слід безумовно вважати лише кешем або повноцінною заміною реляційної БД: вибір залежить від структури доступу, вимог до довговічності й узгодженості.
+
+## Структури даних і підбір моделі
+
+Redis надає рядки, хеші, списки, множини, відсортовані множини, потоки та інші структури, але наявність структури не робить її автоматично правильною для домену. Хеш може природно представляти поля об''єкта, множина — унікальні членства, а sorted set — ранжовані значення. Команди атомарні в межах виконання на вузлі, однак складна послідовність кількох команд не стає транзакційною лише через спільне з''єднання. Lua-скрипти чи транзакційні команди змінюють межу атомарності, але мають оцінюватися з огляду на блокування виконання та кластерні обмеження.
+
+## Стійкість, реплікація й кластер
+
+Redis може використовувати snapshot- або append-only-персистентність; конкретний ризик втрати залежить від політики fsync, інтервалу збереження та аварійного сценарію. Реплікація зазвичай асинхронна, тому підтверджений на первинному вузлі запис може короткий час бути відсутнім на репліці. Cluster розподіляє ключі за слотами та впливає на те, які багатоключові операції можна виконати разом. QA перевіряє TTL при перезапуску, відновлення зі збереження, перемикання вузла, поведінку при вичерпанні пам''яті й узгодженість кешу з основним джерелом. Для кожного сценарію потрібно знати, чи Redis є похідним кешем або авторитетним сховищем.
+
+## Вичерпання пам''яті та поведінка ключів
+
+In-memory зберігання має межу доступної пам''яті, а політика eviction визначає, які ключі можуть бути видалені при її досягненні. Якщо Redis використовується як кеш, видалення часто прийнятне за умови коректного перезавантаження з джерела; якщо як тимчасове авторитетне сховище, та сама політика може означати втрату критичного стану. TTL, eviction і persistence мають розглядатися разом. QA перевіряє, що ключ не зникає раніше дозволеного часу, а втрата кешу не ламає продукт і не створює неконтрольований сплеск запитів до БД. Метрики memory fragmentation, evicted keys і hit ratio потрібно співвідносити з latency backend-а й результатом для клієнта.
+
+## Redis як кеш і як сховище стану
+
+Архітектурно важливо відрізняти Redis, що кешує дані з PostgreSQL, від Redis, який зберігає чергу, лічильник чи короткоживучий бізнес-стан. У першому випадку втрата всіх ключів має бути відновлюваною, хоча й може створити пікове навантаження. У другому випадку persistence, реплікація, backup і правила втрати стають вимогами до збереження продукту. Одна команда може використовувати той самий кластер для різних призначень, що створює конкуренцію за пам''ять та різні політики eviction. QA уточнює власника кожного ключового простору, перевіряє відновлення після очищення й перезапуску та відокремлює допустиме cache miss від втрати підтвердженої роботи.
+
+## Atomicity Redis і обмеження транзакцій
+
+Redis виконує окрему команду атомарно щодо інших команд на відповідному вузлі, але кілька команд в одному клієнтському сценарії можуть бути перервані або інтерлівінговані. MULTI/EXEC групує команди, проте не є повною заміною транзакційної БД з rollback семантикою; помилка виконання окремої команди має конкретні наслідки. Lua script виконується атомарно, але довгий скрипт блокує обробку інших команд на вузлі. У кластері багатоключова операція може вимагати розміщення ключів в одному hash slot. QA перевіряє конкурентні оновлення, помилку типу ключа, перезапуск при збереженні та обмеження кластерної маршрутизації. Це допомагає не припускати гарантій, яких продукт фактично не надає.
+
+## Відмовостійкість Redis у топології системи
+
+Redis replication і Sentinel чи Redis Cluster мають власні режими failover, які можуть змінити доступність запису, затримку та потенційно останні не репліковані дані. Клієнтська бібліотека повинна повторно виявляти вузли, а з''єднання після перемикання можуть вимагати відновлення. Під час failover кеш miss може масово збільшити навантаження на БД; для stateful сценарію можливе порушення очікуваної доступності. QA проводить контрольоване перемикання на стенді та спостерігає за помилками клієнта, втраченими ключами, TTL і швидкістю стабілізації. План відмови має враховувати replica lag і конкретні гарантії підтвердження запису.',NULL,NULL,'Redis: типи даних','https://redis.io/docs/latest/develop/data-types/','["tools","Керування даними"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(211,'tools-relyatsiyni-ta-nerelyatsiyni-bazy-danykh-26','article','tools','Керування даними','middle',NULL,25,4,'Реляційні та нереляційні бази даних','Моделі баз даних відрізняються способом представлення зв’язків, схемою, транзакційними гарантіями та оптимальними шаблонами доступу.','## Модель даних як вихідна точка
+
+Реляційна база представляє факти у таблицях зі схемою, ключами та відношеннями. SQL дозволяє описувати вибірку й перетворення даних декларативно, а транзакції забезпечують контрольовану групу змін. Нереляційні системи охоплюють різні моделі: документи, ключ-значення, широкі стовпці та графи. Термін NoSQL не означає відсутність запитів або транзакцій; він лише об’єднує системи, що не спираються на класичну реляційну модель як єдину форму.
+
+## Нормалізація й денормалізація
+
+Реляційне проєктування розділяє факти між таблицями та виражає зв’язки ключами, щоб зменшити дублювання й аномалії оновлення. Документна модель може вбудувати часто спільно читані дані в один документ, скорочуючи кількість звернень, але копії одного факту потрібно синхронізувати. Вибір залежить від шаблонів читання й запису, обсягу даних, транзакційної області та вимог до звітності. Денормалізація не є помилкою сама по собі, якщо команда визначила джерело істини й механізм підтримання похідних даних.
+
+## Транзакції, масштаб і узгодженість
+
+Реляційні системи часто надають багаті локальні транзакції, складні об’єднання та обмеження цілісності. Документні й розподілені системи можуть оптимізувати горизонтальне масштабування чи конкретні ключові запити, водночас обмежуючи складність транзакцій або структуру запиту. Сучасні продукти відрізняються, тому не слід приписувати всім SQL чи всім NoSQL однакову поведінку. Перевіряйте ізоляцію, реплікацію, індекси, межі запиту та спосіб відновлення для конкретного двигуна й версії.
+
+## Вибір та QA
+
+Для системи замовлень важливі унікальність оплати, транзакційність і пошук за різними зв’язками; для каталогу може бути корисне документне представлення, оптимізоване під сторінку товару. QA перевіряє втрату й дублювання даних, одночасне оновлення, міграції схеми, індексні плани, резервне копіювання та відновлення. Особливу увагу приділяють не лише успішному CRUD, а й поведінці при конфлікті, недоступності репліки та відставанні індексації. Вибір бази даних має виходити з інваріантів і способів доступу, а не з простого протиставлення «SQL проти NoSQL».
+
+## Модель даних і транзакційні гарантії
+
+Реляційна модель описує дані через відношення з визначеними схемами, ключами та обмеженнями, що дозволяє виражати зв''язки й перевіряти інваріанти транзакційно. Нереляційні сховища охоплюють різні моделі — документну, ключ-значення, колонкову, графову — і не утворюють єдиної категорії з однаковою поведінкою. Вибір між ними залежить від запитів, змін схеми, транзакційних меж, масштабування й узгодженості. Денормалізація документа може спростити читання, але дублювання даних вимагає узгодженої зміни кількох копій. Слова SQL і NoSQL не є достатнім описом гарантій конкретного продукту.
+
+## Перевірка цілісності та міграцій
+
+QA перевіряє не лише CRUD, а й конкурентні оновлення, обмеження унікальності, транзакційний rollback, ізоляцію, індекси та міграції між версіями. Для SQL-системи критично підтвердити, що відкат не залишає частково записані пов''язані рядки. Для документної системи важливі еволюція схеми, обробка старих документів та атомарність у межах конкретної операції. Репліка може повертати застаріле значення, якщо продукт дозволяє читання з реплік. Тестові дані мають відтворювати реальну кардинальність і розподіл, інакше план запиту та конкуренція за ресурси в тесті будуть іншими.
+
+## Індекс, блокування та план запиту
+
+Реляційні сховища можуть забезпечувати транзакційні обмеження, проте блокування, рівень ізоляції й вибір індексу впливають на поведінку під конкуренцією. Запит, що добре працює на невеликій тестовій таблиці, може читати мільйони рядків у production через інший розподіл значень. Нереляційна модель теж потребує індексування та оцінки гарячих ключів. QA може аналізувати план виконання разом із розробником і порівнювати час та кількість прочитаних записів на репрезентативних даних. Паралельні транзакції мають перевіряти lost update, deadlock і повтор після відкату. Оптимізація запиту не повинна змінювати семантику, наприклад приховано виключати рядки через неправильний join.
+
+## Шардовані дані та ключ розподілу
+
+Шардинг розділяє набір записів між фізичними вузлами, щоб збільшити сумарну місткість або паралельність, але ускладнює глобальні запити й транзакції. Ключ шардингу має рівномірно розподіляти навантаження та відповідати типовому доступу; популярний tenant або часовий ключ може створити гарячий shard. Перенесення діапазону даних потребує узгодження маршрутизації, копіювання та читання під час міграції. QA створює перекошений розподіл, перевіряє запит через кілька shard-ів, унікальність ключів і поведінку при відмові одного вузла. Цей матеріал доповнює базове порівняння моделей БД: вибір SQL чи NoSQL не визначає автоматично спосіб горизонтального розподілу.
+
+## Реплікація, консистентність і вибір сховища
+
+База даних може реплікуватися синхронно чи асинхронно, використовувати quorum або інший протокол, а це впливає на затримку запису та те, коли читання бачить зміни. Документна модель може мати ACID-гарантії на окрему операцію або транзакцію, а реляційний продукт може бути розгорнутий із різними рівнями ізоляції та реплікації. Тому назва SQL чи NoSQL не визначає поведінку без документації конкретної реалізації. QA тестує фактичний deployment profile, читання після запису та відмову репліки. Критерії збереження та консистентності задаються для продуктового сценарію: каталог може терпіти відставання, тоді як подвійне списання коштів є критичним порушенням.
+
+## Резервне копіювання та відновлення сховища
+
+Резервна копія має практичну цінність лише якщо її можна відновити у допустимий час і перевірити цілісність. Snapshot без журналу змін може втратити операції між копіями, а backup відкритих файлів без узгодження може бути неконсистентним. Транзакційні та документні системи мають різні інструменти й гарантії відновлення до моменту часу. QA або reliability команда виконує restore rehearsal на ізольованому середовищі, порівнює кількість контрольних записів і перевіряє додаток на відновлених даних. RTO/RPO повинні вимірюватися, а не залишатися декларативними. Відновлення включає також credentials, schema version, індекси й залежні проєкції.',NULL,NULL,'Документація PostgreSQL','https://www.postgresql.org/docs/current/','["tools","Керування даними"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(212,'tools-elasticsearch-i-povnotekstovyy-poshuk-27','article','tools','Керування даними','middle',NULL,26,4,'Elasticsearch і повнотекстовий пошук','Elasticsearch індексує документи у розподілених шардах і відповідає на пошукові та аналітичні запити через інвертований індекс.','## Чому потрібен окремий пошуковий індекс
+
+Реляційна база є джерелом транзакційної істини, але запити за словами, релевантністю, підказками й агрегаціями над текстом часто потребують іншої структури. Elasticsearch створює індекс документів, де аналізатор нормалізує текст і розкладає його на терми. Інвертований індекс пов’язує терм із документами, у яких він трапляється, що дозволяє ефективно знаходити відповідні тексти. Індекс зазвичай є похідною проєкцією первинних даних, а не єдиним місцем їх збереження.
+
+## Індекс, mapping і запит
+
+Mapping визначає типи полів і спосіб їх індексації. Поле text аналізується для повнотекстового пошуку; keyword зберігає точне значення для фільтрації й агрегацій. Analyzer може включати токенізацію, приведення регістру та мовні фільтри, тому однаковий рядок у запиті й документі не завжди перетворюється на однакові терми без належної конфігурації. Query DSL дає змогу поєднувати збіг, фільтр, релевантність і агрегації. Помилкова схема поля може змусити систему віддавати порожні або неточні результати без очевидної помилки API.
+
+## Кластер, шарди та узгодження
+
+Індекс складається з первинних і реплікованих шард, які розміщуються на вузлах кластера. Первинний shard зберігає частину документів, а репліка підтримує копію й може обслуговувати читання. Кількість первинних шард обирають під час створення індексу з урахуванням обсягу та майбутнього розподілу; надлишок дрібних shard створює накладні витрати. Оскільки індексація часто асинхронно слідує за основною БД, пошуковий результат може короткий час відставати від запису.
+
+## QA та діагностика
+
+QA перевіряє мову й морфологію, спеціальні символи, точні фільтри, сортування, пагінацію, релевантність і час появи оновленого документа в пошуку. Тестуйте повторну індексацію, видалення застарілого документа, mapping-зміну й недоступний shard. Статус кластера, кількість unassigned shard, затримка індексації та помилки пошукових запитів допомагають локалізувати проблему. Elasticsearch не є автоматичною заміною PostgreSQL: пошук, реплікація та транзакційні гарантії мають інші властивості, тому зазвичай потрібен контрольований процес синхронізації проєкції.
+
+## Індексування й аналіз тексту
+
+Пошуковий рушій розбиває текст на терміни, застосовує нормалізацію та формує inverted index, де термін пов''язаний із документами й позиціями появи. Аналізатор визначає токенізацію, регістр, стоп-слова й мовні правила, тому зміна аналізатора часто потребує переіндексації. Mapping визначає типи полів і спосіб індексації; автоматичне виведення типів зручне для початку, однак може невірно класифікувати значення або створити надлишок полів. Повнотекстова релевантність не дорівнює точній фільтрації за структурованим значенням, яку слід виконувати через відповідні типізовані поля.
+
+## Шарди, репліки та актуальність пошуку
+
+Індекс розподіляється на первинні шарди та їхні копії, а пошуковий запит збирає результати з потрібних частин. Це дає масштабування і відмовостійкість, але додає витрати на координацію, мережу й узгодження стану. Пошуковий індекс зазвичай є похідною моделлю, що оновлюється асинхронно; одразу після зміни документа пошук може ще не знаходити новий стан. QA перевіряє аналізатор на мовах продукту, точні та часткові запити, пагінацію, оновлення індексу, дублікати при повторній індексації та деградацію при відмові шарда. Відсутність документа в пошуку сама по собі не доводить втрату в основній БД.
+
+## Відмінність пошуку від транзакційної бази
+
+Пошуковий індекс оптимізує знаходження документів за термінами, фільтрами й оцінкою релевантності, але не замінює транзакційне джерело даних. Він зазвичай містить денормалізовані документи, побудовані з кількох доменних записів, і може оновлюватися із затримкою. Порядок результатів за score не є стабільним бізнес-порядком без додаткового сортування та tie-breaker. QA перевіряє пагінацію при зміні індексу, колізії нормалізації, локалізовані аналізатори, фільтр доступу та коректну обробку видаленого документа. Для операцій, що змінюють дані, остаточне підтвердження має походити від системи, яка володіє транзакційним станом.
+
+## Сумісність індексу та зміни моделі
+
+Зміна mapping-а може потребувати нового індексу й повторної індексації, оскільки тип поля або analyzer не завжди можна змінити для вже проіндексованих документів без перебудови. Під час побудови нового індексу потрібно підтримувати синхронізацію змін, які надходять паралельно, та безпечно переключити alias чи маршрут читання. Помилка у mapping може перетворити рядок на неправильний тип або спричинити конфлікт полів у різних документах. QA перевіряє стару й нову модель на реальних зразках, повноту переіндексації, переключення alias і rollback читання. Слід відрізняти помилку запиту від дефекту індексації: корисно перевірити документ безпосередньо в індексі та порівняти його з джерелом.
+
+## Оцінка релевантності й точність запиту
+
+Пошукова відповідь є ранжованим набором, тож правильність залежить не тільки від наявності документа, а й від порядку, фільтрів та пояснюваної відповідності запиту. Нормалізація може об''єднати словоформи чи прибрати стоп-слова, що покращує одні запити й шкодить іншим. Пошукові правила повинні розрізняти exact match, phrase, prefix та full-text потребу. QA готує оцінювальний набір запитів із очікуваними релевантними документами й перевіряє регресію після зміни analyzer-а або mapping-а. Особливо важливі українська морфологія, змішані мови й кирилично-латинські ідентифікатори. Відсутність загального формального score не скасовує потреби у повторюваних прикладах і погоджених критеріїв якості пошуку.
+
+## Керування shard-ами та кластерним балансом
+
+Шарди Elasticsearch розподіляють індекс по вузлах і дають паралелізм для indexing та search, але кількість shard-ів має відповідати обсягу даних і навантаженню. Надто багато малих shard-ів збільшує накладні витрати метаданих і heap, надто мало великих ускладнює переміщення й відновлення. Replica shard-и допомагають доступності та читанням, але споживають ресурси й потребують реплікації. QA перевіряє відновлення shard-а після втрати вузла, доступність пошуку в yellow/red стані й поведінку indexing при переміщенні. Потрібно аналізувати кластерний health разом із latency запиту; зелений статус не гарантує релевантної відповіді чи коректного mapping-а.',NULL,NULL,'Elastic: інвертований індекс','https://www.elastic.co/guide/en/elasticsearch/reference/current/inverted-index.html','["tools","Керування даними"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(213,'tools-elastic-stack-zbir-i-doslidzhennya-zhurnaliv-28','article','tools','Керування даними','middle',NULL,27,4,'Elastic Stack: збір і дослідження журналів','Elastic Stack поєднує агенти збору, Logstash, Elasticsearch і Kibana для приймання, перетворення, пошуку та дослідження операційних даних.','## Від розрізнених файлів до централізованої діагностики
+
+Журнал процесу корисний лише тоді, коли його можна зіставити з конкретною версією, запитом і залежністю. У розподіленій системі локальні файли на багатьох вузлах ускладнюють пошук і зникають після заміни контейнера. Elastic Stack формує конвеєр: Beats або Elastic Agent збирає події, Logstash може відфільтрувати й перетворити їх, Elasticsearch індексує документи, а Kibana надає пошук і візуалізацію. Компоненти можуть використовуватися окремо; не кожне розгортання потребує всіх чотирьох.
+
+## Потік обробки та схема
+
+Подія зазвичай містить час, рівень, компонент, повідомлення, ідентифікатор запиту й поля контексту. Logstash організовує обробку через входи, фільтри й виходи; трансформація може парсити рядок, додавати поля або видаляти чутливу інформацію. Elasticsearch приймає документ відповідно до mapping і створює пошуковий індекс. Kibana формує запити, подання й панелі поверх індексованих даних. Різні версії агента, схеми чи часові зони здатні призвести до розбитих полів, хибного порядку подій або пропуску повідомлень.
+
+## Вартість і межі
+
+Централізовані журнали пришвидшують розслідування, але зберігання індексованих даних споживає диск, пам’ять і обчислення. Невдало обрані поля з високою кардинальністю можуть різко збільшити кількість часових рядів або складність індексу. Дублювання подій, повторне надсилання та відставання конвеєра змінюють видимий обсяг даних. Логи можуть містити токени, персональні дані чи платіжні значення, тому маскування, доступ і строки зберігання є частиною архітектури, а не лише налаштуванням інтерфейсу.
+
+## QA та експлуатаційна перевірка
+
+QA створює контрольні події з кореляційним ідентифікатором і простежує їх від агента до пошукового індексу. Перевіряються повнота, точність парсингу, часові мітки, retry після недоступності приймача, відновлення після перезапуску та політики маскування. Для Kibana перевіряють правильність фільтрів і часових діапазонів, щоб відсутність результату не була спричинена неправильним часовим вікном. Elastic Stack допомагає шукати й досліджувати події, але не замінює метрики та трасування: журнал описує окремі записи, а не автоматично повний причинний шлях запиту.
+
+## Конвеєр телеметрії
+
+Elastic Stack об''єднує збір подій, їхню обробку, індексацію та дослідження. Beats або інші агенти можуть передавати журнали, Logstash — парсити й маршрутизувати їх, Elasticsearch — індексувати, а Kibana — надавати пошук і візуалізацію. Потік може мати буфер між етапами, наприклад брокер, що допомагає пережити коротку недоступність індексу. Перетворення часу, розбір JSON і маскування секретів є частиною коректності конвеєра: повідомлення, яке відкинуте через парсер, зникає з аналітичного огляду, хоча прикладний сервіс його створив.
+
+## Достовірність журналу як доказу
+
+Журнали можуть бути вибірковими, затриманими, продубльованими або обрізаними політикою зберігання, тому вони не є абсолютним джерелом істини. Кореляційний ідентифікатор, точний часовий пояс, версія схеми та рівень логування допомагають відновити послідовність. QA перевіряє, що секрети й персональні дані не індексуються, записи помилок зберігають потрібні поля, а зміна структури не ламає парсер і dashboard. Також потрібно вимірювати обсяг та строк зберігання: надмірна деталізація збільшує вартість і може приховати важливі сигнали серед шуму.
+
+## Буферизація та вартість індексації журналів
+
+Високий потік журналів може створювати тиск на дисковий простір, мережу й індексацію. Буферизація дозволяє пережити короткий збій, але при довшій недоступності має визначену межу й політику відкидання або backpressure. Retention і rollover індексів керують компромісом між пошуковою історією та вартістю зберігання. QA перевіряє, чи журнал помилки доходить до пошуку в очікуваний строк, чи не дублюється при повторному відправленні й чи доступна інформація після ротації. У тестовому середовищі також слід перевіряти часові пояси й синхронізацію годинників; неправильний timestamp здатен зробити корисний запис невидимим у вибраному часовому вікні.
+
+## Схеми журналів і приватність
+
+Структуровані журнали простіше фільтрувати, але зміна назви чи типу поля може порушити pipeline і зламати існуючі пошукові запити. Схема має визначати обов''язкові атрибути, рівень вкладеності, timestamp і правила серіалізації помилок. Виняток може містити запит, cookie чи токен, тому маскування слід виконувати до передачі в централізоване сховище або на контрольованому етапі ingestion. QA генерує навмисно чутливий тестовий маркер і переконується, що він не з''являється ні в журналі, ні в індексі чи експорті. Перевіряють також зміну версії лог-схеми й сумісність dashboard-а. Аналітична зручність не виправдовує необмеженого збирання даних.
+
+## Зберігання, доступ і відповідність політикам
+
+Централізований лог може включати персональні ідентифікатори, IP, вміст запиту й внутрішні імена сервісів. Політика збору визначає, які поля маскуються, хто може шукати записи, скільки вони зберігаються та як видаляються за запитом чи вимогою регуляції. Реплікація й snapshots також поширюють дані за межі основного індексу. QA перевіряє повний шлях чутливого тестового маркера через agent, pipeline, сховище, dashboard і експорт. Верифікує рольовий доступ та те, що резервні копії мають відповідний строк життя. Коректна обробка журналу є одночасно вимогою діагностики, безпеки та приватності.
+
+## Маршрутизація й відновлення конвеєра логів
+
+Якщо Logstash чи інший processor перезапускається, важливо знати, де буферизуються події й чи може він відтворити їх без втрати. Pipeline може прийняти запис, успішно обробити його, але не доставити до Elasticsearch до падіння; durable queue чи broker змінюють цей ризик. Backpressure від індексу має пройти назад або перейти до обмеженої черги. QA тестує недоступність цільового сховища, повний диск буфера, помилковий parser та повтор після відновлення. Звіряють лічильник джерела і кінцеву кількість документів, враховуючи sampling чи фільтри. Точність логування часто критична для аудиту та інцидентів, тому непомітне відкидання є дефектом системи спостереження.',NULL,NULL,'Elastic Stack: офіційний огляд','https://www.elastic.co/guide/en/elastic-stack/current/index.html','["tools","Керування даними"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(214,'tools-potokova-obrobka-ta-potoky-danykh-29','article','tools','Керування даними','middle',NULL,28,4,'Потокова обробка та потоки даних','Потокова обробка обчислює результати в міру надходження подій, тоді як пакетна обробка запускається над скінченним набором даних.','## Подія, потік і пакет
+
+Подія є записом факту з даними та часовими атрибутами. Потік — це послідовність таких записів, потенційно без визначеного завершення. Пакетна задача обробляє обмежений набір, наприклад нічний файл за день, тоді як потокова задача підтримує стан і оновлює результат після кожної нової події чи невеликої групи. Це не абсолютна дихотомія: мікропакетні рушії обробляють короткі інтервали, а потокові системи можуть виконувати пакетні перерахунки.
+
+## Час події та вікна
+
+У системах потокової аналітики розрізняють час, коли подія сталася в предметному світі, і час, коли вона надійшла до обробника. Мережеві затримки та повтори означають, що порядок надходження може не збігатися з порядком виникнення. Вікно групує події за часовим інтервалом або активністю, наприклад сумує платежі за п’ять хвилин. Watermark оцінює повноту обробки до певного часу, але пізня подія потребує визначеної політики: оновити старий результат, відкинути запис або спрямувати його окремо.
+
+## Стан, повтори й гарантії
+
+Агрегатори часто зберігають стан між подіями: суму, останнє значення, множину ідентифікаторів чи віконні буфери. Після відновлення рушій має відновити цей стан і позицію читання узгоджено; інакше з’являються пропуски чи подвійний підрахунок. Checkpoint зберігає прогрес, але його гарантія залежить від джерела, приймача та транзакційної інтеграції. Потокова система може бути швидкою, але не гарантує правильності предметної агрегації, якщо схема або ключ розподілу обрані помилково.
+
+## Перевірка потокових систем
+
+QA використовує події з граничним і пізнім часом, дублікати, порушений порядок, стрибок навантаження, перезапуск воркера й відновлення з checkpoint. Порівнюють результат потоку з контрольним пакетним розрахунком на тому самому наборі, враховуючи правила пізніх даних. Метрики затримки обробки, розміру стану, відставання й помилок checkpoint пояснюють, де накопичується робота. Для користувача важливий не лише середній час, а й визначена свіжість даних та можливість виправити вже оприлюднений агрегат.
+
+## Часові вікна та семантика подій
+
+Потокова обробка аналізує події, що надходять безперервно, часто з обмеженням затримки. Вікна групують дані за часом або кількістю записів; подія може надходити із запізненням, тому система визначає watermark або іншу межу, після якої результат вважається достатньо повним. Event time описує час факту в домені, а processing time — момент обробки вузлом; їхня різниця важлива для запізнілих подій і перерахунку агрегатів. Звичайна пакетна задача може повторно обчислити повний набір, тоді як потоковий процес часто підтримує стан між подіями.
+
+## Контроль стану й повторне програвання
+
+Стримінгова задача може зберігати стан вікна, таблицю ключів або контрольну точку позиції в журналі. Після збою правильність відновлення залежить від узгодженості стану та offset-ів джерела й приймача. Повторне програвання корисне для виправлення логіки, але може повторно виконати зовнішній побічний ефект. QA перевіряє запізнілі та дубльовані події, нерівномірне навантаження за ключами, відновлення checkpoint-а й точність агрегатів після replay. Варто порівнювати результат потоку з незалежним пакетним обчисленням на контрольному наборі, що дає еталон для виявлення помилок вікон і дедуплікації.
+
+## Затримка, повнота та пізні дані
+
+Потокова система постійно балансує між швидким результатом і впевненістю, що більшість подій уже надійшла. Коротке вікно зменшує час відповіді, але може пропустити запізнілу подію; довге вікно підвищує повноту ціною затримки. Виправлення попереднього агрегату має бути відображене в downstream-споживачах, які вже отримали попередній результат. QA перевіряє часові межі вікон, події на межі, дублікати, пропущений інтервал і повторне обчислення. Еталонний набір повинен містити не лише рівномірний потік, а й затримані, позачергові та нерівномірно розподілені події, характерні для реального домену.
+
+## Пакетна обробка, стримінг і гібридні системи
+
+Batch processing обробляє скінченний набір за розкладом або після його формування, тоді як stream processing підтримує безперервний потік і часто обмежену затримку. Гібридна архітектура може використовувати Kafka як збережений журнал та окремо запускати batch-перерахунок історії. Не кожна задача потребує stream: звіт раз на день може бути простішим і надійнішим як пакетний процес. Критеріями вибору є потрібна свіжість даних, складність стану, допустимість перерахунку, обсяг і ціна експлуатації. QA порівнює агрегати двох шляхів на одному наборі подій та перевіряє, що запізніла подія не створює різне трактування у поточному й історичному звіті.
+
+## Станові обчислення та масштабування
+
+Потокові операції з вікнами, join-ами та агрегатами зберігають локальний стан і потребують механізму checkpoint чи state backend. Обсяг стану залежить від кількості активних ключів і строку вікна; необмежене збереження ключів створює поступове зростання пам''яті. Масштабування може вимагати перерозподілу стану між worker-ами, що спричиняє паузу або повторне читання. QA контролює кількість унікальних ключів, відновлення зі checkpoint, зміну паралелізму та поведінку після втрати worker-а. Вихідні результати порівнюють із контрольним обчисленням, а затримка checkpoint-а та backpressure допомагають зрозуміти відставання. Стабільна пропускна здатність без контролю стану ще не означає довготривалу надійність.
+
+## Керування схемою подій у потоці
+
+Тривалий потік може включати різні покоління подій, тому схема є еволюційним контрактом. Просте перетворення полів у consumer-і може приховати, що producer змінив семантику значення. Версія схеми й правила compatibility дають змогу визначити, чи безпечно читати старий запис новим кодом. Replay іноді відбувається через місяці, коли стару бібліотеку вже не підтримують, тому потрібні зразки історичних payload-ів і план міграції. QA запускає потік із сумішшю версій, невідомими полями та відсутніми атрибутами. Перевіряє, що некоректна подія локалізується, а решта partition-а може продовжити роботу відповідно до політики.',NULL,NULL,'Документація Apache Kafka','https://kafka.apache.org/documentation/','["tools","Керування даними"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(215,'tools-proksi-server-forward-i-reverse-proxy-30','article','tools','Інфраструктура та трафік','middle',NULL,29,4,'Проксі-сервер: forward і reverse proxy','Проксі приймає мережеве з’єднання й передає запит далі, діючи від імені клієнта або сервера залежно від свого розташування.','## Посередник у мережі
+
+Forward proxy працює на боці клієнта: він може контролювати вихідний трафік, застосовувати політики доступу, приховувати адресу внутрішнього клієнта чи кешувати дозволені відповіді. Reverse proxy стоїть перед одним або багатьма серверами, приймає зовнішній запит і пересилає його до внутрішнього застосунку. Він може завершувати TLS, обирати upstream, змінювати заголовки й формувати журнали доступу. Ролі визначаються тим, інтереси якої сторони представляє посередник, а не лише напрямком стрілки в схемі.
+
+## Маршрутизація й межа довіри
+
+Зворотний проксі часто приховує топологію внутрішніх сервісів і створює контрольовану точку входу. Заголовок на кшталт Forwarded або X-Forwarded-For може передавати початкову адресу клієнта, однак його значення довірене лише тоді, коли проксі видаляє неперевірений зовнішній заголовок і сам додає перевірений. Аналогічно, завершення TLS на проксі створює окрему ділянку між ним і backend, яка також потребує захисту. Неправильне трактування схеми HTTP чи хоста може призвести до помилкових redirect, збоїв cookie або обходу перевірок.
+
+## Кешування та балансування
+
+Проксі може зберігати придатні відповіді, але кешування залежить від заголовків контролю кешу, варіацій запиту й автентифікації. Спільний кеш персоналізованої відповіді може розкрити дані іншому користувачу. Reverse proxy також часто виконує функції балансувальника, однак ці поняття не тотожні: проксі визначає роль посередника та обробку протоколу, а балансувальник — розподіл запитів між цілями. Одна програма може реалізувати обидві ролі.
+
+## Тестування та локалізація
+
+QA перевіряє збереження заголовків, кодування шляху, правила TLS, тайм-аути до upstream, розмір тіла, кеш-контроль і повідомлення про помилки. Для 502, 503 чи 504 слід розрізнити відмову upstream, DNS, конфігурації маршруту та самого проксі. NGINX описує типову reverse-proxy поведінку як приймання клієнтського запиту, передачу до proxied server і повернення його відповіді; його журнали доступу й помилок допомагають встановити, на якому боці виник збій.
+
+## Розташування проксі у шляху запиту
+
+Forward proxy працює від імені клієнтів і часто застосовується для політик вихідного доступу, кешування чи контролю. Reverse proxy стоїть перед серверними застосунками та приймає запити від клієнтів, приховуючи внутрішню топологію й часто виконуючи TLS termination, маршрутизацію чи буферизацію. Один продукт може реалізовувати обидві ролі, однак конфігурація та межа довіри різні. Заголовок на кшталт X-Forwarded-For є твердженням, яке має довірятися лише від контрольованого проксі; без очищення клієнт може підробити його й вплинути на аудит чи правила доступу.
+
+## Зміни семантики та діагностика
+
+Проксі може змінювати заголовки, шлях, кодування, тайм-аути й повторно використовувати upstream-з''єднання. Такі функції впливають на поведінку застосунку: некоректно переданий Host або схема HTTPS змінює генерацію посилань, а обмеження тіла запиту може відхиляти завантаження. QA порівнює прямий і проксійований шлях, перевіряє межі розміру, довгі відповіді, WebSocket upgrade, тайм-аут upstream та заголовки довіри. Код помилки шлюзу вказує на межу, де запит завершився, але причину треба підтверджувати журналом проксі та кореляцією з backend.
+
+## TLS termination і довіра до заголовків
+
+Reverse proxy часто завершує TLS на зовнішній межі та передає запит до backend через інше з''єднання. Така схема потребує чіткого визначення, де шифрується трафік, як перевіряється сертифікат внутрішнього вузла та які заголовки описують оригінальну схему й адресу. Якщо backend безумовно довіряє forwarded headers від довільного клієнта, можна підробити IP, протокол чи host і вплинути на перенаправлення, аудит або безпеку cookie. QA перевіряє прямий шлях до сервісу, межу довіри проксі, редиректи HTTP→HTTPS та валідність заголовків. Потрібно також підтвердити, що секрети не потрапляють до access log при діагностиці.
+
+## Проксі як межа довіри та кешування
+
+Reverse proxy може розміщуватися у периметрі мережі, але його наявність не гарантує безпечного відокремлення backend-а, якщо внутрішній порт доступний напряму. Forward proxy, навпаки, представляє клієнтський вихід і може виконувати TLS inspection чи політики доступу відповідно до середовища. Кеш проксі повинен поважати Cache-Control, Vary і правила приватності; інакше персоналізована відповідь може повторно використовуватися для іншого користувача. QA перевіряє прямий доступ, кешований авторизований контент, очищення заголовків і поведінку при збої upstream. Також важливо відокремити власну помилку проксі від помилки backend-а за журналами обох меж і часом запиту.
+
+## Протокольні особливості й довгі з''єднання
+
+Проксі має враховувати, що не кожна комунікація є коротким HTTP-запитом. WebSocket, streaming response та gRPC можуть утримувати з''єднання довго, потребувати спеціального upgrade або HTTP/2 проксирування та мати власні timeout-и. Балансування під час повторного підключення може направити клієнта до іншого вузла, тому стан сесії має бути спільним чи відновлюваним. Буферизація відповідей змінює момент, коли дані стають видимі клієнту. QA перевіряє idle timeout, розрив посередині потоку, повторне підключення, коректність TLS і передавання backpressure. Успішний звичайний GET не підтверджує, що proxy налаштований правильно для довгих чи двонаправлених потоків.
+
+## Мережеві тайм-аути та граничні помилки
+
+У проксі є окремі тайм-аути встановлення клієнтського з''єднання, читання запиту, підключення до upstream і очікування відповіді. Їхня взаємодія визначає, який код побачить клієнт і чи може backend продовжити роботу після його отримання. Тайм-аут проксі не завжди перериває downstream-запит. QA задає керовану затримку на кожній межі та звіряє клієнтську відповідь із логами upstream. Перевіряють максимальний розмір тіла, заголовків, кількість з''єднань і idle connection timeout. Це дає змогу відрізнити інфраструктурне обмеження від дефекту прикладного endpoint-а й уникнути сліпого збільшення тайм-ауту, що лише накопичує роботу.',NULL,NULL,'Посібник NGINX для початківців','https://nginx.org/en/docs/beginners_guide.html','["tools","Інфраструктура та трафік"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(216,'tools-balansuval-nyk-navantazhennya-31','article','tools','Інфраструктура та трафік','middle',NULL,30,4,'Балансувальник навантаження','Балансувальник розподіляє з’єднання або запити між доступними екземплярами, щоб підвищити місткість і переживати окремі відмови.','## Розподіл трафіку
+
+Коли один сервер обслуговує весь потік, його ресурси стають верхньою межею системи й одиничною точкою відмови. Балансувальник приймає трафік та обирає backend за алгоритмом і станом цілей. На рівні L4 він працює переважно із транспортними з’єднаннями, тоді як L7 може аналізувати HTTP-маршрут, заголовки чи cookie. Round Robin розподіляє послідовно, Least Connections враховує активні з’єднання; доступність алгоритму не гарантує відповідності реальному обсягу роботи кожного запиту.
+
+## Health checks і відмовостійкість
+
+Перевірка здоров’я може бути поверхневою перевіркою процесу або глибшою перевіркою залежностей. Надто поверхневий endpoint позначає екземпляр здоровим, хоча він не може виконати бізнес-операцію; надто глибокий health check до спільної БД здатен одночасно виключити всі сервери під час її короткої деградації. Балансувальник має визначити інтервали, пороги, час вилучення та повернення цілей. Failover переводить трафік після відмови, але не відновлює вже втрачену сесію чи транзакцію автоматично.
+
+## Сесії та масштабування
+
+Якщо стан користувача зберігається лише в локальній пам’яті екземпляра, наступний запит може потрапити на інший сервер і втратити контекст. Sticky sessions тимчасово закріплюють клієнта за ціллю, але можуть створювати нерівномірність і ускладнювати відмову вузла. Зовнішнє сховище сесій чи stateless-токени розв’язують частину проблеми, додаючи інші залежності. Балансувальник також має враховувати повільні запити, довгі потокові з’єднання та різні ліміти backend-ів.
+
+## QA-сценарії
+
+Тестуйте нерівномірний розподіл, зняття цілі з обслуговування, повільну відповідь, помилковий health check і повернення сервера після перезапуску. Перевіряйте, чи нові з’єднання йдуть до здорових екземплярів, а наявні завершуються згідно з очікуваною політикою. Для L7 важливо зіставити маршрут, заголовки, TLS і коди помилок. Метрики запитів і затримок мають бути розрізнені за backend; середнє значення по пулу приховує один перевантажений екземпляр.
+
+## Алгоритми розподілу та межі балансування
+
+Round robin розподіляє послідовні запити циклічно, least connections орієнтується на кількість активних з''єднань, а зважені варіанти враховують різну місткість вузлів. Жоден алгоритм не знає автоматично реальне навантаження CPU чи час відповіді без додаткової телеметрії. Балансування L4 спирається переважно на мережеві адреси й порти, а L7 може приймати рішення за HTTP-маршрутом, заголовком або cookie. Sticky sessions зберігають прив''язку клієнта, але зменшують рівномірність та ускладнюють відмову вузла, якщо стан сесії не винесений у спільне сховище.
+
+## Перевірка здоров''я та поведінки при відмові
+
+Health check має відрізняти процес, що просто відповідає на порт, від екземпляра, здатного обробити роботу. Надмірно глибока перевірка може прибрати всі вузли через спільну залежність, а надто поверхнева направить трафік до непридатного екземпляра. QA контрольовано вимикає один backend, сповільнює відповідь, перевіряє відновлення після повернення вузла, збереження сесії та розподіл нового навантаження. Потрібно фіксувати кількість помилок, повторні спроби й затримки на балансувальнику. Failover не означає безперервність уже відкритого з''єднання: очікувана поведінка залежить від протоколу й механізму відновлення клієнта.
+
+## Health check, failover і сесійний стан
+
+Перевірка доступності може бути активною, коли балансувальник сам надсилає запити до backend, або пасивною, коли він оцінює помилки реального трафіку. Поріг невдалих перевірок і час відновлення визначають, наскільки швидко вузол буде виведений та повернутий у пул. Надто часті перевірки можуть додатково навантажувати сервіс, а довгий інтервал збільшує час направлення трафіку до несправного вузла. Sticky session тимчасово прив''язує користувача до екземпляра, але не гарантує збереження локальної сесії після його відмови. QA відтворює збій до та під час активного сеансу і перевіряє, що повторна авторизація, запит і бізнес-операція поводяться відповідно до контракту.
+
+## Відмінність L4 і L7 на практиці
+
+Балансувальник четвертого рівня оперує транспортним з''єднанням і не аналізує повний зміст HTTP-запиту, що може зменшити обробку на рівні застосунку та підтримати інші протоколи. Рівень застосунку може маршрутизувати за host, шляхом чи заголовком, термінувати TLS і застосовувати політики до конкретного endpoint-а. За TLS passthrough деякі L7 рішення недоступні, оскільки payload зашифрований. Вибір впливає на точку завершення з''єднання, збереження клієнтської IP-адреси та видимість запиту. QA тестує маршрутизацію окремих host/path, протоколів і шифрованих сценаріїв, перевіряючи, що налаштування не змінюють зовнішній контракт та коректно обробляють невідомий маршрут.
+
+## Балансувальник у глобальному трафіку
+
+Великі системи можуть розподіляти трафік на кількох рівнях: географічна DNS чи anycast-маршрутизація обирає регіон, глобальний рівень — кластер, локальний — backend екземпляр. Кожен рівень має власну інформацію про здоров''я та часову затримку оновлення. Відмова регіону може не переключитися миттєво, якщо DNS кешований або клієнт утримує довге з''єднання. Географічна близькість також не завжди означає найкращу доступність для конкретного користувача. QA тестує шлях із різних локацій, відмову локального й регіонального вузла та консистентність сесії між регіонами. Потрібно відрізняти продуктову маршрутизацію від впливу корпоративного проксі чи DNS кешу клієнта.
+
+## Сесії, sticky routing і статистична нерівність
+
+Sticky sessions зберігають маршрут на основі cookie чи іншого ключа, але можуть призвести до нерівного розподілу запитів між вузлами. Окремі активні користувачі з довгими сесіями здатні створити дисбаланс, навіть якщо кількість клієнтів розподілена рівномірно. Втрата backend-а порушує прив''язку, а новий вузол може не мати локального стану попередньої сесії. QA порівнює запити з прив''язкою та без неї, видаляє cookie, відключає вузол та перевіряє відновлення логіну. Якщо сесія має зберігатися, спільне сховище повинно мати власну доступність і тестування. Балансувальник не може самостійно перенести прикладний стан між серверами.',NULL,NULL,'NGINX: розподіл навантаження','https://nginx.org/en/docs/http/load_balancing.html','["tools","Інфраструктура та трафік"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(217,'tools-api-gateway-32','article','tools','Інфраструктура та трафік','middle',NULL,31,4,'API Gateway','API Gateway є контрольованою точкою входу до набору сервісів і може виконувати маршрутизацію та спільні прикладні політики.','## Проблема для клієнта
+
+Коли backend розділений на багато сервісів, пряме підключення клієнта до кожного відкриває внутрішню топологію та множить адреси, правила автентифікації й версії API. Шлюз надає клієнтам узгоджений зовнішній фасад і направляє операції до потрібного компонента. Він може агрегувати відповіді, трансформувати протоколи, обмежувати частоту запитів, перевіряти токен і застосовувати маршрути за версією чи групою клієнтів.
+
+## Роль і межі відповідальності
+
+Шлюз є інфраструктурним компонентом, але будь-яка логіка, додана до нього, збільшує його вплив на продукт. Кросс-різальні політики на кшталт перевірки токена чи rate limiting можуть бути доречними; доменні правила ціноутворення або прийняття бізнес-рішення зазвичай мають належати власному сервісу. API Gateway може взаємодіяти з балансувальником і reverse proxy, а внутрішній сервіс може окремо мати service discovery. Ці назви описують ролі, які іноді реалізує один продукт, а не обов’язково різні сервери.
+
+## Відмови та продуктивність
+
+Шлюз додає мережевий перехід, обмеження розміру запиту, таблиці маршрутів і можливу точку перевантаження. Агрегація кількох відповідей зменшує кількість викликів клієнта, але зчіплює затримку з усіма внутрішніми сервісами. Rate limiting потребує визначити ключ обмеження й поведінку для перевищення; спільний ліміт на NAT-адресу може обмежити багатьох незалежних користувачів. Розгортання шлюзу має передбачати масштабування та захищене оновлення політик.
+
+## QA-перевірка
+
+QA тестує кожен маршрут, недоступність downstream, помилку токена, rate limit, передачу заголовків, агрегацію часткових відповідей і сумісність версій API. Потрібно перевірити, що шлюз не довіряє клієнтським заголовкам і не пропускає запит із недостатніми повноваженнями. Для проблеми latency зіставляють час на шлюзі й у кожному цільовому сервісі. Архітектурна рекомендація Microsoft підкреслює, що gateway має приховувати внутрішні деталі сервісів; тестування має підтвердити цю межу, а не лише успішний проксі-виклик.
+
+## Політика на межі API
+
+API Gateway може виконувати автентифікацію, авторизацію, rate limiting, маршрутизацію та трансформацію заголовків перед передаванням до сервісу. Це зменшує потребу дублювати деякі наскрізні політики, проте бізнес-авторизація на рівні ресурсу зазвичай залишається відповідальністю сервісу, який володіє даними. Ліміт частоти має визначати ключ клієнта, часову межу, алгоритм і формат відмови; глобальний ліміт може несправедливо обмежити великого клієнта, а локальні ліміти на репліках — перевищити загальне значення. Gateway стає критичним компонентом і потребує масштабування та спостережуваності.
+
+## Контракт шлюзу й наскрізний тест
+
+Gateway може об''єднати кілька внутрішніх викликів в один зовнішній endpoint. Це зменшує кількість запитів клієнта, але створює залежність від порядку, тайм-аутів та часткових відповідей сервісів. QA перевіряє, чи не витікають внутрішні адреси та stack trace, чи коректно переносяться trace-id і контекст користувача, чи відповідають статуси специфікації й чи не обходить прямий доступ до backend політику шлюзу. Потрібно окремо протестувати деградацію одного з сервісів у агрегованій відповіді. Централізація технічних політик не має непомітно перетворювати gateway на доменний моноліт.
+
+## Межа відповідальності gateway та сервісу
+
+Шлюз є ефективним місцем для спільної мережевої політики, але не повинен підміняти авторитетний контроль бізнес-прав. Він може перевірити підпис токена та загальний ліміт, тоді як право конкретного користувача редагувати певний рахунок має перевірити сервіс власник ресурсу. Кешування відповіді на gateway потребує коректної варіації за ідентичністю й заголовками. Якщо шлюз агрегує кілька backend-викликів, треба визначити, чи повертається частковий результат або загальна помилка. QA намагається обійти шлюз, підмінити forwarded context і викликати endpoint із простроченим токеном, одночасно перевіряючи авторизацію на сервісній межі.
+
+## Rate limiting і справедливий доступ
+
+Rate limiting обмежує частоту запитів, а throttling може керувати швидкістю пропускання чи затримувати роботу. Фіксоване вікно просте, але має крайовий ефект на межі інтервалів; token bucket дозволяє короткий burst у межах місткості; sliding window оцінює запити у рухомому проміжку. Розподілені gateway-репліки повинні узгоджувати лічильник, інакше кожна дозволить власну квоту. Відповідь 429 має містити очікувану семантику повтору, якщо це передбачено політикою. QA перевіряє паралельні запити, різні клієнтські ключі, повноваження, межу burst та відновлення квоти, а також переконується, що легітимний трафік іншого tenant-а не блокується спільним лімітом.
+
+## API Gateway як окрема площина масштабування
+
+Gateway може приймати більший трафік, ніж кожен внутрішній сервіс окремо, отже його пропускна здатність, кількість з''єднань і TLS-навантаження потребують самостійного планування. Вертикальне масштабування шлюзу не замінює горизонтальної доступності й обмежень backpressure. Неправильно налаштований timeout може одночасно відхилити запити до здорових backend-ів, а повтор шлюзом — збільшити навантаження на них. QA вимірює latency на кожному шарі, тестує перевантаження самого gateway та перевіряє, чи повертаються зрозумілі коди без витоку внутрішніх деталей. Доступ до адміністративної конфігурації та динамічних маршрутів має бути окремо захищений, бо помилка тут впливає на весь периметр.
+
+## Виявлення bottleneck у багатошаровому вході
+
+Запит може пройти через CDN, зовнішній load balancer, ingress, API Gateway та сервісний балансувальник. Кожен шар може додавати обмеження, трансформації, TLS обробку й retry. Якщо ці політики не узгоджені, один шар повторює роботу іншого або повертає відмінний код. Затримка окремого hop-а накопичується, а trace може втратити контекст на межі. QA вимірює latency по шарах, перевіряє forwarding headers і кореляційний ID, а також моделює відмову кожного рівня. Архітектурна діаграма та журнали повинні дозволяти визначити, який компонент реально прийняв рішення про відмову. Це особливо важливо для 502/503/504, які можуть виникати з різних причин.',NULL,NULL,'Microsoft: шаблон API Gateway','https://learn.microsoft.com/azure/architecture/microservices/design/gateway','["tools","Інфраструктура та трафік"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(218,'tools-dns-i-vyyavlennya-servisiv-33','article','tools','Інфраструктура та трафік','middle',NULL,32,4,'DNS і виявлення сервісів','DNS перетворює ієрархічні доменні імена на записи мережевих ресурсів, а service discovery допомагає знаходити актуальні екземпляри сервісу.','## Ім’я замість адреси
+
+Клієнтське програмне забезпечення зазвичай використовує стабільну назву на кшталт api.example.com, а не адресу, яка може змінитися під час масштабування чи аварійного відновлення. Резолвер перевіряє локальний кеш або звертається до ієрархії DNS-серверів, що делегують відповідальність за зони. Запис A чи AAAA пов’язує ім’я з IPv4 або IPv6 адресою, CNAME створює псевдонім, а TTL задає строк кешування результату. DNS відповідає на питання іменування, але сам по собі не гарантує доступності сервісу за отриманою адресою.
+
+## Service discovery
+
+У динамічному середовищі екземпляри сервісів створюються й зникають автоматично. Виявлення може спиратися на DNS-імена Kubernetes Service, реєстр із heartbeat або клієнтську таблицю адрес. Система має прибирати неактуальні екземпляри, оновлювати записи й визначати, який вузол обслуговує запит. Кеш DNS може пережити зміну endpoint довше, ніж очікує команда, а надто низький TTL збільшує навантаження на резолвер і чутливість до його доступності.
+
+## Затримки та типові збої
+
+Запит може не дістатися до TCP-з’єднання через помилку пошуку імені, неправильний запис, застарілий кеш, відсутність маршруту або блокування DNS-порту. Успішне розв’язання не означає, що порт відкритий, TLS пройшов або застосунок готовий. Так само health check сервісу й DNS-запис мають різні часові цикли оновлення. Під час інциденту треба зіставляти те, що повертає системний резолвер клієнта, із конфігурацією зони та фактичними endpoint-ами.
+
+## QA й діагностика
+
+QA перевіряє правильність записів середовищ, оновлення адрес після перезапуску, поведінку при застарілому кеші, failover і різні відповіді для IPv4/IPv6. Тест має відрізняти помилку DNS від відмови транспорту й застосунку: спочатку підтверджують адресу, потім порт і TLS, а тоді HTTP-контракт. Для внутрішнього service discovery перевіряють реєстрацію й вилучення екземпляра, readiness і балансування. Нормативні RFC описують ієрархію імен і формат протоколу; конкретні TTL та балансування залежать від реалізації платформи.
+
+## DNS як розподілена система кешів
+
+Резолвер клієнта запитує DNS ієрархічно або отримує відповідь із кешу; авторитетний сервер відповідає за записи зони. TTL обмежує рекомендований строк кешування, але зміна запису не гарантує миттєвого оновлення в усіх клієнтів через кеші та різні часові точки. A і AAAA записи можуть вести до різних мережевих маршрутів, а CNAME створює додатковий крок розв''язання. DNS часто використовується для початкового пошуку сервісу, проте не завжди придатний для швидкого виявлення кожної зміни екземпляра. Клієнт може кешувати адресу довше або коротше відповідно до власної політики.
+
+## Виявлення сервісу й перевірка доступності
+
+Service discovery може бути клієнтським, коли клієнт отримує список екземплярів і обирає вузол, або серверним, коли це робить балансувальник чи проксі. Реєстр зазвичай отримує інформацію про доступність через health check або heartbeat, але стан може відставати від фактичної мережі. QA перевіряє появу нового екземпляра, виведення несправного, прострочені DNS записи, кешування адреси, збереження існуючих з''єднань та автентифікацію між сервісами. У Kubernetes DNS і Service abstraction мають власні правила; їх не слід узагальнювати як гарантію миттєвого глобального оновлення.
+
+## Кешування DNS і зміни адрес
+
+Зміна DNS-запису не завершує вже відкриті TCP-з''єднання і не змушує клієнта одразу повторити резолюцію. Кеш може бути на ОС, бібліотеці runtime, контейнерному резолвері, корпоративному DNS і зовнішньому recursive resolver-і. Через це міграція endpoint-а або аварійне перемикання може розгортатися нерівномірно. DNS round robin також не є повноцінним health-aware load balancing, якщо резолвери кешують набір адрес незалежно від доступності backend-а. QA перевіряє TTL, період збереження з''єднань, поведінку клієнта після зміни адреси й помилки резолюції. Для діагностики фіксують не лише hostname, а фактично обрану адресу та часовий момент запиту.
+
+## Service discovery під час масштабування
+
+Коли оркестратор додає або видаляє екземпляр, реєстр чи DNS-сервіс має оновити доступний набір адрес, а клієнти — перечитати його відповідно до TTL та локального кешу. Статичний список адрес швидко застаріває. Клієнтське виявлення дає змогу балансувати поблизу споживача, але додає кожному клієнту бібліотеку та політику повторів; серверне приховує цей вибір у балансувальнику. QA навантажує систему під час появи нового екземпляра й перевіряє, коли він стає доступним, а також як швидко припиняється трафік до видаленого. Контрольний DNS lookup має фіксувати отриманий набір адрес і resolver, бо локальний кеш може відрізнятися від авторитетної відповіді.
+
+## DNSSEC, TLS і коректна ідентичність вузла
+
+DNS відповідає за зіставлення імені з записами, але сам звичайний DNS не гарантує шифрування запиту чи автентичність кожної відповіді. DNSSEC додає механізм перевірки цілісності DNS-даних у підтримуваному ланцюзі, але не шифрує запит. HTTPS перевіряє сертифікат відносно hostname, тому правильний IP із некоректною ідентичністю сервера все одно повинен завершитися помилкою. QA перевіряє розв''язання імен, SAN сертифіката, ланцюг довіри, редирект і поведінку при зміні запису. Важливо не плутати позитивний DNS lookup з доказом, що з''єднання захищене, або доступність порту — з підтвердженням правильного backend-а.
+
+## Міграція DNS та контрольований rollout
+
+Зміна адреси сервісу має узгоджувати TTL, готовність нового endpoint-а, сумісність старого й нового середовища та тривалість активних з''єднань. Перед перемиканням перевіряють сертифікат нового host-а, правила firewall і health checks. Поступове зменшення TTL перед запланованою зміною може скоротити час кешування, але не впливає на клієнтів, які кешують адресу власною політикою. QA перевіряє стару й нову адресу з різних резолверів, а також rollback DNS-запису. Потрібно підтвердити, що існуючі клієнти не продовжують використовувати застарілий вузол за межами прийнятного інтервалу. Зміна DNS не є миттєвим failover без перевірки всього клієнтського шляху.',NULL,NULL,'RFC 1034: домени та система доменних імен','https://www.rfc-editor.org/rfc/rfc1034.html','["tools","Інфраструктура та трафік"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(219,'tools-docker-i-konteyneryzatsiya-34','article','tools','Інфраструктура та трафік','middle',NULL,33,4,'Docker і контейнеризація','Контейнеризація пакує програму з файловими залежностями й запускає її ізольованим процесом, використовуючи ядро хостової операційної системи.','## Відтворюваність середовища
+
+Програма може працювати на машині розробника, але відмовляти на сервері через різні бібліотеки, користувачів чи змінні середовища. Контейнерний образ задає файлову систему й метадані запуску, а контейнер є запущеним екземпляром образу. На Linux ізоляція спирається на механізми ядра, зокрема простори імен і контроль ресурсів; контейнер не є повною віртуальною машиною з окремим ядром. Це робить запуск легшим, але означає спільний ризик ядра хоста.
+
+## Образ, runtime та збереження
+
+Dockerfile описує кроки побудови образу, шари якого можуть кешуватися. Registry зберігає й поширює образи, а container runtime створює процес із визначеними мережами, змонтованими томами й лімітами. Запис у тимчасовий шар контейнера зникає після його видалення; дані бази повинні зберігатися у volume чи зовнішньому сховищі. Compose дозволяє визначити кілька сервісів, мереж і томів для локального середовища, проте не замінює оркестратор кластера.
+
+## Практичне застосування
+
+Команда може збирати API в багатостадійному Docker build, копіювати лише готовий артефакт у менший runtime-образ і запускати його з непривілейованим користувачем. Однакова основа допомагає розробці, CI й тестовому середовищу використовувати сумісні системні залежності. Водночас тег образу на кшталт latest не є незмінною ідентичністю; для відтворюваності важливі digest, версії базового образу та provenance збірки. Секрети не слід вбудовувати в шари образу, бо вони можуть залишитися доступними в історії.
+
+## QA контейнеризованого продукту
+
+QA перевіряє чистий запуск образу, конфігурацію через змінні й секрети, доступність потрібних портів, права файлової системи, health check, сигнали завершення та роботу зі змонтованим томом. Слід тестувати обмеження CPU й пам’яті, нестачу диска та мережеву ізоляцію. Якщо контейнер завершується з кодом помилки, потрібно зіставити журнал програми, entrypoint і стан залежностей, а не покладатися на локальне середовище розробника. Офіційні матеріали Docker окремо розмежовують образ, контейнер, том і Compose-сервіс, що є важливою основою для діагностики.
+
+## Образ, контейнер і межі ізоляції
+
+Образ контейнера — незмінний шаблон шарів файлової системи та метаданих запуску; контейнер — створений із нього процес з ізольованими просторами імен та ресурсними обмеженнями хоста. Це не повна віртуальна машина: ядро операційної системи спільне з host. Теги образів можуть змінювати вміст, тому відтворювана доставка часто фіксує digest і контролює походження базових шарів. Секрети не слід вбудовувати в образ, адже вони залишаються в його історії. Volume відділяє потрібний стан від життєвого циклу контейнера, а мережеві режими визначають доступність портів.
+
+## Відтворюваність і тестове середовище
+
+Контейнер допомагає узгодити залежності та конфігурацію запуску, але однаковий образ не означає ідентичну поведінку на різних ядрах, CPU-архітектурах чи зовнішніх сервісах. QA перевіряє старт із чистого середовища, health/readiness, права файлової системи, межі пам''яті, сигнали завершення та persistence потрібних даних. Docker Compose може зручно піднімати локальний набір сервісів, однак не відтворює автоматично мережеві політики чи оркестрацію production. Важливо перевірити, що журнали й метрики доступні поза контейнером та що аварійне завершення не залишає неконсистентного стану.
+
+## Відтворюваність образу та безпечна конфігурація
+
+Dockerfile описує кроки побудови образу, а кеш шарів може прискорити повторну збірку, однак непіновані базові образи чи залежності роблять її змінною. Multi-stage build дає змогу відокремити компілятор і тестові інструменти від мінімального runtime-образу. Це зменшує поверхню постачання, але не гарантує безпечності без оновлення базових шарів та сканування залежностей. Конфігурація повинна передаватися при запуску, а секрети — окремим захищеним каналом. QA перевіряє, що образ не містить dev-даних, ключів, зайвих портів і прав root без необхідності, а процес коректно приймає сигнал завершення та завершує активні запити.
+
+## Volumes, мережі та відтворення залежностей
+
+Контейнер зазвичай має ефемерний writable layer, який не слід вважати довготривалим сховищем. Volume може пережити контейнер, але його життєвий цикл і доступність залежать від реалізації Docker або оркестратора. Контейнерні мережі створюють DNS-імена та ізоляцію, однак не відтворюють автоматично політики production-кластера. Compose допомагає описати локальні залежності, health checks і порядок готовності, але сам порядок запуску не гарантує, що сервіс уже приймає запити. QA перевіряє запуск після повного очищення контейнерів, збереження даних у потрібному volume і відмову при відсутній залежності. Скрипти ініціалізації мають бути безпечними до повторного запуску.
+
+## Образ як одиниця доставки й аудиту
+
+Контейнерний образ можна зберегти як версійований артефакт і просувати між тестовим та production середовищами, що зменшує розбіжність збірок. Для довіри важливі digest, provenance, перелік залежностей і контроль оновлень базового образу. Тег на кшталт latest не забезпечує незмінності. Сканування вразливостей дає сигнал про відомі компоненти, але не доводить відсутності вразливостей у власному коді чи конфігурації. QA перевіряє, що протестований digest збігається з розгорнутим і що runtime-конфігурація не містить секретів. Резервне копіювання даних не повинно покладатися на копіювання writable layer контейнера, якщо інфраструктура визначає окремі persistent volumes.
+
+## Постачання образів і контроль вразливостей
+
+Базовий образ визначає значну частину системних пакетів, а його оновлення може виправити відому вразливість або змінити поведінку бібліотеки. Сканер образів зіставляє компоненти з базами вразливостей, але можливі false positive, відсутній контекст експлуатації чи невиявлений власний код. Потрібна політика виправлення за ризиком і строком, а також перевірка сумісності після оновлення. QA тестує саме оновлений образ і фіксує digest, а не покладається лише на звіт сканера. Registry permissions, підпис і контроль хто може публікувати образ запобігають підміні артефакту. Безпечне постачання охоплює весь ланцюг від Dockerfile до середовища запуску.',NULL,NULL,'Docker: основи контейнерів','https://docs.docker.com/learn/paths/get-started-with-docker-containers/','["tools","Інфраструктура та трафік"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(220,'tools-kubernetes-ta-orkestratsiya-konteyneriv-35','article','tools','Інфраструктура та трафік','middle',NULL,34,4,'Kubernetes та оркестрація контейнерів','Kubernetes координує бажаний стан контейнеризованих навантажень у кластері й автоматизує розміщення, відновлення та кероване оновлення.','## Проблема одиничного запуску
+
+Docker може запустити контейнер, але велика система має підтримувати багато реплік, перевіряти готовність вузлів, оновлювати версії й відновлювати навантаження після відмов. Kubernetes надає декларативний API: оператор описує бажаний стан, а контролери циклічно зіставляють його з фактичним. Площина керування зберігає ресурси й приймає рішення, а worker-вузли запускають Pods. Це не означає, що платформа розуміє бізнес-правильність програми; вона керує життєвим циклом за технічними сигналами.
+
+## Pod, Deployment і Service
+
+Pod є найменшою одиницею розгортання й може містити один або кілька тісно пов’язаних контейнерів зі спільною мережею та томами. Deployment керує бажаною кількістю взаємозамінних Pod-ів і стратегією оновлення. Service надає стабільну мережеву назву для мінливих адрес Pod-ів, а Ingress чи Gateway API організовує зовнішній HTTP-доступ залежно від встановлених контролерів. ConfigMap і Secret відокремлюють налаштування від образу, але захист секретів потребує відповідних прав і зберігання.
+
+## Самовідновлення та його межі
+
+Liveness probe сигналізує, що контейнер слід перезапустити, readiness визначає, чи включати його до обслуговування, а startup probe дає повільному старту окремий період. Неправильні пороги можуть утворити цикл рестартів під навантаженням або залишити несправний Pod у трафіку. Оркестратор може повторно створити Pod після втрати вузла, але не відновить автоматично дані у неправильно налаштованому сховищі й не виправить помилку бізнес-коду. Автомасштабування залежить від метрик, запитів ресурсів і фактичної наявності місткості в кластері.
+
+## Перевірки QA
+
+QA тестує rollout і rollback, readiness під час прогрівання, завершення з’єднань, конфігураційні помилки, нестачу ресурсів, втрату вузла й поведінку Stateful workload. Перевіряють, що нова версія не отримує трафік до готовності й що недоступний сервіс не маскується статусом Running. Для відмови дивляться на події Kubernetes, стан Pod, логи процесу й метрики вузла. Kubernetes описує workload як набір Pod-ів, якими керують вищі ресурси; пряме створення одиничного Pod не забезпечує потрібного самовідновлення.
+
+## Бажаний стан і контролери
+
+У Kubernetes користувач описує бажану кількість реплік і конфігурацію ресурсу, а контролери постійно зіставляють її з фактичним станом. Pod є найменшою одиницею планування та може містити кілька тісно пов''язаних контейнерів; Deployment керує оновленням набору pod-ів, а Service надає стабільний спосіб звернення до змінних екземплярів. Readiness визначає, чи спрямовувати трафік, liveness — чи слід перезапустити контейнер; невдалі probe-и можуть спричинити цикл перезапусків. ConfigMap і Secret мають різне призначення, але сам факт типу Secret не замінює шифрування та контроль доступу.
+
+## Розгортання та поведінка при збої
+
+Self-healing відновлює бажану кількість екземплярів, але не виправляє помилкову конфігурацію чи недоступну зовнішню залежність. Rolling update може тимчасово співіснувати зі старою та новою версіями, тому API і схема даних мають бути сумісні в перехідному стані. QA перевіряє readiness під час прогрівання, drain трафіку при завершенні, autoscaling, ліміти ресурсів і реакцію на втрату вузла. Pod, що перезапускається, може стерти локальний стан; важливі дані повинні зберігатися у відповідному сховищі. Події кластера, журнали контейнера та метрики вузла доповнюють одне одного при діагностиці.
+
+## Service, Ingress та зберігання стану
+
+Kubernetes Service надає стабільне ім''я й маршрут до набору Pod-ів, тоді як Ingress або інший gateway-контролер керує зовнішньою HTTP-маршрутизацією. Ingress-ресурс сам по собі не працює без контролера, що реалізує його правила. PersistentVolume й PersistentVolumeClaim відокремлюють запит на сховище від конкретної реалізації, але фактичні гарантії залежать від storage class та провайдера. Stateful workload має окремі вимоги до ідентичності, порядку запуску й резервного копіювання. QA перевіряє DNS імена сервісів, routing rules, монтування тому після перенесення Pod-а, відмову probe та відновлення після оновлення вузла. Статус Ready не доводить цілісність даних на persistent storage.
+
+## Межі кластерної гарантії та оновлення
+
+Kubernetes контролює ресурси кластера, але не гарантує успіх бізнес-процесу. Pod може бути Ready, хоча стороння платіжна система недоступна; Deployment може мати потрібну кількість реплік, що всі використовують несумісну конфігурацію. Autoscaler реагує на метрики з власною затримкою та потребує правильно заданих requests і limits. Rolling update може тимчасово створити додаткові екземпляри, а disruption budget обмежує добровільне одночасне вилучення pod-ів, але не кожну аварійну подію. QA проводить rollout під навантаженням, перевіряє сигнал завершення, сумісність двох версій і доступність зовнішніх залежностей. Перевіряється і rollback: саме повернення manifest-а не відновить знищені дані.
+
+## Модель прав доступу та межа кластера
+
+Kubernetes розділяє контрольні й робочі вузли, API Server приймає декларативні зміни, scheduler розміщує Pod-и, а controller manager підтримує потрібний стан. RBAC визначає, хто може читати чи змінювати ресурси, тоді як network policy та service account контролюють інші межі. Secret у Kubernetes може бути збережений у etcd і потребує відповідного шифрування та доступу. QA перевіряє, що сервісний обліковий запис має мінімальні дозволи, контейнер не може читати чужі секрети, а мережеві правила обмежують небажані виклики. Кластерна готовність не дорівнює захисту програми; помилкова роль або відкритий ingress може обійти припущення про внутрішню мережу.
+
+## Резервування, оновлення вузлів і відновлення
+
+Cluster може мати кілька control plane вузлів, але фактична відмовостійкість залежить від etcd quorum, мережі та політики backup. Планове оновлення worker node повинно drain-ити Pod-и й враховувати disruption budget, а stateful workload має безпечно перемістити чи перепідключити сховище. Резервна копія кластерних manifest-ів не містить автоматично дані постійного тому. QA перевіряє втрату вузла, пересоздання pod-а та доступність даних після переміщення, а також процедуру відновлення конфігурації control plane на тестовому стенді. Сам факт, що Kubernetes створив новий Pod, не доводить, що він має ті самі secrets, persistent data та мережеві права.',NULL,NULL,'Kubernetes: огляд архітектури кластера','https://kubernetes.io/docs/concepts/architecture/','["tools","Інфраструктура та трафік"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(221,'tools-monitorynh-sposterezhuvanist-i-sli-slo-sla-36','article','tools','Надійність і продуктивність','middle',NULL,35,4,'Моніторинг, спостережуваність і SLI/SLO/SLA','Моніторинг відстежує відомі сигнали системи, а спостережуваність допомагає досліджувати її внутрішній стан через телеметрію.','## Від працездатності до досвіду користувача
+
+Health check показує стан визначеного компонента, але не обов’язково цінність продукту для користувача. Моніторинг збирає заздалегідь обрані метрики й перевіряє відхилення від очікувань. Спостережуваність (observability) означає можливість робити висновки про внутрішню поведінку за зовнішніми сигналами та деталями конкретної операції. Вона не є окремим інструментом і не виникає автоматично від встановлення панелі з графіками.
+
+## Метрики, журнали й траси
+
+Метрика агрегує числове вимірювання у часі, наприклад кількість запитів чи тривалість відповіді. Журнал містить окремі структуровані події з контекстом. Розподілена траса показує причинний шлях запиту через компоненти й час кожного кроку. Сигнали доповнюють один одного: метрика виявляє деградацію, траса локалізує повільний виклик, а журнал пояснює стан конкретної операції. Некоректні мітки високої кардинальності можуть перевантажити систему метрик, тоді як надто детальні журнали створюють витрати й ризик витоку даних.
+
+## SLI, SLO та SLA
+
+Service Level Indicator є вимірюваним показником поведінки, наприклад часткою успішних запитів або затримкою за перцентилем. Service Level Objective задає ціль для такого показника в конкретному вікні. Service Level Agreement є домовленістю з користувачем або замовником і може містити наслідки невиконання. Ці терміни не взаємозамінні. SLO має вимірювати користувацький результат, а не лише внутрішню температуру CPU; інакше інфраструктурна метрика може бути зеленою при зламаному бізнес-сценарії.
+
+## Оповіщення й QA
+
+Сповіщення має повідомляти про симптом, що потребує дії, а не просто про будь-яке коливання. Надмірні пороги породжують втому, а відсутність оцінки тривалості порушення створює шум. QA перевіряє, що критичні помилки й затримки відображаються у відповідних сигналах, кореляційний ідентифікатор проходить через межі сервісів, а персональні дані маскуються. Інцидентний сценарій можна використати для перевірки повного циклу: генерація збою, поява метрики, трасування проблемного запиту, сповіщення та документована реакція.
+
+## Сигнали та контекст здоров''я
+
+Метрики агрегують числові вимірювання в часі, журнали фіксують окремі події, а traces пов''язують етапи одного запиту. Спостережуваність — властивість системи, що дає змогу робити висновки про її внутрішній стан за зовнішніми сигналами, а не назва конкретного продукту. Health check показує готовність конкретного компонента за заданою політикою, тоді як SLI вимірює результат для користувача, наприклад частку успішних запитів. SLO задає ціль, а SLA може бути зовнішньою домовленістю з наслідками. Їхні вікна, знаменники та правила виключень мають бути явними.
+
+## Якість сигналу та діагностика
+
+Алерт повинен вказувати на дію, а не просто повідомляти про зміну будь-якої метрики. Надмірна кількість сигналів спричиняє втому від сповіщень; відсутність контексту робить реакцію повільною. QA перевіряє, чи корелює видимий користувачу дефект із метрикою або трасою, чи не пропускаються помилки через sampling та чи зберігаються потрібні поля в журналах. Персональні дані й секрети мають бути вилучені або захищені. Сценарій відмови корисно пройти наскрізно: від помилки в інтерфейсі до trace/span, логів залежності, алерта та зрозумілого відновлення.
+
+## SLI, SLO та бюджет помилок
+
+SLI є визначеним виміром якості послуги, наприклад часткою коректних запитів серед усіх запитів, які відповідають критерію включення. SLO задає ціль на часовому вікні, а error budget показує допустимий обсяг невідповідності до цілі. SLA може включати договірні наслідки й не має автоматично збігатися з внутрішнім SLO. Важливо узгодити, як враховуються синтетичні запити, повтори, скасування та помилки клієнта, інакше dashboard обчислюватиме не ту властивість, що відчуває користувач. QA формує перевірки на межах вікна, зміну знаменника та пропущені дані, щоб алерт не був наслідком математично хибного запиту.
+
+## Обсерваційність як причинний метод
+
+Метрики найкраще відповідають на питання про масштаб і тенденцію, журнали — що зафіксував конкретний компонент, а розподілені траси — де пройшла одна операція й скільки часу провела на межах. Жоден тип сигналу не замінює інші. Метрика помилок може показати зростання, але не пояснить конкретний payload; журнал містить подробиці, але його складно агрегувати; trace може бути відсутній через sampling. QA перевіряє узгодженість trace-id у логах, повноту метрик у часовій серії та налаштування вибірки. Під час тестової відмови потрібно пройти шлях від користувацького симптому до причини та перевірити, що доступна інформація не включає персональні дані чи секрети.
+
+## Життєвий цикл інциденту й тестування сигналів
+
+Моніторинг має підтримувати шлях від виявлення до підтвердженого відновлення. Поріг алерта визначає час виявлення, а доступні runbook-и й контекст впливають на час діагностики. Тестовий інцидент може перевірити, чи приходить повідомлення черговому, чи є dashboard посилання, чи коректний сервіс-власник і чи не закривається alert до відновлення користувацького SLI. QA може брати участь у game day або контрольованій симуляції, де відмова залежності вводиться й усувається за заздалегідь визначеними межами. Мета — перевірити не людей, а готовність технічного процесу надати безпечне відновлення та достатні докази причини.
+
+## Якість телеметрії та захист від сліпих зон
+
+Система спостереження може здаватися справною, хоча не збирає нові дані або втрачає один важливий сервіс. Відсутність метрики може означати нуль подій, помилку scrape, зміну імені чи відсутність інструментації. Для критичних сигналів корисні метрики самого pipeline: кількість експорту, відхилених записів і затримка доставки. QA тестує telemetry outage та переконується, що бізнес-процес продовжується або деградує контрольовано. Перевіряють і alert на відсутність даних, і доступність запасного каналу логування. Спостережуваність не має бути єдиним доказом: контрольний бізнес-запит і пряме джерело стану дозволяють верифікувати сигнал.',NULL,NULL,'Google SRE: моніторинг розподілених систем','https://sre.google/sre-book/monitoring-distributed-systems/','["tools","Надійність і продуктивність"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(222,'tools-grafana-doslidzhennya-danykh-i-paneli-37','article','tools','Надійність і продуктивність','middle',NULL,36,4,'Grafana: дослідження даних і панелі','Grafana запитує підключені джерела даних і представляє їх у панелях, дослідницькому інтерфейсі та сповіщеннях.','## Роль в екосистемі
+
+Grafana є платформою для візуалізації та дослідження даних, а не обов’язково системою зберігання метрик. Вона підключається до джерел, наприклад Prometheus, Elasticsearch чи сумісного сховища, виконує запити їхньою мовою й представляє результат. Панель описує джерело, запит, період часу й спосіб візуалізації. Це розділення дає змогу використати єдиний інтерфейс для різних систем, але помилка в запиті чи часовому діапазоні може створити оманливий графік.
+
+## Панелі, змінні та сповіщення
+
+Dashboard об’єднує панелі, що відображають взаємопов’язані показники. Змінні дають змогу перемикатися між середовищами, сервісами чи регіонами без копіювання окремих панелей. Запит визначає вибірку, агрегування та часову роздільність, а візуалізація перетворює її на часовий ряд, таблицю або числове значення. Правила сповіщень можуть оцінювати умову й запускати повідомлення; їхня коректність залежить від джерела й налаштувань стану, а не лише від того, що панель виглядає переконливо.
+
+## Практичний приклад
+
+Панель API може відображати частоту запитів, частку помилок, затримку p95 і насичення пулу з’єднань. Якщо всі графіки використовують однакову часову зону та фільтр середовища, інженер може зіставити момент збільшення трафіку з появою помилок. Невідповідні агрегування, наприклад середнє замість перцентиля для довгого хвоста затримок, приховують погані користувацькі випадки. Анотації випусків допомагають пов’язати зміну графіка з конкретним розгортанням.
+
+## QA і контроль інтерпретації
+
+QA перевіряє правильність вибраного джерела, часових меж, фільтрів і одиниць виміру. Важливо зіставити панель із сирими даними для контрольного інтервалу та перевірити поведінку при відсутніх значеннях. Сповіщення тестують на граничних значеннях, короткочасному стрибку й відновленні, перевіряючи затримку та отримувача. Grafana офіційно трактує джерела як системи, що зберігають метрики, журнали чи траси; це розрізнення допомагає не шукати візуалізаційний шар як першопричину відсутніх даних.
+
+## Панель як модель запитання
+
+Grafana виконує запити до джерел даних і відображає їх у панелях, але не є автоматично джерелом метрик чи повною системою зберігання. Dashboard має відповідати на конкретне операційне запитання: чи зростає затримка, який endpoint помиляється, чи співпадає відставання споживача з піком трафіку. Одиниці вимірювання, часовий діапазон, агрегація та label-фільтри впливають на правильність інтерпретації. Панель із середнім часом може приховати довгий хвіст, тому для затримок важливі розподіли та перцентилі, якщо джерело підтримує такі дані.
+
+## Перевірка панелей і правил
+
+QA перевіряє не тільки наявність графіка, а й коректність запиту, назви серій, одиниць і поведінки при відсутності даних. Null, нуль і порожній результат мають різний зміст, але можуть виглядати схоже. Алерт залежить від виразу, тривалості умови, групування й маршрутизації повідомлень; тест повинен довести, що він спрацьовує на очікуваному порозі й відновлюється після нормалізації. Доступ до dashboard також має відповідати ролям, а експорт конфігурацій — залишатися відтворюваним між середовищами. Grafana-панель є допоміжним інструментом рішення, а не доказом відсутності проблем поза її метриками.
+
+## Дашборд як інструмент причинного аналізу
+
+Панелі мають відображати взаємопов''язані сигнали в узгодженому часовому діапазоні та з однаковими фільтрами середовища й версії. Корисне компонування дозволяє перейти від загального SLI до затримки конкретного endpoint-а, далі до залежності та конкретної траси. Назви й одиниці повинні бути однозначними; наприклад, секунди не слід показувати як мілісекунди без відповідного перетворення. Змінна dashboard може випадково приховати production-дані, якщо початкове значення обмежує середовище. QA перевіряє запити на контрольних даних і порівнює їх із незалежним обчисленням, а також перевіряє часове зміщення та права доступу для користувачів різних ролей.
+
+## Алерти та керування доступом до панелей
+
+Grafana alerting оцінює вираз за заданим інтервалом і переводить правило між станами відповідно до threshold та тривалості умови. No data, error і нормальне значення мають трактуватися окремо; інакше зупинка збору даних може виглядати як здоровий нуль. Контактна точка й маршрутизація визначають, хто отримає повідомлення і з яким контекстом. Панель може містити запити, які відкривають чутливі labels або імена ресурсів, тому ролі й обмеження джерела даних важливі. QA перевіряє firing та resolved transitions на синтетичних значеннях, затримку доставки повідомлення й коректність посилання на відповідний dashboard. Тестова умова повинна бути безпечною для операційного середовища.
+
+## Запити, variables і межі джерела даних
+
+Grafana dashboard може об''єднати дані з кількох джерел, проте агреговане відображення не створює автоматично спільної часової семантики. Prometheus і Loki можуть мати різний retention, точність timestamps і правила доступу. Перемінна середовища має фільтрувати всі панелі послідовно, а невідоме значення не повинно зняти критичний фільтр. Запит із широким діапазоном може бути дорогим або повільним. QA перевіряє поведінку панелі для порожніх даних, помилки джерела, довгого діапазону та користувача з обмеженою роллю. Експорт dashboard-а в контрольовану конфігурацію дозволяє побачити зміни у code review й відновити однакове представлення після міграції середовища.
+
+## Спільне використання панелей у команді
+
+Dashboard часто стає спільним інтерфейсом для QA, розробки та чергової команди, отже назви й одиниці мають бути зрозумілими без усного пояснення автора. Порогові лінії повинні походити з SLO або експериментальної базової лінії, а не довільної цифри. Annotation розгортання допомагає зіставити зміну метрики з релізом, а змінні середовища й сервісу дають змогу повторно використовувати панель. QA перевіряє панель на невідомих і порожніх значеннях, відкриває її в обмеженій ролі та перевіряє, що зміна назви метрики не створила мовчазний нуль. Експортована панель проходить review як код конфігурації.',NULL,NULL,'Документація Grafana: панелі й джерела','https://grafana.com/docs/grafana/latest/datasources/','["tools","Надійність і продуктивність"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(223,'tools-prometheus-metryky-ta-chasovi-ryady-38','article','tools','Надійність і продуктивність','middle',NULL,37,4,'Prometheus: метрики та часові ряди','Prometheus збирає числові метрики як часові ряди, зберігає їх і підтримує запити, правила запису та сповіщення.','## Модель даних
+
+Часовий ряд Prometheus ідентифікується ім’ям метрики та набором міток, а кожне вимірювання пов’язане з часовою міткою. Така модель добре підходить для числових трендів і агрегованих показників сервісів. Prometheus часто використовує pull-підхід: сервер періодично опитує endpoint-и цілей або експортерів. Короткоживучі задачі можуть передавати показники через спеціальний Pushgateway, але він не є універсальною заміною прямого збирання.
+
+## Збір і запити
+
+Клієнтські бібліотеки надають метрики прикладному коду, а exporters відкривають показники для зовнішніх систем. PromQL дає змогу вибирати часові ряди, агрегувати значення й обчислювати швидкість зміни лічильника. Правила запису зберігають часто потрібні похідні значення, а правила сповіщень оцінюють умови у часі. Label допомагає розрізнити сервіс, маршрут чи статус, але унікальний ідентифікатор користувача як мітка створює високу кардинальність і надмірну кількість рядів.
+
+## Межі системи
+
+Prometheus спеціалізується на метриках, а не на повнотекстових журналах чи точному обліку кожної події для білінгу. Локальний сервер має власне сховище й принцип надійності: доступні показники бажано залишати придатними для діагностики навіть під час збою інших інфраструктурних компонентів. Довге зберігання та глобальне об’єднання даних можуть потребувати додаткових систем. Опитування з надто коротким інтервалом збільшує обсяг, але не обов’язково покращує корисність сигналу.
+
+## QA метрик та правил
+
+QA перевіряє, що метрика з’являється після події, лічильник монотонно змінюється, gauge відображає поточний стан, а labels відповідають очікуваній схемі. Для PromQL результат порівнюють із контрольними даними, включно з відсутньою серією та перезапуском процесу. Alert тестують на появі, затримці, повторному сповіщенні й відновленні. Офіційний огляд Prometheus попереджає, що така система не призначена для абсолютної точності кожного запису; QA має обрати джерело, яке відповідає фактичним вимогам обліку.
+
+## Збір часових рядів і кардинальність
+
+Prometheus періодично опитує налаштовані endpoint-и й зберігає часові ряди, визначені іменем метрики та набором label-ів. Label-и дають змогу розрізняти сервіс, метод чи код відповіді, але кожна нова комбінація створює окремий ряд. Використання user-id або довільного URL як label-а може спричинити вибух кардинальності та значне навантаження. Counter накопичує монотонне значення, gauge відображає поточний рівень, а histogram допомагає аналізувати розподіл. Вибір типу має відповідати семантиці вимірювання, інакше графік може бути математично коректним, але операційно оманливим.
+
+## PromQL і надійність сигналів
+
+PromQL дозволяє агрегувати ряди, обчислювати швидкості зміни лічильника та будувати умови сповіщень. Для counter зазвичай застосовують rate або increase на часовому вікні, щоб враховувати скидання процесу. Відсутність series може означати нуль подій або відсутність scrape, і ці стани не завжди тотожні. QA перевіряє endpoint експорту, типи метрик, labels, перезапуск exporter-а, часовий інтервал scrape та правила alerting. Потрібно зіставляти Prometheus-сигнал із фактичним тестовим навантаженням і незалежними логами. Відсутність метрики у графіку може бути наслідком неправильного target discovery, а не здоров''я системи.
+
+## Метрики сервісу та кардинальність
+
+Метрика має описувати вимірювану поведінку, а label — стабільну обмежену характеристику. Додавання trace-id або user-id до label-ів створює унікальний часовий ряд для кожної операції і швидко збільшує пам''ять та навантаження Prometheus. Для детальних подій краще застосовувати журнали чи трасування, тоді як метрики показують агреговану форму проблеми. Histograms можуть підтримувати обчислення квантилів через агрегування bucket-ів, тоді як локальний summary зазвичай має іншу семантику агрегування. QA перевіряє одиниці виміру, reset counter-а після рестарту, labels і результат агрегації на кількох репліках. Неправильна rate-функція може показати спад або сплеск, якого не було в реальному потоці.
+
+## Моніторинг scrape та втрачених часових рядів
+
+Prometheus pull-модель потребує доступного endpoint-а з коректним форматом exposition та відповідної мережевої конфігурації. Target може бути down, повільним або повертати некоректний набір метрик; ці стани відображаються окремо від нульового бізнесового значення. Scrape interval, retention, remote write і кількість рядів впливають на навантаження та повноту історії. QA перевіряє метрику up, час останнього успішного scrape, перезапуск Prometheus і поведінку правил на пропущеному інтервалі. Після зміни назви метрики чи label-а потрібно оновити запити та алерти без помилкового періоду, коли спостереження відсутнє. Доказ якості включає саму доступність telemetry pipeline.
+
+## Recording rules та керування витратами
+
+Складний PromQL-запит над великою кількістю рядів може бути дорогим при кожному відкритті dashboard-а. Recording rule обчислює важливий агрегат заздалегідь і зберігає результат як нову часову серію, але самі правила потребують тестування та версіонування. Зміна labels може змінити групування й історичну сумісність виразів. QA перевіряє математичний результат на відомих рядах, обробку counter reset та відсутніх series, а також період оцінювання. Alert rule має бути перевірений разом із recording rule, щоб не виникало сліпого проміжку при розгортанні конфігурації. Вартість вимірювання також є частиною надійності monitoring stack-а.
+
+## Семантика гістограм і перцентилів
+
+Histogram з bucket-ами зберігає розподіл спостережень, який можна агрегувати між екземплярами. Обчислений percentile є оцінкою на основі меж bucket-ів і не тотожний точному percentile з усіх сирих запитів. Недостатній вибір bucket-ів може приховати потрібну межу, а неправильна одиниця значення зіпсує інтерпретацію. QA створює відомий набір затримок, перевіряє результат PromQL та зіставляє його з незалежним обчисленням. Тестує різні репліки й часові вікна, щоб виявити помилку агрегації. SLO на p95 має чітко визначити популяцію запитів і виключення, інакше технічно правильний графік вимірюватиме не ту користувацьку групу.',NULL,NULL,'Prometheus: огляд','https://prometheus.io/docs/introduction/overview/','["tools","Надійність і продуктивність"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(224,'tools-rozpodilene-trasuvannya-ta-opentelemetry-39','article','tools','Надійність і продуктивність','middle',NULL,38,4,'Розподілене трасування та OpenTelemetry','Розподілена траса пов’язує окремі операції сервісів у причинний шлях одного запиту, а OpenTelemetry стандартизує інструментування й передавання телеметрії.','## Чому журнали не завжди достатні
+
+У мікросервісному продукті один запит може пройти через gateway, кілька сервісів, чергу й базу. Окремий журнал фіксує подію локально, але без спільного контексту важко зрозуміти, які записи належать одній операції та в якому порядку виникли. Trace групує span-и, кожен з яких представляє одиницю роботи з часовим інтервалом, атрибутами, результатом і причинним зв’язком. Така структура показує, де саме витрачено час і який виклик породив наступний.
+
+## Поширення контексту
+
+Trace ID та ідентифікатор батьківського span передаються між процесами через стандартизовані заголовки або транспортний контекст. Сервіс витягує зовнішній контекст, створює дочірній span і передає його наступній залежності. OpenTelemetry надає API, SDK і протокольні механізми для збирання трас, метрик і журналів, залишаючи вибір бекенду експорту окремим рішенням. Якщо проміжний proxy або черга не передає контекст, траса розривається; для асинхронних подій може знадобитися пов’язаний, але не строго батьківський span.
+
+## Інструментування та приватність
+
+Автоматичне інструментування зменшує ручну роботу для підтримуваних бібліотек, однак важливі бізнес-етапи часто потребують власних span-ів і семантичних атрибутів. Надмірна деталізація збільшує обсяг даних і витрати зберігання. Заголовки, параметри запитів і винятки можуть містити персональні дані чи секрети; перед експортом потрібні фільтрація й політика збереження. Семплювання зменшує навантаження, проте може відкинути рідкісний помилковий шлях, якщо політика не враховує помилки чи затримки.
+
+## Перевірка та діагностика
+
+QA надсилає контрольний запит і перевіряє, що його trace ID проходить через клієнт, сервіс, брокер і downstream-виклики, а span-и мають коректні батьківські зв’язки й час. Внесіть навмисну затримку або помилку в один компонент і підтвердьте, що траса дозволяє локалізувати її. Також перевіряють кореляцію журналів із trace ID та відсутність чутливих полів. Документація OpenTelemetry показує, як W3C Trace Context допомагає передавати контекст між процесами; це стандарт взаємодії, а не гарантія, що кожна бібліотека автоматично інструментована.
+
+## Trace, span і передавання контексту
+
+Trace складається зі span-ів, які описують операції та їхні дочірні виклики в межах одного причинного ланцюга. Для кореляції контекст trace має передаватися через мережеві межі, а для повідомлення — зберігатися в заголовках чи атрибутах і відновлюватися споживачем. Без належної інструментації trace може завершитися на gateway і не пояснити затримку backend. OpenTelemetry визначає API та протоколи збору телеметрії, але backend зберігання й інтерфейс аналізу можуть бути іншими продуктами. Sampling зменшує обсяг даних, однак має ризик не зберегти рідкісний дефект.
+
+## Діагностична цінність і приватність
+
+Span-и мають відображати межі корисних операцій, містити статус, часові атрибути й контрольований набір метаданих. Надлишок дуже дрібних span-ів збільшує вартість без пропорційної користі; запис чутливих параметрів створює ризик розкриття даних. QA запускає контрольований запит крізь кілька сервісів і перевіряє trace-id, батьківські зв''язки, часову послідовність та атрибуцію помилки. Для асинхронного повідомлення перевіряють збереження контексту між producer і consumer. Відсутній span може означати не відсутність виклику, а брак інструментації, відсів sampling або помилку експорту.
+
+## Sampling і зв''язування асинхронної роботи
+
+Tracing backend може зберігати не всі trace-и, якщо застосовано sampling. Head-based sampling ухвалює рішення на початку запиту, а tail-based — після отримання достатньої інформації про завершення; вибір впливає на вартість і шанс зберегти рідкісну помилку. Асинхронний процес може тривати довше за HTTP-запит, тому його trace-контекст потрібно переносити через повідомлення, а не покладатися на активне мережеве з''єднання. Для довгих процесів іноді доцільніше пов''язувати окремі trace-и через span links. QA перевіряє наявність кореляції після черги й те, що записані атрибути не містять секретів. Відсутність trace слід співвідносити з sampling та експортними помилками.
+
+## Кореляція трас із метриками та журналами
+
+Trace стає корисним для діагностики, коли його атрибути узгоджені з версією сервісу, середовищем, endpoint-ом та кореляційними полями журналів. Висококардинальні атрибути мають бути обережно використані в агрегованих метриках, але можуть бути корисними в trace-і за умов контрольованої політики зберігання. Часові мітки span-ів допомагають локалізувати затримку, однак черга може відокремити producer і consumer у часі. QA перевіряє, що span для обробки повідомлення зберігає посилання на контекст producer-а, і що помилковий span містить зрозумілий статус. Окремо тестують exporter outage: відмова телеметрії не повинна зупиняти бізнес-запит або створювати каскад логування.
+
+## Інструментація й семплювання в реальному середовищі
+
+Автоматична інструментація може створити span-и для HTTP-клієнтів, бази даних чи runtime, тоді як ручна додає доменний контекст операції. Автоматичні атрибути іноді містять URL-параметри або SQL, тому політика фільтрації важлива. Context propagation через W3C Trace Context допомагає передати traceparent між сумісними компонентами, але зовнішній партнер може видалити чи переписати заголовок. Sampling може бути різним за сервісами і створити фрагментовану трасу. QA проходить контрольний запит через усі межі й перевіряє коректне продовження контексту, а також відмову експортера. Інструментація повинна мати низький вплив на latency та не блокувати основний потік при втраті collector-а.
+
+## Розподілений контекст і довіра до telemetry
+
+Trace context, отриманий із зовнішнього заголовка, може бути відсутнім, некоректним або спеціально сформованим зловмисником. Інструментація має обмежувати розмір і формат атрибутів та не дозволяти довільні значення створювати надмірну кардинальність у backend-і. У деяких межах зовнішній trace слід почати заново або пов''язати через link, зберігши контроль довіри. QA надсилає некоректний traceparent, перевіряє fallback генерації нового контексту та переконується, що довільний baggage не витікає у внутрішні сервіси. Трасування є телеметрією, а не механізмом авторизації. Воно не повинно впливати на рішення про доступ чи зберігати секретні параметри запиту.',NULL,NULL,'OpenTelemetry: контекстне поширення','https://opentelemetry.io/docs/concepts/context-propagation/','["tools","Надійність і продуктивність"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(225,'tools-apache-jmeter-modelyuvannya-navantazhennya-40','article','tools','Надійність і продуктивність','middle',NULL,39,4,'Apache JMeter: моделювання навантаження','JMeter виконує тестові плани, які генерують запити й вимірюють реакцію системи за заданої конкурентності та послідовності дій.','## Тестовий план як модель поведінки
+
+JMeter описує навантаження через Test Plan, Thread Group, контролери, samplers, конфігураційні елементи, таймери, твердження й listeners. HTTP Sampler задає запит; менеджер cookie чи заголовків моделює стан клієнта; контролери визначають порядок і повторення кроків. Thread Group запускає незалежні потоки віртуальних користувачів. Така модель корисна лише настільки, наскільки вона відтворює реальний профіль запитів, пауз, авторизації та розподілу даних.
+
+## Ramp-up, throughput і затримка
+
+Ramp-up визначає, як поступово починаються потоки; миттєвий запуск великої кількості віртуальних користувачів може створити ненатуральний сплеск. Таймери задають паузи, щоб тест не перетворився на надмірне послідовне надсилання без часу мислення. Response time вимірює час відповіді окремої операції, throughput — обсяг роботи за одиницю часу. Середнє значення приховує хвіст розподілу, тому важливо аналізувати перцентилі й помилки у співвідношенні з інтенсивністю навантаження.
+
+## Генератор і достовірність
+
+Якщо JMeter-процес сам вичерпує CPU, мережу чи пам’ять, тест вимірює межу генератора, а не сервера. GUI listeners, збереження повних відповідей і надмірна кількість assertion можуть спотворити результат. Тест має прогрівати систему, тривати достатньо довго для стабільного режиму й фіксувати версію сценарію та тестового середовища. Розподілений запуск додає мережеві й конфігураційні чинники між генераторами.
+
+## QA-підхід до навантажувального плану
+
+QA спершу перевіряє один сценарій функціонально, валідуючи запити й бізнес-результат; потім масштабує профіль і перевіряє, що система виконує коректні операції. Переконайтеся, що тестові дані не блокують одне одного через унікальні ключі й що сценарій не має прихованого кешу або незмінної відповіді. Порівняйте метрики клієнтського генератора із серверними графіками. Офіційний посібник JMeter визначає Thread Group і таймери як частину моделі часу; неправильно заданий профіль не дає надійної оцінки місткості.
+
+## Сценарій навантаження як модель користувачів
+
+JMeter будує тестовий план із потоків, sampler-ів запитів, контролерів, таймерів і перевірок відповіді. Кількість потоків сама по собі не означає реальну кількість одночасних користувачів: таймери, час відповіді та модель запуску визначають фактичний темп. Ramp-up поступово додає навантаження, а різкий старт моделює інший сценарій. Дані сесії, авторизація й кореляційні значення мають бути реалістичними, інакше тест може виміряти кешування або повтор однієї помилки замість продуктивності продукту.
+
+## Валідність результату та генератор навантаження
+
+Listeners, що накопичують кожен результат у пам''яті, можуть перевантажити сам JMeter і спотворити вимірювання. Розподілений тест потребує узгоджених конфігурацій генераторів і збору результатів, а мережа від тестового клієнта до цілі може стати обмеженням. QA перевіряє assertions для семантичної коректності, а не лише код 200, та аналізує percentiles, throughput, помилки й навантаження генератора. Результат має містити версію сценарію, тестових даних, конфігурацію середовища й період прогріву. Повторюваність важливіша за один привабливий графік.
+
+## Критерії успіху навантажувального експерименту
+
+Тестовий план повинен задавати не лише кількість потоків, а й частку сценаріїв, час між діями, розподіл параметрів і фазу прогрівання. Сценарій одного запиту з фіксованими даними може штучно прогрівати кеш і не показувати конкуренцію за блокування. Під час тесту потрібно мати пороги дострокового припинення, щоб не пошкодити спільне середовище або дані. Використання тільки середньої затримки приховує користувачів із повільною відповіддю; p95 чи p99 слід інтерпретувати разом із кількістю вибірок. QA проводить базовий тест генератора, зберігає сирі результати й повторює прогін після стабілізації середовища. Результат має бути відтворюваною експериментальною процедурою, а не одиничною цифрою.
+
+## Стабільність генератора та тестових даних
+
+Кількість клієнтських потоків у JMeter є лише одним параметром. Кожен потік може створювати нову сесію, повторно використовувати токен, читати CSV-дані чи звертатися до одних і тих самих ключів, і це змінює навантаження на систему. Замала кількість унікальних записів надмірно прогріває кеш, а спільний користувач створює конкуренцію за блокування, якої немає у плані. Генератор слід запускати на окремо контрольованій машині й стежити за його CPU, пам''яттю та мережею. QA перевіряє репрезентативність даних і порівнює фактичну кількість запитів із задумом тест-плану. Якщо генератор насичений, результати не можна приписувати серверному продукту.
+
+## Розподілене виконання JMeter
+
+Кілька генераторів можуть збільшити сумарне навантаження, але вимагають синхронізації тестового плану, даних, версій плагінів і часу. Координатор має збирати результати без втрати зразків, а генератори — отримувати незалежний набір користувачів, щоб уникнути колізії сесій. Мережеве розташування генератора впливає на RTT і може створити bottleneck поза цільовим середовищем. QA перевіряє, що розподілений тест дає очікуваний сумарний темп, а не множить його непередбачувано; фіксує локальний час і синхронізацію вузлів. Після тесту об''єднані дані аналізують за percentiles і помилками, але також звіряють із метриками сервера, щоб підтвердити відповідність цільовому профілю.
+
+## Відтворюваність та інтерпретація звітів
+
+JMeter звіт має бути відтворюваним через збереження test plan, версії Java, плагінів, параметрів JVM, тестових даних і конфігурації мережі. Aggregate report може звести дані до показників, але сирий набір дає змогу повторно перевірити percentiles і класи помилок. Якщо сервер повертає 200 із помилкою в JSON, тест без assertion зарахує її як успіх. QA задає перевірку змісту відповіді та записує окремі причини відмови. Порівняльний графік має позначати версію продукту й фазу навантаження. Ці практики зменшують ризик ухвалити рішення про оптимізацію на основі некоректно налаштованого сценарію.',NULL,NULL,'Apache JMeter: елементи плану тестування','https://jmeter.apache.org/usermanual/test_plan.html','["tools","Надійність і продуктивність"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(226,'tools-performance-testing-vydy-ta-interpretatsiya-41','article','tools','Надійність і продуктивність','middle',NULL,40,4,'Performance Testing: види та інтерпретація','Тестування продуктивності вимірює затримку, пропускну здатність, ресурси й стабільність під контрольованим навантаженням.','## Від запитання до експерименту
+
+Performance Testing має відповісти на конкретне питання: чи витримає система прогнозований пік, де межа місткості або як зміниться затримка після релізу. Load Testing перевіряє очікуване робоче навантаження, Stress Testing виходить за межу для пошуку режиму деградації, Spike Testing досліджує різкий стрибок, Soak Testing — тривалу роботу, а Capacity Testing оцінює місткість за цільовими критеріями. Назви не замінюють плану: треба вказати користувацькі потоки, інтенсивність, тривалість і критерії успіху.
+
+## Метрики та вузькі місця
+
+Response time варто розглядати розподілом і перцентилями, а не лише середнім. Throughput і рівень помилок пояснюють, чи збільшення затримки спричинене перевантаженням або ж тест фактично перестав виконувати запити. CPU, пам’ять, дисковий ввід-вивід, мережа, пул з’єднань і черги допомагають визначити ресурсне обмеження. Вузьке місце може переміщатися: після оптимізації SQL домінантною стає мережа або зовнішній сервіс. Якщо масштабування підвищує throughput, але не змінює перцентилі, потрібне окреме пояснення.
+
+## Відтворюваність і середовище
+
+Результат залежить від версії коду, конфігурації, обсягу даних, теплового стану кешу, генератора й сторонніх процесів. Тому порівняння до та після зміни має фіксувати ці умови або явно визнавати відмінність. Тестове середовище не обов’язково має дорівнювати production, але невідомі різниці в ресурсах і мережі обмежують переносність результату. Синтетичне навантаження, що постійно читає одну гарячу сутність, може не відображати розподіл реальних ключів.
+
+## QA-висновки
+
+QA не лише запускає інструмент, а перевіряє валідність сценарію, точність метрик і причинний висновок. Потрібно підтвердити бізнес-коректність відповідей під навантаженням, а не рахувати швидкі помилкові відповіді як високу пропускну здатність. Для діагностики зіставляють клієнтські перцентилі, серверні метрики, журнали й траси. У звіті відокремлюють спостереження від гіпотез: наприклад, зростання p95 разом із вичерпанням пулу БД є сильнішою підставою для локалізації, ніж один графік CPU.
+
+## Види перевірки продуктивності
+
+Load testing оцінює систему за очікуваного профілю навантаження, stress testing шукає межу та поведінку за її перевищення, spike testing перевіряє різке зростання, soak testing — тривалу роботу, а capacity testing допомагає оцінити доступну місткість. Ці назви описують цілі експерименту, а не універсально стандартизовані конфігурації. Сценарій має відтворювати розподіл операцій, даних, сесій і пауз, інакше синтетичне навантаження не представляє роботу користувачів. Потрібно визначити критерій успіху до запуску: допустиму затримку, частку помилок, цільову пропускну здатність та поведінку деградації.
+
+## Інтерпретація й локалізація вузького місця
+
+Середній час відповіді приховує хвости розподілу; тому аналізують percentiles разом із throughput, частотою помилок, CPU, пам''яттю, пулом з''єднань, чергами та залежностями. Зростання навантаження може насичувати не вебсервер, а базу або зовнішню послугу. Контрольний запуск без цільового компонента іноді допомагає оцінити межу генератора, однак не замінює вимірювання реального шляху. QA порівнює базову лінію та змінений білд за однакових умов і перевіряє коректність даних після тесту. Якщо зростає затримка без зростання пропускної здатності, потрібно шукати насичення чи блокування, а не лише збільшувати ресурси.
+
+## Коректний експеримент і зовнішні чинники
+
+Вимірювання продуктивності має контролювати версію застосунку, ресурси інфраструктури, стан кешів, обсяг даних, фонові задачі й залежності. Порівняння двох збірок на різних базах або у різних часових вікнах не дає надійного висновку про регресію. Важливі повторюваність і достатня тривалість вимірювання: короткий прогін може не виявити витік пам''яті, а одиничний піковий відлік може бути шумом. QA записує передумови експерименту та перевіряє, що генероване навантаження справді доходить до цільового сервісу й породжує правильний профіль операцій. Після завершення звіряють цілісність даних і вплив на інші тестові команди, щоб тест сам не створив помилку в спільному середовищі.
+
+## Поріг приймання і зв''язок із досвідом користувача
+
+Результат performance test інтерпретується відносно погодженого профілю та очікуваної якості. Система може витримати потрібний throughput, але мати неприйнятний p99; або зберігати швидку відповідь, водночас відхиляючи частину запитів. Для черг важливо враховувати час очікування до обробки, а для браузерного сценарію — час повного завершення видимої дії. Поріг має врахувати базову лінію й допустиме відхилення, а не лише порівняння з попереднім запуском. QA зв''язує технічний показник із користувацьким наслідком і перевіряє, що навантажувальний тест не вимірює тільки швидкість HTTP-відповіді при відкладеній асинхронній роботі.
+
+## Capacity planning і тестування межі
+
+Capacity testing оцінює, який обсяг роботи система може обслуговувати за заданої якості та ресурсної конфігурації. Результат залежить від профілю сценаріїв, розподілу даних, вартості запиту та зовнішніх квот. Проста лінійна екстраполяція з малої вибірки ненадійна, бо системи мають пороги насичення, блокування та нелінійне збільшення черг. QA поступово нарощує навантаження, спостерігає за latency, throughput і помилками, а також перевіряє поведінку після перевищення цільової межі. Система має або деградувати контрольовано, або відмовляти передбачувано, а не накопичувати невизначену роботу. Результат описує місткість саме цієї версії та середовища; він не є постійною властивістю назви продукту.
+
+## Ресурсний профіль і пошук вузького місця
+
+Bottleneck може змінюватися зі зростанням навантаження: спершу CPU, потім пул підключень, черга, дискове сховище чи зовнішній API. Тому одне вимірювання не визначає постійне обмеження системи. Метрики насичення, помилок і затримок потрібно аналізувати разом із трасами та профілем операцій. QA варіює одну умову за раз, щоб локалізувати компонент, і повторює експеримент після зміни. Збільшення ресурсів може зняти тимчасове обмеження, але й відкласти структурну проблему, наприклад неефективний запит. Підсумок тесту має вказати доказову гіпотезу про вузьке місце й умови, за яких вона підтверджена.',NULL,NULL,'Apache JMeter: елементи плану тестування','https://jmeter.apache.org/usermanual/test_plan.html','["tools","Надійність і продуктивність"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(227,'tools-shablony-stiykosti-ta-kerovanoi-dehradatsii-42','article','tools','Надійність і продуктивність','middle',NULL,41,4,'Шаблони стійкості та керованої деградації','Шаблони стійкості обмежують поширення збоїв і визначають, як система поводиться, коли залежності повільні або недоступні.','## Чому одного повтору недостатньо
+
+Мережеві помилки й тимчасове перевантаження можуть бути короткими, тому повтор іноді відновлює операцію. Проте необмежені чи миттєві повтори множать навантаження на вже несправну залежність і створюють шторм. Тайм-аут обмежує очікування, exponential backoff поступово збільшує паузи, а jitter розсіює синхронні повтори клієнтів. Повтор має застосовуватися лише до операції, яку безпечно виконувати ще раз, або після введення ключа ідемпотентності.
+
+## Circuit breaker, bulkhead і fallback
+
+Circuit breaker відстежує помилки залежності та тимчасово припиняє виклики після визначеного порога, переходячи з відкритого стану до контрольного пробного режиму. Bulkhead обмежує ресурси окремих груп операцій, щоб повільний сервіс не вичерпав усі потоки чи з’єднання. Rate limiting відкидає надлишкове навантаження до виснаження ресурсу. Fallback може повернути спрощений результат, але лише якщо його семантика зрозуміла користувачу; кешоване старе значення не повинно непомітно подаватися як актуальне.
+
+## Каскадні відмови
+
+Якщо сервіс A чекає B, а B одночасно чекає C, повільність C накопичує запити й зайняті ресурси у всьому ланцюзі. Коли тайм-аут клієнта коротший за суму нижчих тайм-аутів, віддалена робота може тривати після того, як клієнт уже відмовився. Каскадну ситуацію посилюють повтори на кожному рівні. Наскрізний дедлайн, бюджет повторів і обмежені черги роблять час очікування явною частиною контракту.
+
+## QA-перевірки стійкості
+
+QA вводить контрольовані затримки, 5xx, відмову мережі й насичення пулу, після чого перевіряє кількість спроб, період circuit breaker, fallback та відновлення після повернення залежності. Переконайтеся, що ретраї не дублюють списання чи створення ресурсу. Також тестуйте часткову деградацію: функції, що не залежать від несправної системи, мають залишатися доступними, якщо архітектура це передбачає. Метрики retry count, open circuit, відхилених запитів і тривалості черг допомагають оцінити, чи шаблон захищає систему, а не маскує дефект.
+
+## Композиція тайм-аутів і повторів
+
+Retry допомагає пережити тимчасову помилку, але безмежні чи синхронізовані повтори посилюють перевантаження. Експоненційна затримка з випадковим джиттером зменшує одночасне повторення багатьох клієнтів, а загальний deadline не дозволяє сумі тайм-аутів перевищити очікування користувача. Circuit breaker тимчасово припиняє виклики залежності після порогу помилок і згодом перевіряє її відновлення. Bulkhead обмежує вплив виснаження ресурсу в одному напрямку. Ці механізми взаємодіють: повтор за відкритого circuit breaker-а не корисний, а fallback може повертати функціонально неповну відповідь.
+
+## Керована деградація та тестування
+
+Graceful degradation визначає, які можливості можна тимчасово обмежити, зберігши критичний результат. Наприклад, каталог може залишатися доступним без персоналізованої рекомендації, але операція платежу не повинна підтверджуватися без авторитетної фіксації. QA ін''єктує затримку, помилку, відмову з''єднання та відновлення залежності, перевіряючи стан breaker-а, кількість повторів, fallback і відсутність подвійного побічного ефекту. Метрики мають розрізняти первинну помилку залежності й відхилення, породжене захисним механізмом. Перевіряється також відновлення: система не повинна залишатися у деградованому режимі після повернення залежності.
+
+## Стабільність ланцюга залежностей
+
+Коли сервіс A викликає B, а B — C, кожен додатковий мережевий крок додає затримку й нову межу відмови. Тайм-аути повинні вкладатися у дедлайн зовнішнього запиту: внутрішній виклик має завершитися раніше, щоб залишився час на контрольовану відповідь. Retry на кожному шарі може помножити число викликів, тому політику повтору узгоджують між клієнтом, gateway і сервісом. Circuit breaker ізольовано тестують у станах closed, open і half-open та перевіряють перехід за порогом і часом. Bulkhead потребує обмеження пулу й спостереження за чергою очікування. QA моделює одночасну деградацію кількох залежностей, щоб виявити каскадну відмову, а не лише одиничний timeout.
+
+## Експлуатаційна перевірка механізмів стійкості
+
+Resilience pattern має бути видимим у системі: кількість спроб, тривалість circuit breaker, відсоток fallback та відкинуті запити повинні вимірюватися. Без телеметрії захисний механізм може приховати деградацію, а команда помітить її лише через скаргу користувача. Параметри варто налаштовувати від профілю залежності та загального deadline, а не копіювати між сервісами. QA перевіряє одночасно правильність стану та сигнали: при відмові залежності користувач бачить погоджену деградацію, а оператор розуміє причину і момент відновлення. Також потрібен тест на помилкове спрацювання breaker-а під час короткого піку й на можливість поступового повернення навантаження.
+
+## Патерни стійкості та бізнес-інваріанти
+
+Fallback може повертати останнє відоме значення, спрощений результат або явну помилку, однак вибір має бути безпечним для домену. Показати застарілий курс валют як актуальний може бути гірше, ніж не завершити обчислення; показати неперсоналізований каталог часто прийнятно. Rate limiting захищає ресурс, але може відхилити легітимну операцію, якщо ключ чи quota обрані неправильно. Graceful degradation повинна зберігати бізнес-інваріант, наприклад не підтверджувати транзакцію без запису. QA формує матрицю критичних і необов''язкових залежностей та перевіряє для кожної очікуваний результат і повідомлення користувачу. Стійкість перевіряється щодо продуктового контракту, а не кількості реалізованих шаблонів.
+
+## Вибір порога, стану та часу відновлення
+
+Circuit breaker зазвичай переходить до open після визначеного обсягу помилок чи частки невдач, а через паузу дозволяє probe-запит у half-open стані. Замалий поріг спричиняє коливання, завеликий дозволяє довго накопичувати невдалі виклики. Timeout повинен обмежити очікування, але достатньо враховувати нормальну мінливість залежності. QA програє короткі сплески й тривалі відмови, щоб відрізнити очікуваний перехід від помилкового відкриття breaker-а. Перевіряє, що часткова відмова не блокує незалежні функції, а після відновлення система поступово повертає трафік. Метрики станів і кількість відхилених викликів пояснюють поведінку оператору.',NULL,NULL,'AWS: надійність і повторні спроби','https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/','["tools","Надійність і продуктивність"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(228,'tools-apache-airflow-orkestratsiya-robochykh-protsesiv-43','article','tools','Інтеграція та узгодженість даних','middle',NULL,42,4,'Apache Airflow: оркестрація робочих процесів','Apache Airflow моделює пакетні робочі процеси як орієнтовані ациклічні графи та керує їхнім плануванням і станом виконання.','## Оркестрація та її призначення
+
+ETL-процес може чекати надходження файлів, перевіряти схему, перетворювати дані, завантажувати їх у сховище й запускати перевірки якості. Якщо кожен крок запускається окремим cron-завданням, залежності, повтори та причина пропуску стають складними для спостереження. Оркестратор представляє роботу як граф залежностей і координує її виконання. Airflow призначений насамперед для планування й моніторингу робочих потоків; він не є потоковим рушієм для низьколатентної обробки кожної події.
+
+## DAG, задачі та планувальник
+
+DAG описує задачі й напрямок залежностей без циклів. Scheduler визначає, які екземпляри задач готові до запуску за розкладом і станом попередників; executor визначає спосіб передачі роботи виконавцям. Task instance є конкретним виконанням задачі для певного запуску та інтервалу даних. Повтор після помилки може бути доречним для тимчасової недоступності джерела, але безпечним він є лише тоді, коли дія ідемпотентна або має контроль за прогресом. XCom та інші механізми передавання невеликого контексту не призначені для безмежного переміщення великих наборів між задачами.
+
+## Інтервали, повтори й відновлення
+
+Планований час запуску й фактичний час виконання можуть відрізнятися; для пакетних даних важливо розуміти логічний data interval, за який формується результат. Backfill повторно запускає історичні інтервали, що може створити дублікати, якщо цільові записи не мають ключа перезапису чи ідемпотентності. Тайм-аут обмежує тривалість задачі, а retry policy визначає повторне призначення після помилки. Невірно налаштований sensor може займати ресурси або пропускати вікно даних.
+
+## Перевірка QA
+
+QA перевіряє граф залежностей, умови пропуску, повторний запуск, паралельні інтервали, backfill і відновлення після втрати worker. Для кожної задачі порівнюють вхідний набір, вихідний результат і стан у системі-одержувачі. Логи мають дозволяти відрізнити невдалий код від невиконаної залежності чи затриманого розкладу. Документація Airflow описує DAG як спосіб визначити порядок, retries і timeouts, не нав’язуючи логіку всередині самої задачі; це розділення важливо перевіряти під час тестування.
+
+## Граф робочого процесу й виконання
+
+DAG в Airflow описує спрямовану ациклічну залежність задач, їхній графік та правила виконання. Scheduler створює запуски відповідно до інтервалу, executor визначає спосіб передавання роботи виконавцям, а task instance фіксує конкретне виконання задачі для певного запуску. DAG-файл має бути придатним до регулярного розбору scheduler-ом, тому важкі побічні операції під час імпорту створюють операційні проблеми. Повтор задачі має бути безпечним до побічних ефектів: Airflow може запускати її знову після помилки або backfill минулих інтервалів.
+
+## Часові межі й відновлення
+
+Повторний запуск не є автоматичним відкатом частково виконаного SQL чи зовнішнього виклику. Тому кожен крок має визначити, чи можна його повторити, як уникнути дублювання результату та де зберігається контрольна точка. Backfill виконує історичні інтервали і може створити значне навантаження на сховища. QA перевіряє залежності, пропуск і повтор запуску, пропущений інтервал, конкуренцію DAG-ів, тайм-аут і повторну обробку. Потрібно також оцінити, чи відображає UI реальний стан worker-а, а журнали дають змогу зіставити помилкову задачу з її вхідними даними та версією коду.
+
+## Планування, повторне виконання та версія DAG
+
+Розклад Airflow визначає логічні інтервали даних, які не завжди збігаються з моментом фактичного запуску. Backfill може запустити багато минулих інтервалів, а catchup політика визначає, чи створювати пропущені запуски. Зміна DAG під час активного процесу може впливати на нові запуски інакше, ніж на вже створений run; тому треба відстежувати версію коду та конфігурації. Task retry може повторити зовнішній запис, отже задача має бути ідемпотентною або мати контрольовану перевірку вже виконаної роботи. QA тестує часові зони й перехід літнього часу, ручний запуск, пропуск інтервалу, backfill і частковий успіх. Наявність зеленого DAG run не гарантує правильності вмісту вихідного набору.
+
+## Зовнішні системи та межі Airflow
+
+Airflow планує та відстежує задачі, але зазвичай не призначений для передачі кожного малорозмірного онлайн-запиту чи обробки подій із низькою затримкою. Тривалість планування, черга executor-а і пул worker-ів впливають на момент старту task-а. Зовнішні системи — сховище, API, обчислювальний кластер — виконують саму роботу і мають окремі гарантії. Оператор може вичерпати ліміт API чи створити дубльований файл, якщо retry не ідемпотентний. QA розрізняє помилку scheduler-а, запуску task-а та його бізнес-результату, використовує відповідні логи й ідентифікатори run/task. Такий поділ допомагає не лікувати проблему даних перезапуском оркестратора.
+
+## Спостереження за виконанням DAG
+
+UI Airflow показує стани задач і спроб, але для пояснення проблеми потрібні також логи worker-а, scheduler-а, executor-а та зовнішньої системи. Зависла задача може очікувати слот пулу, блокування БД або неотриманий секрет, а не бути активним обчисленням. Метрики черги scheduler-а й тривалість запуску відокремлюють затримку планування від тривалості самої задачі. QA перевіряє, що retry видимий як окрема спроба, помилка містить контекст без секретів, а ручне очищення стану не призводить до втрати аудиту. Контрольований DAG із навмисно невдалою задачею дозволяє пройти процедуру від виявлення до безпечного повторного запуску.
+
+## Data lineage і перевірка набору результатів
+
+У data workflow кінцевий звіт залежить від джерела, перетворень, часових параметрів і версії коду кожної задачі. DAG показує залежність виконання, але не завжди описує походження окремого поля чи якість вхідних рядків. Lineage й контрольні підсумки допомагають встановити, яке джерело сформувало результат. QA звіряє кількість записів, дедуплікацію, null policy та ключові агрегати між етапами. Запуск успішної задачі може створити порожній або неповний набір, якщо upstream повернув неочікувано малий результат. Якість даних має бути окремим критерієм завершення workflow та сигналом для зупинки downstream-кроків.',NULL,NULL,'Apache Airflow: поняття DAG і задач','https://airflow.apache.org/docs/apache-airflow/stable/concepts/dags.html','["tools","Інтеграція та узгодженість даних"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(229,'tools-kontraktne-testuvannya-api-44','article','tools','Інтеграція та узгодженість даних','middle',NULL,43,4,'Контрактне тестування API','Контрактне тестування перевіряє сумісність очікувань споживача з поведінкою постачальника на межі інтеграції.','## Проблема повільних інтеграційних циклів
+
+Повний інтеграційний тест може вимагати розгортання багатьох сервісів, тестових облікових записів і стабільної мережі. Він потрібний для перевірки системної взаємодії, але повільно локалізує, який саме контракт порушився. Контрактне тестування фіксує конкретні очікування споживача щодо запиту й відповіді та перевіряє, що постачальник їх виконує. Це дозволяє частіше перевіряти сумісність компонентів без запуску всього продукту.
+
+## Consumer-driven contracts
+
+Споживач описує операції й поля, на які реально покладається, а контракт зберігається у спільному сховищі або артефакті. Постачальник запускає перевірку проти реалізації й підтверджує сумісність. Такий контракт має бути конкретним і мінімальним: якщо споживач залежить від поля, яке він не використовує, тест створює зайве зчеплення. Якщо контракт описує лише типи, але не коди помилок, права доступу чи семантику порожньої відповіді, він не покриває повний інтерфейс.
+
+## Сумісність версій та межі
+
+У незалежному розгортанні старий споживач може працювати з новим постачальником, а новий споживач — зі старим постачальником під час rollout. Тому зворотна й пряма сумісність мають перевірятися відповідно до реального порядку оновлення. Контрактні тести не підтверджують TLS, DNS, балансування, тайм-аут мережі чи транзакційні властивості бази; ці ризики потребують інтеграційних і системних перевірок. OpenAPI може описувати форму API, а інструменти на кшталт Pact зберігають фактичні взаємодії споживача.
+
+## QA-процес
+
+QA перевіряє, що контракт випливає з реальних споживацьких сценаріїв, помилка сумісності блокує небезпечне розгортання, а зміна схеми має зрозуміле повідомлення. Негативні контракти охоплюють відмови, обов’язкові поля, невідомі значення й поведінку забороненої операції. У pipeline потрібно запускати контрактні перевірки для сумісних версій, а не лише для однієї пари компонентів. Результат не замінює наскрізний сценарій, але скорочує час виявлення порушень на межі.
+
+## Споживач як джерело контрактних очікувань
+
+Consumer-driven contract testing фіксує взаємодію, яка потрібна конкретному споживачу, і перевіряє її сумісність із постачальником. Контракт охоплює форму запиту та відповіді, але також може виражати потрібні статуси й поведінку помилок. Він не замінює тестування всіх можливих значень або повну системну перевірку; його ціль — виявляти несумісні зміни на межі. Schema validation перевіряє відповідність формату, тоді як бізнес-правило може вимагати додаткових інваріантів, невиражених у схемі. Відсутність контракту для операції не означає, що вона не має споживачів.
+
+## Еволюція й межі контрактної перевірки
+
+Постачальник може пройти контрактні тести локально, але production-розбіжність лишається можливою через конфігурацію gateway, права, мережу чи відмінні дані. Тому контрактна перевірка доповнює інтеграційні та end-to-end сценарії, а не замінює їх. QA перевіряє необов''язкові поля, невідомі enum-значення, зміни типів і форматів дат, поведінку старого клієнта з новим сервером та навпаки. Сумісна міграція часто означає спочатку розширити формат, перевести споживачів, а згодом вилучити стару форму. Реєстр результатів контракту має бути прив''язаний до конкретної версії артефакту.
+
+## Контрактна сумісність у циклі розгортання
+
+У системі з незалежними командами producer і consumer можуть розгортатися в різний час. Сумісна зміна спершу додає нову можливість, дозволяє споживачам перейти на неї, а видаляє стару лише після підтвердження фактичного використання. Тестовий контракт слід пов''язувати з версіями артефактів і середовищем, інакше старий успішний результат може бути помилково застосований до іншого білда. Consumer-driven перевірка не описує всі вимоги безпеки чи продуктивності; їх задають окремими політиками. QA перевіряє матрицю сумісності старого й нового клієнта проти нової та попередньої версій постачальника і контролює повідомлення про несумісність до production-випуску.
+
+## Контракт не є повною гарантією продукту
+
+Успішна контрактна перевірка підтверджує обмежену множину очікувань між конкретним споживачем і постачальником. Вона може не охоплювати навантаження, авторизацію, порядок операцій, транзакційність або фактичну конфігурацію мережі. Контракти часто тестують проти provider verification середовища, але різниця даних і фіче-флагів може зберегти інтеграційний дефект. Тому критичний API зазвичай поєднує schema validation, контрактні сценарії, інтеграційні тести й обмежені наскрізні перевірки. QA має визначити, яку саме невизначеність закриває кожен шар тестування, щоб не дублювати однакові сценарії й не створювати хибне відчуття повного покриття.
+
+## Негативні контрактні сценарії та семантика помилок
+
+Контрактні тести часто концентруються на успішному запиті, хоча несумісність частіше проявляється на помилкових даних, недостатніх правах і конфліктах стану. Consumer може залежати від того, що помилка має певний статус і стабільний код, або помилково вважати порожню відповідь валідним результатом. Provider verification має перевірити, що сервіс справді повертає погоджену поведінку на тестовому наборі. QA додає перевірки для відсутнього обов''язкового поля, невідомого enum, timeout та повтору. Негативний контракт не повинен фіксувати випадковий текст stack trace чи внутрішній порядок перевірок. Це зберігає можливість змінювати реалізацію, водночас захищаючи семантичні очікування споживача.
+
+## Керування тестовими контрактами
+
+Контракти мають бути незалежно версійованими й актуальними для споживачів, інакше вони перетворюються на копію реалізації постачальника та не виявляють зміни. Consumer задає лише поля й поведінку, на які фактично покладається; надмірні очікування фіксують внутрішній формат без потреби. Коли споживач більше не використовує поле, контракт слід оновити разом із кодом. QA перевіряє provenance тестового контракту та тестує provider verification у CI проти актуального артефакту. Застарілий контракт може блокувати безпечну еволюцію або створити хибне відчуття сумісності. Відповідальний власник і процес перегляду роблять його живим технічним договором.',NULL,NULL,'Pact: контрактне тестування','https://docs.pact.io/','["tools","Інтеграція та узгодженість даних"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(230,'tools-rozpodileni-tranzaktsii-ta-saga-45','article','tools','Інтеграція та узгодженість даних','middle',NULL,44,4,'Розподілені транзакції та Saga','Розподілена транзакція координує бізнес-зміну між кількома незалежними сховищами, де немає спільної локальної транзакційної межі.','## Локальна транзакція та розподілена операція
+
+Транзакція однієї бази може атомарно змінити кілька таблиць у межах її механізму. Коли процес проходить через кілька сервісів із власними базами, локальна атомарність не охоплює всю бізнес-операцію. Наприклад, створення замовлення може резервувати товар, авторизувати платіж і планувати доставку. Збій між кроками залишає систему в частковому стані. Спільний двофазний commit може надати координовану атомарність за певних умов, але вимагає підтримки учасників і створює доступність та операційну складність.
+
+## Saga та компенсація
+
+Saga розбиває довгий процес на локальні транзакції, кожна з яких фіксується у своєму сервісі. Якщо наступний крок не вдається, виконуються компенсувальні дії, які наближають систему до прийнятного стану. Компенсація не є фізичним rollback: відправлений лист не можна «не відправити», а платіжне повернення може бути окремою фінансовою операцією. Saga може координуватися центральним оркестратором або хореографією подій. Обидва підходи потребують однозначного стану процесу, дедлайнів і обробки повторних повідомлень.
+
+## Сценарії відмови
+
+Після успішного резервування товару платіж може відхилитися; тоді система має зняти резерв. Якщо компенсація також тимчасово недоступна, процес повинен залишитися в спостережуваному стані та повторитися за визначеною політикою. Повтор транзакції чи компенсації може надходити після тайм-ауту, коли перша спроба фактично завершилася. Ідентифікатор операції та idempotency key дозволяють розрізняти повтор і новий намір користувача.
+
+## QA-перевірки
+
+QA моделює збій до й після кожного кроку, дубльоване повідомлення, затриману відповідь, невдалу компенсацію та перезапуск оркестратора. Перевіряють, що кінцевий стан відповідає бізнес-інваріанту, проміжний стан має зрозумілий статус, а журнал дозволяє відновити послідовність. Успішний HTTP-код одного сервісу не доводить завершення saga. Сценарій повинен визначити, коли користувач бачить pending, коли система повторює дію та коли потрібне ручне втручання.
+
+## Межі атомарності між сховищами
+
+Локальна ACID-транзакція однієї БД не робить атомарними зміни в іншій базі чи брокері. Two-Phase Commit використовує координатора, який готує учасників до фіксації, а потім приймає спільне рішення; це потребує підтримки ресурсів і може блокувати роботу під час втрати координатора. Saga розбиває процес на локальні транзакції, між якими виконуються події, і визначає компенсувальні дії для бізнес-відновлення. Компенсація не завжди є точним математичним відкатом: повернення коштів — нова операція з власною історією, а не стирання первинного списання.
+
+## Стан Saga та сценарії відмов
+
+Оркестровану Saga координує окремий процес, тоді як хореографічна передає ініціативу наступному учаснику через події. Перша спрощує огляд переходів, але створює центр координації; друга зменшує централізацію, але причинний ланцюг розподіляється між сервісами. QA тестує збій після кожного кроку, затриману чи повторну подію, невдалу компенсацію та ручне відновлення. Бізнес-стан повинен показувати проміжний результат, а не маскувати його як остаточний успіх. Ідентифікатор процесу й журнал переходів потрібні для відтворення та підтримки операційної команди.
+
+## Відновлення процесу й аудит переходів
+
+Розподілена бізнес-транзакція повинна мати явний стан, наприклад очікування підтвердження, завершення чи компенсацію, замість припущення про миттєве глобальне commit. Координатор Saga може впасти між виконанням кроку й збереженням переходу; відновлення потребує журналу або надійного сховища стану. Компенсаційна дія також може завершитися невдало й потребувати повтору, ручного втручання або окремого статусу. QA вводить збій після кожного кроку та перевіряє, що система не позначає процес завершеним завчасно. Звіт про Saga повинен зв''язувати початкову команду з усіма локальними транзакціями й компенсаціями. Це робить тестування операційного відновлення частиною перевірки функціональної коректності.
+
+## Консистентність бізнес-процесу протягом часу
+
+Saga може залишатися активною довше за одне HTTP-з''єднання, тому користувацький досвід потребує відображення проміжного стану. Відмова партнера, очікування доставки чи ручне підтвердження є нормальними переходами, якщо вони передбачені моделлю процесу. Система повинна визначити строк очікування, повтори, компенсацію й точку, де процес переходить до ручного розгляду. QA тестує не лише окремий крок, а й переходи між станами, часові дедлайни й коректність повідомлення користувачу. Порівняння журналу процесу з локальними транзакціями допомагає виявити, чи процес завис, чи вже завершився без оновлення інтерфейсу. Це особливо важливо при зовнішніх інтеграціях з непередбачуваною тривалістю відповіді.
+
+## Порівняння 2PC і Saga за характером процесу
+
+Two-Phase Commit намагається забезпечити спільне рішення учасників щодо commit і потребує координатора та підтримки транзакційного протоколу ресурсами. Він може бути доцільним у контрольованій інфраструктурі, але доступність та блокування стають частиною компромісу. Saga приймає локальне завершення кроків і відновлює бізнес-процес компенсаціями, що підходить для довгих операцій, але робить проміжний стан видимим. Вибір залежить від того, чи потрібна атомарна видимість, чи прийнятна компенсація, як довго триває процес і чи можуть усі учасники підтримати координований commit. QA перевіряє заявлену модель на реальній технологічній зв''язці, бо назва патерну не гарантує однакової поведінки різних брокерів і баз.
+
+## Тестування компенсацій як нових операцій
+
+Компенсація може бути невдалою незалежно від первинної транзакції, наприклад повернення коштів може бути тимчасово відхилене платіжним партнером. Її потрібно повторити, відстежити та, за потреби, передати на ручну обробку. Компенсаційний запис не повинен видаляти аудиторський слід оригінальної дії. QA тестує невдалу компенсацію, повтор її доставки та кінцеве узгодження локального і зовнішнього стану. Перевіряє, що UI не приховує незавершений процес і підтримка бачить причину. Критерій завершення Saga має включати як успішний основний шлях, так і стабільний контрольований стан відновлення.',NULL,NULL,'Microservices.io: Saga pattern','https://microservices.io/patterns/data/saga.html','["tools","Інтеграція та узгодженість даних"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(231,'tools-modeli-uzhodzhenosti-ta-eventual-consistency-46','article','tools','Інтеграція та узгодженість даних','middle',NULL,45,4,'Моделі узгодженості та eventual consistency','Модель узгодженості визначає, які значення можуть бачити клієнти при паралельному записі, реплікації та затриманій синхронізації вузлів.','## Узгодженість як гарантія читання
+
+У розподіленому сховищі копії даних можуть оновлюватися не одночасно. Strong consistency часто означає, що операція читання спостерігає результат усіх раніше завершених записів у визначеній моделі, наприклад лініаризованій. Eventual consistency гарантує зближення копій за умови припинення нових змін і відновлення зв’язку, але дозволяє тимчасово повертати застаріле значення. Терміни мають кілька формальних трактувань, тому продуктова документація має визначати гарантію для конкретної операції.
+
+## Read-after-write та причинність
+
+Після зміни профілю користувач може очікувати негайно побачити нове значення. Read-after-write гарантія задовольняє цей сценарій для відповідного клієнта або сесії, навіть якщо глобальна реплікація триває. Causal consistency зберігає причинний порядок пов’язаних операцій, але не вимагає єдиного глобального порядку всіх незалежних подій. Локальний кеш, асинхронна проєкція й репліка читання можуть кожен додати власне відставання.
+
+## Бізнес-компроміси
+
+Для лічильника переглядів тимчасове відставання може бути прийнятним, тоді як перевірка доступного балансу перед оплатою потребує сильнішої гарантії або контролю конфлікту. Архітектура може поєднувати моделі: сильне узгодження для запису джерела істини та eventual consistency для пошукового індексу. Це не усуває потребу в UX, який пояснює проміжний стан, і механізмі виправлення розбіжності. CAP описує поведінку під час мережевого розділення, тоді як consistency model визначає спостереження клієнта у ширшому наборі сценаріїв.
+
+## Перевірка QA
+
+QA вимірює відставання між записом і читанням на різних вузлах, перевіряє конкурентні зміни й відновлення після мережевого розділення. Тести мають визначити допустиме вікно застарілості та поведінку при конфлікті, а не вимагати миттєвої глобальної синхронізації без підстав. Для платіжної операції перевіряють, що дві конкурентні транзакції не перевищують інваріант; для пошуку — що новий документ з’являється в межах домовленого інтервалу. Логи й версії записів допомагають відрізнити нормальне відставання від втрати даних.
+
+## Моделі читання після запису
+
+Strong consistency часто означає, що читання після успішного запису бачить найновіше значення згідно з визначеною моделлю, але точне поняття залежить від протоколу та межі системи. Eventual consistency допускає тимчасову розбіжність реплік за умови, що зміни припиняються і реплікація зрештою зблизить стан. Read-after-write, монотонне читання й причинна консистентність описують різні гарантії для послідовності спостережень. Реплікація може зробити читання швидшим і доступнішим, однак продукт має визначити, як поводитися з підтвердженням операції та застарілим представленням.
+
+## Перевірка допустимих станів
+
+Тест eventual consistency не повинен вимагати миттєвої синхронізації, якщо контракт її не обіцяє. Натомість перевіряють межу часу збіжності, послідовність повторного читання, конфліктні записи та поведінку при тривалій недоступності репліки. Для платежу прийнятна затримка у пошуковій проєкції може бути нормальною, але баланс, показаний як доступний, має відповідати бізнес-правилам. QA фіксує джерело читання, часову мітку та версію запису, порівнює авторитетне сховище з проєкціями й відрізняє очікуване відставання від втрати даних. Критерій збіжності повинен бути вимірюваним.
+
+## Конфлікти реплік і межі гарантій
+
+Eventual consistency не визначає сама по собі, як система вирішує конфлікт двох одночасних змін. Реалізація може застосувати last-write-wins, версійний контроль, злиття доменних значень або відхилити конфлікт. Годинники вузлів не завжди достатньо синхронізовані, тому вибір за wall-clock timestamp може бути оманливим. Кворумні протоколи також мають умови, що визначають читання й запис, і їхні гарантії залежать від конфігурації. QA формує одночасні зміни з різних регіонів, перериває реплікацію та перевіряє кінцевий стан після відновлення. Вимога має описувати допустимий результат і граничний час збіжності; без цього тест або надто суворий, або не виявляє втрати оновлення.
+
+## Компроміс між свіжістю, доступністю і затримкою
+
+Клієнтська вимога «показувати останні дані» має бути уточнена: чи допустиме коротке відставання, чи потрібна read-your-writes гарантія, чи система має відмовити під час розділення мережі. Для однієї сутності може бути важлива сильна узгодженість запису, а для рекомендацій — eventual consistency. Архітектура може застосовувати різні моделі на різних шляхах. QA створює сценарій запису в одну репліку й читання з іншої, перевіряючи обіцяне продуктом спостереження. Якщо застарілість допустима, вимірюють її тривалість і відображення у UI; якщо ні — перевіряють відмову або направлення читання до авторитетного вузла. Модель слід описувати для конкретної операції, а не називати всю систему просто «сильно консистентною».
+
+## Тестові вікна та детермінізм перевірки
+
+Перевірка консистентності може стати flaky, якщо тест використовує довільне очікування на кшталт кількох секунд і не має умови завершення. Краще визначити bounded polling до погодженої межі, зберігати версію запису та завершувати перевірку з діагностикою фактичного джерела. На тестовому середовищі потрібно контролювати навантаження й реплікацію, інакше час збіжності буде випадково зумовлений іншими тестами. QA перевіряє також monotonic read: послідовні читання не повинні повертати дедалі старішу версію, якщо система обіцяє таку гарантію. Тест має розрізняти очікуване eventual convergence і вічне відставання, а поріг повинен випливати з SLO чи продуктового контракту.
+
+## Документування допустимого відставання
+
+Для eventual consistency команда повинна визначити, яке відставання очікується та як система повідомляє користувачу про незавершене оновлення. Значення може різнитися за типом читання й навантаженням, тому корисно встановлювати поріг percentile, а не лише середнє. У разі перевищення межі потрібен alert і діагностика replication lag. QA вимірює час збіжності на контрольованому потоці та перевіряє UI-стан під час очікування. Якщо користувач виконує друге оновлення до збіжності першого, система має визначену поведінку, щоб не затирати новіші дані. Формальний опис перетворює абстрактну модель консистентності на приймальну вимогу.',NULL,NULL,'Gilbert і Lynch: формалізація теореми CAP','https://groups.csail.mit.edu/tds/papers/Gilbert/Brewer2.pdf','["tools","Інтеграція та узгодженість даних"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(232,'tools-idempotentnist-povtory-ta-semantyka-obrobky-47','article','tools','Інтеграція та узгодженість даних','middle',NULL,46,4,'Ідемпотентність, повтори та семантика обробки','Ідемпотентна операція зберігає той самий кінцевий ефект при повторному виконанні, що є критичним для мережевих повторів і доставки повідомлень.','## Повтор після невизначеного результату
+
+Клієнт може втратити з’єднання після надсилання запиту й не знати, чи сервер застосував зміну. Повторний POST може створити друге замовлення, хоча перше вже було зафіксоване. Ідемпотентність означає, що кілька однакових операцій приводять систему до того самого кінцевого ефекту, що й одна операція. Це не обов’язково означає однакову відповідь кожного разу або відсутність журналювання повторів.
+
+## Ключ ідемпотентності
+
+Клієнт передає унікальний ключ наміру, сервер атомарно зіставляє його з операцією та зберігає результат. Повтор з тим самим ключем повертає попередній результат або контрольовано повідомляє стан; використання ключа з іншим тілом має бути відхилене. Реалізація потребує строку зберігання ключів, захисту від конкурентного першого запиту й узгодження ключа з транзакцією бізнес-даних. Просте збереження ключа після побічного ефекту залишає вікно між виконанням і записом дедуплікації.
+
+## At-least-once та exactly-once
+
+At-most-once доставка може втратити роботу, але не повторити її; at-least-once повторює доставку до підтвердження, допускаючи дублікати. Exactly-once processing часто означає гарантію в конкретній межі платформи, наприклад транзакційне читання й запис у тому самому брокері, а не універсальне «рівно один раз» для будь-якої БД, API та побічного ефекту. Бізнес-система зазвичай досягає практичного одноразового ефекту ідемпотентністю, журналом операцій і транзакційною координацією.
+
+## QA-перевірки
+
+QA надсилає одночасні запити з однаковим ключем, повторює після втрати відповіді, змінює тіло при збереженні ключа й тестує повтор після завершення строку зберігання. Перевіряється фактична кількість створених ресурсів і побічних повідомлень, а не лише код відповіді. Для споживача Kafka чи RabbitMQ сценарій має падати між збереженням результату й підтвердженням доставки. RFC 9110 визначає ідемпотентні властивості окремих HTTP-методів, але прикладний POST може стати повторюваним лише через спеціальну серверну логіку.
+
+## Повторна доставка та ідемпотентна дія
+
+Ідемпотентна операція дає той самий бажаний ефект при повторному виконанні з тим самим ключем, хоча відповідь може містити нові метадані. HTTP-метод PUT має визначену ідемпотентну семантику на рівні ресурсу, але конкретна реалізація може порушити її побічним лічильником чи повторним відправленням листа. Idempotency key дозволяє серверу зіставити повтор із попередньою спробою, однак строк зберігання, межа користувача та обробка одночасних однакових ключів мають бути визначені. Ідентичний ключ із різним тілом потребує передбачуваної відмови.
+
+## Семантика доставки без магії exactly-once
+
+At-most-once допускає втрату, at-least-once допускає повтор, а exactly-once зазвичай має конкретну межу — наприклад, атомарну обробку позиції та результату в межах підтримуваної платформи. Це не гарантує одноразовий зовнішній платіж чи лист без координації з їхнім одержувачем. QA навмисно створює тайм-аут після фіксації ефекту, повторює запит, запускає паралельні однакові повідомлення й перевіряє, що кінцевий стан один. Також перевіряють завершення строку дії ключа й помилкове повторне використання його для іншої операції.
+
+## Термін життя ключа й атомарне резервування
+
+Idempotency key має оброблятися атомарно: дві паралельні копії того самого запиту не повинні обидві пройти перевірку відсутності запису, а потім створити подвійний ефект. Серверу потрібно зберігати результат або посилання на нього протягом узгодженого строку. Надто короткий строк дозволяє пізній повтор після тайм-ауту створити дубль; надто довгий може блокувати законну повторну дію. Межа ключа має враховувати користувача, тип операції та відмінність payload. QA перевіряє конкурентні запити, перезапуск сервісу, втрату кешу ключів, однаковий ключ з іншими даними та повтор після expiry. Якщо журнал ключів зберігається окремо від транзакції, треба тестувати розрив між реєстрацією ключа й бізнес-записом.
+
+## Ідемпотентність у багатокомпонентному ланцюзі
+
+Захист від дублювання має працювати через усі межі операції. API може прийняти idempotency key, але producer події, consumer і зовнішній платіжний провайдер мають власні ідентифікатори та повторну семантику. Якщо ключ загубився під час перетворення повідомлення, наступний компонент може виконати дію повторно. Дедуплікація також має визначений строк зберігання й простір імен. QA простежує один ключ від клієнтського запиту до кінцевої транзакції та створює повтор у кожній межі. Перевіряють, що один і той самий результат повертається, а конфліктний payload відхиляється. Формулювання exactly-once без зазначення цього наскрізного шляху приховує реальну семантику.
+
+## Платіжні та фінансові операції як приклад
+
+У платіжному сценарії клієнт може не отримати відповідь після того, як постачальник уже списав кошти. Ідемпотентний ключ дозволяє повторити запит і отримати попередній результат, але його потрібно передавати незмінно через gateway та зберігати до завершення можливого повтору. Система повинна корелювати ключ із користувачем, сумою та типом операції, щоб не прийняти інший запит під тим самим значенням. QA моделює тайм-аут на кожному мережевому переході, повтор з тим самим і зміненим payload, а також відновлення після падіння локального процесу. Перевіряється кількість списань у провайдера та локальний статус, а не тільки відповідь endpoint-а.
+
+## Аудит ключів та обробка помилкових повторів
+
+Система повинна зберігати достатньо інформації, щоб розрізнити повтор тієї самої команди від випадкового повторного використання ключа. Це може бути хеш payload-а, власник, endpoint і результат, але дані мають зберігатися без зайвого чутливого вмісту. Повтор із тим самим ключем та іншим payload-ом зазвичай має отримати конфлікт, а не успіх. QA перевіряє паралельне змагання за ключ, строк retention, очищення записів і поведінку після відкату транзакції. Логи мають дозволяти знайти повтор без публікації токенів чи повного payload. Спостережуваність дедуплікації допомагає відрізнити нормальний мережевий retry від помилки клієнта.',NULL,NULL,'RFC 9110: безпечні та ідемпотентні методи','https://www.rfc-editor.org/rfc/rfc9110.html#name-idempotent-methods','["tools","Інтеграція та узгодженість даних"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(233,'tools-skhemy-serializatsiya-ta-schema-registry-48','article','tools','Інтеграція та узгодженість даних','middle',NULL,47,4,'Схеми, серіалізація та Schema Registry','Схема визначає структуру повідомлення, серіалізація перетворює дані на передаваний формат, а реєстр контролює версії та сумісність.','## Контракт структурованих даних
+
+JSON і XML є текстовими форматами зручними для огляду та взаємодії між багатьма платформами, але можуть мати значний обсяг і слабшу типізацію без окремої схеми. Protocol Buffers та Avro кодують структури за формальним описом і часто створюють компактніше бінарне представлення. Серіалізація перетворює об’єкт у байти, а десеріалізація відновлює структуру за узгодженими правилами. Невідповідність порядку, типу чи обов’язковості поля може зробити повідомлення непридатним для споживача.
+
+## Реєстр і еволюція
+
+Schema Registry зберігає версії схем і перевіряє нову версію за заданою політикою сумісності. Backward compatibility зазвичай означає, що новий споживач може читати старі дані; forward compatibility — що старий споживач витримує нові дані за визначеними правилами формату. Full поєднує обидва напрями, а transitive перевіряє не лише безпосередньо попередню версію. Точна семантика залежить від формату: Protobuf, Avro й JSON Schema мають різні правила для полів, значень за замовчуванням та ідентифікаторів.
+
+## Зміна продюсера й споживача
+
+У потоковій системі продюсер і споживачі розгортаються незалежно. Додавання поля з безпечним значенням за замовчуванням може бути сумісним, а перейменування або повторне використання видаленого номера Protobuf — небезпечним. Зміна одиниці виміру чи семантики поля може пройти схематичну перевірку й усе одно порушити бізнес-значення. Для міграції часто застосовують період подвійного читання чи запису, після чого стару форму прибирають лише коли всі споживачі оновлені.
+
+## Перевірка QA
+
+QA перевіряє сумісність щонайменше між активними версіями, поведінку невідомих полів, відсутні й null-значення, некоректні байти та реальне читання старих подій новим кодом. Слід перевірити, що pipeline блокує несумісне опублікування схеми, а повідомлення має правильний schema ID. Confluent документація підкреслює, що сумісність залежить від формату й політики та може бути транзитивною; це слід враховувати для довготривалого replay, а не лише поточної пари версій.
+
+## Формат, схема й сумісність
+
+JSON зручний для читання та широко підтримується, але його текстова форма часто має більший обсяг і типи даних визначаються домовленістю. Protocol Buffers і Avro кодують структуровані дані за схемою; це може зменшити розмір і зробити контракт явним, але створює вимоги до генерації коду та еволюції. Schema Registry зберігає версії схем і може застосовувати правила сумісності перед публікацією. Backward, forward і full compatibility визначають, чи може новий читач обробити старі записи та навпаки; точне правило залежить від формату й політики реєстру.
+
+## Перевірка змін і даних у черзі
+
+Додане поле за замовчуванням може бути сумісним для одного формату й конфігурації, але видалення чи зміна типу часто створює проблему для старих споживачів. У черзі можуть залишатися повідомлення попередніх версій значно довше за життєвий цикл одного випуску. QA перевіряє серіалізацію й десеріалізацію між версіями, невідомі поля, відсутні значення, enum-розширення та коректну помилку для несумісної схеми. Потрібно випробувати фактичні історичні приклади повідомлень, а не лише згенеровану модель поточної версії. Некоректна подія не повинна непомітно губитися.
+
+## Розгортання схем і сумісність кількох версій
+
+У черзі одночасно можуть існувати повідомлення, створені різними версіями producer-а, тому схема має витримувати співіснування старого і нового формату. Додане nullable поле зазвичай легше обробити, ніж поле, яке старий consumer вважає обов''язковим; перейменування часто проводять через паралельне поле та перехідний період. Schema Registry може заборонити несумісну реєстрацію, але не змінює вже збережені повідомлення. QA розгортає producer і consumer у змішаній матриці версій та програє історичні записи. Необхідно перевірити default values, enum невідомого значення, відсутнє поле та повідомлення з помилковою версією, а також спостерігати за dead-letter потоком.
+
+## Підписані схеми й контроль змін
+
+Схема є контрактом між producer-ом і consumer-ом, а не лише описом для генерації класів. Registry може застосовувати правила сумісності, namespace й перевірку формату, але контроль доступу до реєстрації також важливий. Несанкціонована зміна схеми може заблокувати публікацію або змінити трактування історичних повідомлень. Підпис чи ідентифікатор версії у повідомленні допомагає зрозуміти, яким декодером читати дані. QA перевіряє контрольований випуск схеми, рольову політику, використання правильної версії serializer-а й реакцію consumer-а на відсутню схему. Архів зразків payload-ів дає змогу перевірити реальну сумісність, а не тільки формальний diff полів.
+
+## Серіалізація та еволюція через межі довіри
+
+Серіалізація перетворює доменний об''єкт у зовнішнє представлення, тому потрібно визначити кодування, часову зону, точність чисел, правила null і backward compatibility. Десяткове значення грошей, закодоване як двійкове float, може втратити точність; timestamp без визначеної зони може змінити календарний день. Protobuf/Avro з явними схемами зменшують невизначеність типів, але генератори повинні узгоджуватися між мовами й версіями. QA перевіряє round-trip, різні клієнтські мови, невідомі поля, розмір payload та пошкоджені байти. Для зовнішніх повідомлень також перевіряється автентичність джерела, бо коректна схема не доводить довіреність вмісту.
+
+## Пошкоджені payload-и та схема безпеки
+
+Декодер має обмежувати допустимий розмір і глибину повідомлення та коректно відхиляти пошкоджене кодування. Надто глибокий JSON чи надмірно великий повторюваний список може створити навантаження на пам''ять і CPU ще до бізнес-валідації. Схема не замінює sanitization для тексту, який буде вставлений у SQL, HTML або журнал. QA тестує malformed bytes, завищені довжини, некоректний enum і payload із додатковими невідомими полями. Перевіряє контрольовану відмову й те, що повідомлення потрапляє в ізольований потік для дослідження без витоку секретів. Формат серіалізації впливає на поверхню атаки та повинен входити до моделі загроз.',NULL,NULL,'Confluent Schema Registry: еволюція схем','https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html','["tools","Інтеграція та узгодженість даних"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(234,'tools-ci-cd-ta-avtomatyzovana-dostavka-zmin-49','article','tools','Інтеграція та узгодженість даних','middle',NULL,48,4,'CI/CD та автоматизована доставка змін','CI/CD автоматизує перевірки, створення артефактів і контрольоване просування змін від репозиторію до цільових середовищ.','## Інженерна проблема доставки
+
+Ручне складання й розгортання збільшують ризик пропустити крок, використати різну конфігурацію або втратити зв’язок між кодом і версією середовища. Continuous Integration автоматично перевіряє інтегровані зміни частими збірками й тестами. Continuous Delivery підтримує готовність перевіреного артефакту до випуску, а Continuous Deployment автоматично просуває зміни за визначених умов. Це не однакова обов’язкова схема: рівень автоматизації залежить від ризику, політики організації та системи.
+
+## Pipeline та артефакт
+
+Pipeline може виконувати аналіз коду, модульні й контрактні тести, збирати образ, створювати підписаний артефакт і просувати той самий digest між середовищами. Повторне складання для кожного середовища послаблює доказ того, що тестовано саме розгорнуту версію. Секрети мають надаватися лише потрібним крокам і не потрапляти до логів чи артефактів. Міграції схеми, інфраструктурні зміни й сумісність версій сервісів повинні бути частиною плану розгортання.
+
+## Стратегії випуску та відкат
+
+Rolling update поступово замінює екземпляри, blue-green переключає трафік між паралельними середовищами, а canary спершу направляє обмежену частину трафіку на нову версію. Кожна стратегія має різні вимоги до сумісності даних, спостережуваності й процедури повернення. Відкат коду не завжди може відкотити вже виконану міграцію або зовнішній побічний ефект. Тому поступове розширення впливу та автоматичний критерій зупинки часто безпечніші за припущення, що deployment завершився успішно.
+
+## Перевірка QA
+
+QA перевіряє умови запуску pipeline, версію залежностей, склад тестового набору, контроль артефакту, дозволи середовищ і фактичну поведінку після rollout. Для canary зіставляються помилки й затримка нової та попередньої версій. Потрібно тестувати сценарій перерваного розгортання, повторного запуску кроку, недоступної реєстрації образів і rollback після часткової зміни даних. Документація GitHub Actions показує, що deployment environment може вимагати схвалення й обмежувати доступ до секретів; інструмент CI є частиною межі безпеки.
+
+## Pipeline як відтворюваний процес доставки
+
+CI запускає перевірки змін у контрольованому середовищі; continuous delivery підтримує готовність артефакту до випуску, а continuous deployment автоматизує його розгортання за визначених умов. Pipeline зазвичай компілює код, запускає тести, створює незмінний артефакт і просуває саме його між середовищами. Повторна збірка для production може створити інший результат, навіть якщо вихідний код не змінився, через плаваючі залежності чи базовий образ. Секрети, дозволи та provenance артефакту належать до якості доставки, а не лише до налаштувань інструмента.
+
+## Стратегія rollout та зворотний шлях
+
+Blue-green перемикає трафік між двома середовищами, canary поступово відкриває нову версію частині трафіку, а rolling update замінює екземпляри поетапно. Усі стратегії потребують сумісності коду й даних протягом перехідного стану. Rollback застосунку не завжди відкочує схему БД без втрати даних, тому міграції мають бути сумісними й часто виконуються у кілька фаз. QA перевіряє gates pipeline, зв''язок тестового звіту з артефактом, припинення rollout за погіршення SLI та відновлення на попередню версію. Факт зеленого pipeline підтверджує виконані перевірки, але не повну відсутність дефектів.
+
+## Захист pipeline і доказ походження артефакту
+
+CI/CD має доступ до вихідного коду, реєстру образів і часто до середовищ розгортання, тому права pipeline є частиною моделі безпеки. Секрети потрібно обмежувати за середовищем і строком дії, а зміни workflow — рев''ювати як виконуваний код. Артефакт слід ідентифікувати digest-ом, підписом чи іншим перевірюваним походженням, щоб у середовище потрапив саме результат перевіреної збірки. QA тестує відхилення непідписаного образу, захист гілки, обробку секретів у логах і зупинку rollout за невдалого smoke check. Ручне схвалення може бути потрібне для окремих ризиків, але не замінює автоматичних перевірок відтворюваності й сумісності.
+
+## Автоматизація якості й контроль змін
+
+Pipeline повинен виконувати швидкі перевірки на ранніх етапах і дорожчі інтеграційні чи безпекові перевірки там, де їхній результат може вплинути на рішення про випуск. Нестабільний тест, який часто помилково блокує зміни, знижує довіру до всієї системи доставки; його слід вимірювати й усувати першопричину, а не безконтрольно повторювати. Результати тестів прив''язують до commit-а, артефакту та конфігурації середовища. QA оцінює також поведінку при частковій відмові runner-а, недоступності реєстру, скасуванні pipeline й повторному запуску. Стратегія rollout включає спостереження за SLI після розгортання і критерій автоматичної зупинки, що робить доставку замкненим циклом зворотного зв''язку.
+
+## Показники якості процесу доставки
+
+CI/CD можна оцінювати через частоту випусків, час від зміни до production, частку невдалих змін і час відновлення, але метрики потребують чіткого визначення й контексту продукту. Велика частота релізів без спостереження за дефектами не є самостійною ознакою якості. Pipeline має балансувати швидкий зворотний зв''язок і достатнє зниження ризику, уникаючи тестових бар''єрів, що не дають корисного сигналу. QA аналізує flaky rate, тривалість етапів і пропуски тестів; виняток тесту має бути видимим, обмеженим у часі та погодженим. Після випуску перевіряють метрики фактичного впливу і виконують rollback чи forward fix за заздалегідь зрозумілим планом.
+
+## Зв''язок автоматичного тесту з рішенням про реліз
+
+Кожен етап pipeline має пояснювати, який ризик він знижує і як його результат впливає на подальшу доставку. Unit test може швидко перевірити доменну логіку, integration test — сумісність із БД чи брокером, а smoke test після deploy — базову готовність середовища. Якщо тест пропускається, це має бути явним винятком із визначеною відповідальністю, а не прихованим зеленим статусом. QA перевіряє, що тестовий звіт відповідає саме артефакту, який буде розгорнуто, і що середовище pipeline не підміняє production-конфігурацію випадковими mocks. Після випуску потрібний спостережуваний критерій зупинки чи rollback.',NULL,NULL,'GitHub Actions: середовища розгортання','https://docs.github.com/en/actions/concepts/workflows-and-actions/deployment-environments','["tools","Інтеграція та узгодженість даних"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(235,'tools-kompleksna-arkhitektura-suchasnoi-rozpodilenoi-systemy-50','article','tools','Інтеграція та узгодженість даних','middle',NULL,49,4,'Комплексна архітектура сучасної розподіленої системи','Наскрізний приклад поєднує клієнта, шлюзи, сервіси, черги, сховища, кеш, оркестрацію контейнерів і засоби спостереження.','## Запит від клієнта до джерела даних
+
+Уявімо систему електронної торгівлі. Браузер надсилає HTTPS-запит до DNS-імені продукту, а мережевий балансувальник спрямовує його до reverse proxy чи API Gateway. Шлюз перевіряє автентифікаційний контекст, обмежує частоту й маршрутизує операцію до сервісу каталогу або замовлень. Backend працює в контейнерах, а Kubernetes підтримує потрібні репліки та перевіряє готовність. PostgreSQL зберігає транзакційні дані замовлень; Redis може кешувати часто читаний каталог із визначеною політикою TTL.
+
+## Події, пошук і фонові процеси
+
+Після фіксації замовлення сервіс публікує подію через брокер. RabbitMQ може розподіляти короткоживучі задачі між воркерами, тоді як Kafka може зберігати потік бізнес-подій для кількох незалежних споживачів і повторного читання. Споживачі оновлюють пошукову проєкцію Elasticsearch, запускають аналітику або надсилають повідомлення. Оскільки ці дії асинхронні, пошуковий результат може відставати від бази; користувацька поведінка має враховувати цей проміжний стан. Airflow може оркеструвати пакетні звіти, але не є заміною низьколатентному сервісному запиту.
+
+## Операційний цикл
+
+CI/CD pipeline збирає незмінний образ, перевіряє контракти та тестовий набір, а потім поступово розгортає його. Prometheus збирає часові ряди з сервісів, Grafana відображає SLI та ресурси, а OpenTelemetry пов’язує span-и одного запиту між gateway, сервісами й брокером. Журнали дають деталі помилки, метрики показують масштаб деградації, траса локалізує повільний компонент. Жоден з інструментів окремо не доводить коректність продукту; їхні сигнали мають бути прив’язані до єдиних ідентифікаторів і версій.
+
+## Сценарій часткової відмови й роль QA
+
+Якщо PostgreSQL повільно відповідає, API Gateway може повертати контрольовану помилку після дедлайну, а circuit breaker обмежує нові виклики. Redis не повинен непомітно повертати застарілу ціну для операції, що потребує актуального значення. Якщо Kafka-споживач відстає, команда перевіряє lag і стан партицій; повторна обробка не має створити подвійне замовлення. QA відтворює ці відмови в ізольованому середовищі, перевіряє інваріанти, трасу, відновлення та відсутність витоку секретів. Наскрізний тест оцінює не лише те, що всі компоненти «зелені», а те, що користувач отримує коректний і пояснюваний результат.
+
+## Шлях синхронного запиту та асинхронної події
+
+Клієнт розв''язує DNS-ім''я, встановлює захищене з''єднання з точкою входу, а Load Balancer і reverse proxy спрямовують трафік до API Gateway. Шлюз перевіряє зовнішній контракт і передає команду сервісу замовлень. Сервіс фіксує авторитетний стан у PostgreSQL і публікує подію через узгоджений механізм, наприклад transactional outbox, після чого споживачі оновлюють Redis-кеш, Kafka-проєкцію або пошуковий індекс Elasticsearch. RabbitMQ може окремо передавати короткі робочі задачі. Не кожна система потребує обох брокерів: їхнє співіснування виправдане лише різними вимогами доставки та повторного читання.
+
+## Контейнерна експлуатація й доказ коректності
+
+Docker-образи розгортаються у Kubernetes, який підтримує бажану кількість реплік, readiness та контрольований rollout. Prometheus збирає метрики, Grafana відображає SLI, OpenTelemetry пов''язує span-и, а журнали допомагають пояснити конкретну помилку. У сценарії повільної БД ланцюг може проявитися як зростання часу запиту, насичення пулу з''єднань, збільшення тайм-аутів gateway і накопичення consumer lag. QA поєднує навантажувальну перевірку з контрольованою відмовою залежності, звіряє авторитетний запис із похідними проєкціями та перевіряє ідемпотентність повтору. Головним критерієм є правильний і пояснюваний результат для користувача, а не лише працездатність кожної окремої інфраструктурної панелі.
+
+## Розбір відмови від клієнта до сховища
+
+Для комплексного сценарію важливо простежити не лише успішний шлях, а й альтернативні гілки. Якщо DNS повертає застарілу адресу, помилка виникне до gateway; якщо TLS не погодив алгоритм чи сертифікат, HTTP-запиту ще не буде. Відмова backend може проявитися як 502, а повільна залежність — як 504 або контрольована продуктова помилка після дедлайну. Якщо транзакція в PostgreSQL зафіксована, але публікація події затрималась, пошукова проєкція може відставати, тоді як замовлення вже існує. QA використовує trace-id та часову шкалу, перевіряє авторитетний запис, стан брокера й lag індексу. Діагноз має назвати точку відмови та наслідок для користувача.
+
+## Архітектурний розбір як метод QA
+
+Наскрізний аналіз системи починають із конкретного user journey й простежують його дані, виклики та відповідальних власників. Для кожної межі фіксують протокол, дедлайн, автентифікацію, джерело істини, спосіб повтору й сигнал спостереження. Потім будують сценарії нормальної роботи, затримки, втрати відповіді, відмови вузла та несумісної версії. У кожному випадку визначають очікуваний бізнес-стан і докази для його підтвердження. Наприклад, відповідь gateway 504 може співіснувати з уже зафіксованим замовленням; коректний UX має дати змогу перевірити статус, а не підштовхувати до сліпого повтору. Архітектурне мислення QA означає перевіряти причинний ланцюг і користувацьке зобов''язання, а не лише окремий endpoint.
+
+## Критерій повноти комплексного сценарію
+
+Повноцінний розбір розподіленої системи завершується перевіркою не лише доступності всіх вузлів, а й правильності узгодженого результату. Для одного користувацького сценарію QA визначає контрольну точку транзакції, допустимий строк оновлення кешу й індексу, семантику повідомлень та метрики, що свідчать про деградацію. Кожен змодельований збій має очікуване відновлення: автоматичне, повторною дією, компенсацією чи втручанням оператора. Тестовий звіт зберігає версії образів, конфігурацію кластера, запити та часову шкалу, достатню для відтворення. Такий системний підхід дозволяє обговорювати з розробниками причинний механізм, а не обмежуватися повідомленням, що «іноді довго працює».
+
+## Навчальна цінність системної моделі
+
+Комплексна архітектура корисна QA не як перелік модних компонентів, а як спосіб ставити причинні запитання. Яке джерело авторитетне для цього факту? Де виник тайм-аут? Чи можна повторити дію? Яка проєкція може відставати? Який сигнал підтвердить відновлення? Відповіді формуються з контрактів, моделей даних, маршрутизації та спостережуваності. Системна модель допомагає відокремити симптом від першопричини й описати дефект відповідальною команді мовою. Вона також дає змогу планувати ризик-орієнтовані перевірки до написання тест-кейсів. Саме це поєднання технологічного розуміння й доказового мислення є головним результатом енциклопедичного маршруту.',NULL,NULL,'Microsoft Azure Architecture Center: стилі архітектури','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/','["tools","Інтеграція та узгодженість даних"]',1,'2026-11-18 00:00:00','2026-11-18 00:00:00');
+
+INSERT INTO `KnowledgeSources` (`id`,`knowledgeItemId`,`title`,`url`,`type`,`description`,`createdAt`,`updatedAt`) VALUES
+(1,1,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(2,2,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(3,3,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(4,4,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(5,5,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(6,6,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(7,7,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(8,8,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(9,9,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(10,10,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(11,11,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(12,12,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(13,13,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(14,14,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(15,15,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(16,16,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(17,17,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(18,18,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(19,19,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(20,20,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(21,21,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(22,22,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(23,23,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(24,24,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(25,25,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(26,26,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(27,27,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(28,28,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(29,29,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(30,30,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(31,31,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(32,32,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(33,33,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(34,34,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(35,35,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(36,36,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(37,37,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(38,38,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(39,39,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(40,40,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(41,41,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(42,42,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(43,43,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(44,44,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(45,45,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(46,46,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(47,47,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(48,48,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(49,49,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(50,50,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(51,51,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(52,52,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(53,53,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(54,54,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(55,55,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(56,56,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(57,57,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(58,58,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(59,59,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(60,60,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(61,61,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(62,62,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(63,63,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(64,64,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(65,65,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(66,66,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(67,67,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(68,68,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(69,69,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(70,70,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(71,71,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(72,72,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(73,73,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(74,74,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(75,75,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(76,76,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(77,77,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(78,78,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(79,79,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(80,80,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(81,81,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(82,82,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(83,83,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(84,84,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(85,85,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(86,86,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(87,87,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(88,88,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(89,89,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(90,90,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(91,91,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(92,92,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(93,93,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(94,94,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(95,95,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(96,96,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(97,97,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(98,98,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(99,99,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(100,100,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(101,101,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(102,102,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(103,103,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(104,104,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(105,105,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(106,106,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(107,107,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(108,108,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(109,109,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(110,110,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(111,111,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(112,112,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(113,113,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(114,114,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(115,115,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(116,116,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(117,117,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(118,118,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(119,119,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(120,120,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(121,121,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(122,122,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(123,123,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(124,124,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(125,125,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(126,126,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(127,127,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(128,128,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(129,129,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(130,130,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(131,131,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(132,132,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(133,133,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(134,134,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(135,135,'QA_bible: interview and practical testing examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Topic inspiration and scenario coverage; answers are independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(136,136,'OpenAPI Specification','https://spec.openapis.org/oas/latest.html','standard','Machine-readable description of HTTP API operations and schemas.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(137,137,'Microsoft Learn: Architecture styles','https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/','official','Architecture styles, constraints, trade-offs and selection guidance.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(138,138,'Microsoft Learn: Architecture styles','https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/','official','Architecture styles, constraints, trade-offs and selection guidance.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(139,139,'ITU-T X.200: Open Systems Interconnection model','https://www.itu.int/rec/T-REC-X.200/en','standard','Reference model for the seven OSI layers.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(140,140,'RFC 1122: Requirements for Internet Hosts — Communication Layers','https://www.rfc-editor.org/rfc/rfc1122.html','standard','Host requirements across link, IP and transport layers.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(141,141,'RFC 8200: Internet Protocol, Version 6 (IPv6) Specification','https://www.rfc-editor.org/rfc/rfc8200.html','standard','Normative IPv6 protocol specification.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(142,142,'RFC 826: An Ethernet Address Resolution Protocol','https://www.rfc-editor.org/rfc/rfc826.html','standard','Address resolution on a directly connected network.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(143,143,'RFC 826: An Ethernet Address Resolution Protocol','https://www.rfc-editor.org/rfc/rfc826.html','standard','Address resolution on a directly connected network.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(144,144,'RFC 2131: Dynamic Host Configuration Protocol','https://www.rfc-editor.org/rfc/rfc2131.html','standard','DHCP message exchange and lease configuration.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(145,145,'QA_bible: practical interview examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Scenario inspiration; content is independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(146,146,'RFC 3022: Traditional IP Network Address Translator','https://www.rfc-editor.org/rfc/rfc3022.html','rfc','Informational description of traditional address and port translation behavior.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(147,147,'RFC 1812: Requirements for IP Version 4 Routers','https://www.rfc-editor.org/rfc/rfc1812.html','standard','IPv4 router forwarding and behavior requirements.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(148,148,'IEEE 802.1Q VLAN Bridging','https://www.ieee802.org/1/pages/802.1Q.html','standard','VLAN and bridged-network standards work.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(149,149,'RFC 1122: Requirements for Internet Hosts — Communication Layers','https://www.rfc-editor.org/rfc/rfc1122.html','standard','Host requirements across link, IP and transport layers.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(150,150,'QA_bible: practical interview examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Scenario inspiration; content is independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(151,151,'RFC 9110: HTTP Semantics','https://www.rfc-editor.org/rfc/rfc9110.html','standard','Normative reference for HTTP semantics, methods and status codes.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(152,152,'RFC 8446: The Transport Layer Security (TLS) Protocol Version 1.3','https://www.rfc-editor.org/rfc/rfc8446.html','standard','TLS 1.3 handshake and record protocol.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(153,153,'NIST SP 800-41 Rev. 1: Guidelines on Firewalls and Firewall Policy','https://csrc.nist.gov/pubs/sp/800/41/r1/final','guidance','NIST firewall concepts and policy guidance, published in 2009; verify deployment details against current platform controls.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(154,154,'Docker Docs: Compose','https://docs.docker.com/compose/','official','Official multi-container application configuration guide.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(155,155,'Microsoft Learn: Architecture styles','https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/','official','Architecture styles, constraints, trade-offs and selection guidance.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(156,156,'RFC 9110: HTTP Semantics','https://www.rfc-editor.org/rfc/rfc9110.html','standard','Normative reference for HTTP semantics, methods and status codes.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(157,157,'OpenAPI Specification','https://spec.openapis.org/oas/latest.html','standard','Machine-readable description of HTTP API operations and schemas.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(158,158,'RFC 9110: HTTP Semantics','https://www.rfc-editor.org/rfc/rfc9110.html','standard','Normative reference for HTTP semantics, methods and status codes.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(159,159,'RFC 9110: HTTP Semantics','https://www.rfc-editor.org/rfc/rfc9110.html','standard','Normative reference for HTTP semantics, methods and status codes.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(160,160,'RFC 9110: HTTP Semantics','https://www.rfc-editor.org/rfc/rfc9110.html','standard','Normative reference for HTTP semantics, methods and status codes.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(161,161,'OpenAPI Specification','https://spec.openapis.org/oas/latest.html','standard','Machine-readable description of HTTP API operations and schemas.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(162,162,'RFC 9110: HTTP Semantics','https://www.rfc-editor.org/rfc/rfc9110.html','standard','Normative reference for HTTP semantics, methods and status codes.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(163,163,'QA_bible: practical interview examples','https://github.com/VladislavEremeev/QA_bible/blob/master/prakticheskaya-chast/primery-zadach-na-sobesedovaniyakh-i-testovykh-zadanii.md','community','Scenario inspiration; content is independently authored.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(164,164,'RFC 9000: QUIC: A UDP-Based Multiplexed and Secure Transport','https://www.rfc-editor.org/rfc/rfc9000.html','standard','QUIC transport protocol specification.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(165,165,'RFC 9113: HTTP/2','https://www.rfc-editor.org/rfc/rfc9113.html','standard','HTTP/2 framing and multiplexed streams.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(166,165,'RFC 9114: HTTP/3','https://www.rfc-editor.org/rfc/rfc9114.html','standard','HTTP mapping over QUIC.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(167,166,'RFC 8201: Path MTU Discovery for IP version 6','https://www.rfc-editor.org/rfc/rfc8201.html','standard','IPv6 path MTU discovery and packet-too-big handling.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(168,166,'RFC 8899: Packetization Layer Path MTU Discovery','https://www.rfc-editor.org/rfc/rfc8899.html','standard','Transport-independent guidance for discovering path MTU.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(169,167,'Microsoft Learn: Architecture styles','https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/','official','Architecture styles and their trade-offs.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(170,168,'Microsoft Learn: Architecture styles','https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/','official','Architecture styles and their trade-offs.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(171,169,'Microsoft Learn: Architecture styles','https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/','official','Architecture styles and their trade-offs.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(172,170,'Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','official','Bounded contexts, service autonomy, data ownership and operational trade-offs.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(173,171,'Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','official','Bounded contexts, service autonomy, data ownership and operational trade-offs.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(174,172,'Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','official','Bounded contexts, service autonomy, data ownership and operational trade-offs.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(175,173,'Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','official','Bounded contexts, service autonomy, data ownership and operational trade-offs.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(176,174,'Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','official','Bounded contexts, service autonomy, data ownership and operational trade-offs.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(177,175,'Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','official','Bounded contexts, service autonomy, data ownership and operational trade-offs.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(178,176,'Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','official','Bounded contexts, service autonomy, data ownership and operational trade-offs.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(179,177,'Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','official','Bounded contexts, service autonomy, data ownership and operational trade-offs.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(180,178,'Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','official','Bounded contexts, service autonomy, data ownership and operational trade-offs.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(181,179,'Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','official','Bounded contexts, service autonomy, data ownership and operational trade-offs.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(182,180,'OpenAPI Specification','https://spec.openapis.org/oas/latest.html','standard','Machine-readable description of HTTP API operations and schemas.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(183,181,'Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','official','Bounded contexts, service autonomy, data ownership and operational trade-offs.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(184,182,'Microsoft Learn: Architecture styles','https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/','official','Architecture styles, constraints, trade-offs and selection guidance.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(185,183,'Microsoft Learn: Microservices architecture style','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','official','Bounded contexts, service autonomy, data ownership and operational trade-offs.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(186,184,'Microsoft Learn: Architecture styles','https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/','official','Architecture styles, constraints, trade-offs and selection guidance.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(187,185,'Microsoft Learn: Architecture styles','https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/','official','Architecture styles, constraints, trade-offs and selection guidance.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(188,186,'Microsoft Azure Architecture Center: стилі архітектури','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/','official','Порівнює архітектурні стилі, межі компонентів і відповідні компроміси.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(189,186,'Документація ядра Linux','https://docs.kernel.org/','official','Першоджерело про процеси, пам’ять, файлові системи та механізми ядра.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(190,187,'Документація ядра Linux','https://docs.kernel.org/','official','Першоджерело про процеси, пам’ять, файлові системи та механізми ядра.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(191,187,'Специфікація віртуальної машини Java','https://docs.oracle.com/javase/specs/jvms/se26/html/index.html','standard','Специфікує байткод, завантаження класів, потоки виконання та області пам’яті JVM.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(192,188,'LLVM: посібник зі створення фронтенду мови','https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/index.html','official','Показує лексичний аналіз, синтаксичне дерево, проміжне подання, оптимізацію та генерацію коду.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(193,189,'Специфікація віртуальної машини Java','https://docs.oracle.com/javase/specs/jvms/se26/html/index.html','standard','Специфікує байткод, завантаження класів, потоки виконання та області пам’яті JVM.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(194,189,'Процес керованого виконання .NET','https://learn.microsoft.com/dotnet/standard/managed-execution-process','official','Описує проміжний код, JIT-компіляцію та сервіси середовища виконання .NET.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(195,190,'Основи збирання сміття .NET','https://learn.microsoft.com/dotnet/standard/garbage-collection/fundamentals','official','Пояснює досяжність об’єктів, фази GC та межі автоматичного керування ресурсами.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(196,190,'Документація ядра Linux','https://docs.kernel.org/','official','Першоджерело про процеси, пам’ять, файлові системи та механізми ядра.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(197,191,'POSIX Threads: огляд потоків','https://www.man7.org/linux/man-pages/man7/pthreads.7.html','standard','Описує спільні ресурси процесу та ресурси, окремі для кожного потоку.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(198,191,'Документація ядра Linux','https://docs.kernel.org/','official','Першоджерело про процеси, пам’ять, файлові системи та механізми ядра.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(199,192,'Специфікація мови Java: модель пам’яті та потоки','https://docs.oracle.com/javase/specs/jls/se26/html/jls-17.html','standard','Визначає взаємодію потоків, синхронізацію та модель пам’яті Java.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(200,192,'POSIX Threads: огляд потоків','https://www.man7.org/linux/man-pages/man7/pthreads.7.html','standard','Описує спільні ресурси процесу та ресурси, окремі для кожного потоку.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(201,193,'Node.js: цикл подій та неблокувальний ввід-вивід','https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick','official','Документація пояснює цикл подій Node.js та роль черг зворотних викликів.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(202,194,'Microsoft Azure Architecture Center: стилі архітектури','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/','official','Порівнює архітектурні стилі, межі компонентів і відповідні компроміси.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(203,195,'Martin Fowler: Monolith First','https://martinfowler.com/bliki/MonolithFirst.html','technical','Аргументує економічний контекст вибору моноліту на ранніх етапах продукту.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(204,195,'Microsoft Azure Architecture Center: стилі архітектури','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/','official','Порівнює архітектурні стилі, межі компонентів і відповідні компроміси.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(205,196,'Microsoft: багатошарова архітектура','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/n-tier','official','Описує типові рівні застосунку й розподіл обов’язків між ними.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(206,197,'Martin Fowler: Microservices','https://martinfowler.com/articles/microservices.html','technical','Описує характерні властивості та організаційні наслідки мікросервісного стилю.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(207,197,'Azure Architecture Center: мікросервісні стилі','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/microservices','official','Розглядає сервісні межі, власність даних і операційну складність.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(208,198,'Martin Fowler: Monolith First','https://martinfowler.com/bliki/MonolithFirst.html','technical','Аргументує економічний контекст вибору моноліту на ранніх етапах продукту.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(209,198,'Martin Fowler: модульний моноліт','https://martinfowler.com/bliki/ModularMonolith.html','technical','Пояснює модульність усередині одного розгортуваного застосунку.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(210,198,'Martin Fowler: Microservices','https://martinfowler.com/articles/microservices.html','technical','Описує характерні властивості та організаційні наслідки мікросервісного стилю.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(211,199,'AWS: подієво-керована архітектура','https://aws.amazon.com/event-driven-architecture/','official','Описує виробників, споживачів і брокерів подій як архітектурні ролі.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(212,199,'Документація Apache Kafka','https://kafka.apache.org/documentation/','official','Описує брокери, журнали, партиції, групи споживачів і гарантії обробки.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(213,200,'The Open Group: сервісно-орієнтована архітектура','https://www.opengroup.org/soa/source-book/soa/p1.htm','standard','Архітектурний посібник щодо сервісів, контрактів і взаємодії.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(214,200,'Microsoft Azure Architecture Center: стилі архітектури','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/','official','Порівнює архітектурні стилі, межі компонентів і відповідні компроміси.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(215,201,'Gilbert і Lynch: формалізація теореми CAP','https://groups.csail.mit.edu/tds/papers/Gilbert/Brewer2.pdf','research','Першоджерело про обмеження узгодженості й доступності під час мережевого розділення.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(216,201,'Martin Fowler: Microservices','https://martinfowler.com/articles/microservices.html','technical','Описує характерні властивості та організаційні наслідки мікросервісного стилю.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(217,202,'Специфікація OpenAPI','https://spec.openapis.org/oas/latest.html','standard','Стандарт машинозчитуваного опису HTTP API, операцій і схем.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(218,202,'RFC 9110: семантика HTTP','https://www.rfc-editor.org/rfc/rfc9110.html','standard','Нормативне визначення семантики методів, статусів і полів HTTP.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(219,203,'RFC 9110: семантика HTTP','https://www.rfc-editor.org/rfc/rfc9110.html','standard','Нормативне визначення семантики методів, статусів і полів HTTP.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(220,203,'AWS: подієво-керована архітектура','https://aws.amazon.com/event-driven-architecture/','official','Описує виробників, споживачів і брокерів подій як архітектурні ролі.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(221,204,'Документація RabbitMQ','https://www.rabbitmq.com/docs','official','Офіційні матеріали про маршрутизацію, черги, підтвердження та моделі доставки.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(222,204,'Документація Apache Kafka','https://kafka.apache.org/documentation/','official','Описує брокери, журнали, партиції, групи споживачів і гарантії обробки.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(223,205,'Enterprise Integration Patterns: Message Bus','https://www.enterpriseintegrationpatterns.com/patterns/messaging/MessageBus.html','technical','Описує шину повідомлень як інтеграційну топологію з незалежними каналами.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(224,205,'Документація RabbitMQ','https://www.rabbitmq.com/docs','official','Офіційні матеріали про маршрутизацію, черги, підтвердження та моделі доставки.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(225,206,'Документація RabbitMQ','https://www.rabbitmq.com/docs','official','Офіційні матеріали про маршрутизацію, черги, підтвердження та моделі доставки.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(226,207,'Документація Apache Kafka','https://kafka.apache.org/documentation/','official','Описує брокери, журнали, партиції, групи споживачів і гарантії обробки.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(227,208,'Документація RabbitMQ','https://www.rabbitmq.com/docs','official','Офіційні матеріали про маршрутизацію, черги, підтвердження та моделі доставки.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(228,208,'Документація Apache Kafka','https://kafka.apache.org/documentation/','official','Описує брокери, журнали, партиції, групи споживачів і гарантії обробки.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(229,209,'Redis: типи даних','https://redis.io/docs/latest/develop/data-types/','official','Офіційний опис структур даних Redis і характерних способів їх застосування.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(230,210,'Redis: типи даних','https://redis.io/docs/latest/develop/data-types/','official','Офіційний опис структур даних Redis і характерних способів їх застосування.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(231,210,'Redis: збереження даних на диску','https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/','official','Розглядає знімки RDB, журнал AOF і компроміси довговічності.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(232,211,'Документація PostgreSQL','https://www.postgresql.org/docs/current/','official','Першоджерело про реляційні дані, транзакції, індекси та секціонування.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(233,211,'MongoDB Manual: модель даних','https://www.mongodb.com/docs/manual/data-modeling/','official','Описує документну модель даних і компроміси вбудовування та посилань.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(234,212,'Elastic: інвертований індекс','https://www.elastic.co/guide/en/elasticsearch/reference/current/inverted-index.html','official','Пояснює структуру інвертованого індексу для повнотекстового пошуку.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(235,212,'Elastic: вузли, кластери та шарди Elasticsearch','https://www.elastic.co/docs/deploy-manage/distributed-architecture/clusters-nodes-shards','official','Описує розміщення документів у первинних і реплічованих шардах.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(236,213,'Elastic Stack: офіційний огляд','https://www.elastic.co/guide/en/elastic-stack/current/index.html','official','Описує взаємодію Elasticsearch, Logstash, Beats та Kibana.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(237,213,'Elastic: вузли, кластери та шарди Elasticsearch','https://www.elastic.co/docs/deploy-manage/distributed-architecture/clusters-nodes-shards','official','Описує розміщення документів у первинних і реплічованих шардах.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(238,214,'Документація Apache Kafka','https://kafka.apache.org/documentation/','official','Описує брокери, журнали, партиції, групи споживачів і гарантії обробки.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(239,215,'Посібник NGINX для початківців','https://nginx.org/en/docs/beginners_guide.html','official','Пояснює обробку запитів, віртуальні сервери та зворотне проксіювання.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(240,215,'RFC 9110: семантика HTTP','https://www.rfc-editor.org/rfc/rfc9110.html','standard','Нормативне визначення семантики методів, статусів і полів HTTP.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(241,216,'NGINX: розподіл навантаження','https://nginx.org/en/docs/http/load_balancing.html','official','Документація щодо upstream-серверів і алгоритмів балансування.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(242,216,'Kubernetes: огляд архітектури кластера','https://kubernetes.io/docs/concepts/architecture/','official','Описує площину керування, вузли, планування та мережеві компоненти.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(243,217,'Microsoft: шаблон API Gateway','https://learn.microsoft.com/azure/architecture/microservices/design/gateway','official','Розглядає маршрутизацію, агрегацію та спільні функції шлюзу.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(244,217,'Посібник NGINX для початківців','https://nginx.org/en/docs/beginners_guide.html','official','Пояснює обробку запитів, віртуальні сервери та зворотне проксіювання.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(245,218,'RFC 1034: домени та система доменних імен','https://www.rfc-editor.org/rfc/rfc1034.html','standard','Базова специфікація ієрархії імен і делегування DNS.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(246,218,'RFC 1035: реалізація та специфікація DNS','https://www.rfc-editor.org/rfc/rfc1035.html','standard','Описує DNS-повідомлення, записи та протокол обміну.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(247,218,'Kubernetes: огляд архітектури кластера','https://kubernetes.io/docs/concepts/architecture/','official','Описує площину керування, вузли, планування та мережеві компоненти.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(248,219,'Docker: основи контейнерів','https://docs.docker.com/learn/paths/get-started-with-docker-containers/','official','Пояснює образи, контейнери, томи, мережі та багатоконтейнерні застосунки.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(249,220,'Kubernetes: огляд архітектури кластера','https://kubernetes.io/docs/concepts/architecture/','official','Описує площину керування, вузли, планування та мережеві компоненти.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(250,220,'Docker: основи контейнерів','https://docs.docker.com/learn/paths/get-started-with-docker-containers/','official','Пояснює образи, контейнери, томи, мережі та багатоконтейнерні застосунки.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(251,221,'Google SRE: моніторинг розподілених систем','https://sre.google/sre-book/monitoring-distributed-systems/','technical','Пояснює сигнали моніторингу, симптоми та підхід до сповіщень.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(252,221,'OpenTelemetry: контекстне поширення','https://opentelemetry.io/docs/concepts/context-propagation/','official','Пояснює наскрізне перенесення контексту трас між процесами та сервісами.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(253,221,'Prometheus: огляд','https://prometheus.io/docs/introduction/overview/','official','Описує збирання часових рядів, експортери, правила та сповіщення.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(254,222,'Документація Grafana: панелі й джерела','https://grafana.com/docs/grafana/latest/datasources/','official','Описує підключення джерел даних і відображення метрик, журналів та трас.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(255,222,'Prometheus: огляд','https://prometheus.io/docs/introduction/overview/','official','Описує збирання часових рядів, експортери, правила та сповіщення.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(256,223,'Prometheus: огляд','https://prometheus.io/docs/introduction/overview/','official','Описує збирання часових рядів, експортери, правила та сповіщення.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(257,223,'Prometheus: запити PromQL','https://prometheus.io/docs/prometheus/latest/querying/basics/','official','Описує часові ряди, селектори, мітки й базові вирази PromQL.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(258,224,'OpenTelemetry: контекстне поширення','https://opentelemetry.io/docs/concepts/context-propagation/','official','Пояснює наскрізне перенесення контексту трас між процесами та сервісами.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(259,224,'Google SRE: моніторинг розподілених систем','https://sre.google/sre-book/monitoring-distributed-systems/','technical','Пояснює сигнали моніторингу, симптоми та підхід до сповіщень.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(260,225,'Apache JMeter: елементи плану тестування','https://jmeter.apache.org/usermanual/test_plan.html','official','Пояснює групи потоків, таймери, самплери, твердження та слухачі результатів.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(261,226,'Apache JMeter: елементи плану тестування','https://jmeter.apache.org/usermanual/test_plan.html','official','Пояснює групи потоків, таймери, самплери, твердження та слухачі результатів.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(262,226,'Google SRE: моніторинг розподілених систем','https://sre.google/sre-book/monitoring-distributed-systems/','technical','Пояснює сигнали моніторингу, симптоми та підхід до сповіщень.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(263,227,'AWS: надійність і повторні спроби','https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/','official','Розглядає тайм-аути, повтори, експоненційне очікування й відмовостійкість.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(264,227,'Microsoft: шаблони стійкості хмарних систем','https://learn.microsoft.com/azure/architecture/patterns/','official','Пояснює повтори, автоматичний вимикач, обмеження й ізоляцію збоїв.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(265,227,'Google SRE: усунення перевантаження','https://sre.google/sre-book/handling-overload/','technical','Розглядає черги, відсікання запитів і поведінку систем під перевантаженням.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(266,228,'Apache Airflow: поняття DAG і задач','https://airflow.apache.org/docs/apache-airflow/stable/concepts/dags.html','official','Описує графи залежностей, запуски задач, повтори та керування розкладом.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(267,229,'Pact: контрактне тестування','https://docs.pact.io/','official','Документація контрактного тестування взаємодій споживачів і постачальників.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(268,229,'Специфікація OpenAPI','https://spec.openapis.org/oas/latest.html','standard','Стандарт машинозчитуваного опису HTTP API, операцій і схем.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(269,229,'Confluent Schema Registry: еволюція схем','https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html','official','Визначає правила сумісності та еволюції схем Avro, Protobuf і JSON Schema.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(270,230,'Microservices.io: Saga pattern','https://microservices.io/patterns/data/saga.html','technical','Описує послідовність локальних транзакцій і компенсувальних дій.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(271,230,'Gilbert і Lynch: формалізація теореми CAP','https://groups.csail.mit.edu/tds/papers/Gilbert/Brewer2.pdf','research','Першоджерело про обмеження узгодженості й доступності під час мережевого розділення.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(272,231,'Gilbert і Lynch: формалізація теореми CAP','https://groups.csail.mit.edu/tds/papers/Gilbert/Brewer2.pdf','research','Першоджерело про обмеження узгодженості й доступності під час мережевого розділення.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(273,231,'Документація PostgreSQL','https://www.postgresql.org/docs/current/','official','Першоджерело про реляційні дані, транзакції, індекси та секціонування.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(274,232,'RFC 9110: безпечні та ідемпотентні методи','https://www.rfc-editor.org/rfc/rfc9110.html#name-idempotent-methods','standard','Нормативно розмежовує безпечність і ідемпотентність HTTP-методів.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(275,232,'Документація Apache Kafka','https://kafka.apache.org/documentation/','official','Описує брокери, журнали, партиції, групи споживачів і гарантії обробки.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(276,232,'Документація RabbitMQ','https://www.rabbitmq.com/docs','official','Офіційні матеріали про маршрутизацію, черги, підтвердження та моделі доставки.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(277,233,'Confluent Schema Registry: еволюція схем','https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html','official','Визначає правила сумісності та еволюції схем Avro, Protobuf і JSON Schema.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(278,233,'Apache Avro: специфікація','https://avro.apache.org/docs/','standard','Специфікує схеми та бінарне кодування для обміну структурованими даними.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(279,233,'Protocol Buffers: огляд','https://protobuf.dev/overview/','official','Пояснює схеми, кодування та сумісність повідомлень Protobuf.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(280,234,'GitHub Actions: середовища розгортання','https://docs.github.com/en/actions/concepts/workflows-and-actions/deployment-environments','official','Описує середовища, контроль доступу, захист гілок і перевірки перед розгортанням.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(281,234,'Martin Fowler: Monolith First','https://martinfowler.com/bliki/MonolithFirst.html','technical','Аргументує економічний контекст вибору моноліту на ранніх етапах продукту.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(282,235,'Microsoft Azure Architecture Center: стилі архітектури','https://learn.microsoft.com/azure/architecture/guide/architecture-styles/','official','Порівнює архітектурні стилі, межі компонентів і відповідні компроміси.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(283,235,'Kubernetes: огляд архітектури кластера','https://kubernetes.io/docs/concepts/architecture/','official','Описує площину керування, вузли, планування та мережеві компоненти.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(284,235,'Документація Apache Kafka','https://kafka.apache.org/documentation/','official','Описує брокери, журнали, партиції, групи споживачів і гарантії обробки.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(285,235,'Документація RabbitMQ','https://www.rabbitmq.com/docs','official','Офіційні матеріали про маршрутизацію, черги, підтвердження та моделі доставки.','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(286,235,'OpenTelemetry: контекстне поширення','https://opentelemetry.io/docs/concepts/context-propagation/','official','Пояснює наскрізне перенесення контексту трас між процесами та сервісами.','2026-11-18 00:00:00','2026-11-18 00:00:00');
+
+INSERT INTO `KnowledgeRelations` (`sourceArticleId`,`targetArticleId`,`relationType`,`createdAt`,`updatedAt`) VALUES
+(186,187,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(186,194,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(187,186,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(187,188,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(187,190,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(188,187,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(188,189,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(188,234,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(189,188,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(189,190,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(189,191,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(190,189,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(190,191,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(190,226,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(191,187,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(191,192,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(191,193,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(192,191,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(192,201,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(192,227,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(193,191,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(193,199,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(193,203,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(194,186,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(194,195,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(194,201,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(195,194,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(195,198,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(195,197,'alternative','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(196,194,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(196,195,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(196,202,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(197,194,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(197,198,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(197,201,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(197,217,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(198,195,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(198,196,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(198,197,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(199,201,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(199,203,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(199,204,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(199,207,'implements','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(200,194,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(200,197,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(200,205,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(201,197,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(201,199,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(201,194,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(201,230,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(202,196,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(202,197,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(202,229,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(203,193,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(203,199,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(203,204,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(204,203,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(204,205,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(204,206,'implements','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(204,207,'implements','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(205,204,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(205,199,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(205,206,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(206,204,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(206,203,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(206,207,'alternative','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(206,232,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(207,204,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(207,199,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(207,206,'alternative','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(207,232,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(208,206,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(208,207,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(208,204,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(209,210,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(209,211,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(209,216,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(210,209,'implements','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(210,211,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(210,204,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(210,231,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(211,209,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(211,210,'alternative','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(211,212,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(211,230,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(212,211,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(212,213,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(212,221,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(213,212,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(213,221,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(213,224,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(214,207,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(214,228,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(214,221,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(215,202,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(215,216,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(215,217,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(216,215,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(216,217,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(216,220,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(217,197,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(217,215,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(217,216,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(217,218,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(218,215,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(218,216,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(218,220,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(219,187,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(219,194,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(219,220,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(219,234,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(220,219,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(220,216,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(220,221,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(220,234,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(221,222,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(221,223,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(221,224,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(222,221,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(222,223,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(222,224,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(223,221,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(223,222,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(223,224,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(224,221,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(224,222,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(224,213,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(225,226,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(225,221,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(225,227,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(226,225,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(226,221,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(226,227,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(227,201,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(227,203,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(227,216,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(227,226,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(228,214,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(228,221,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(228,232,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(229,202,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(229,233,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(229,234,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(230,201,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(230,199,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(230,231,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(230,232,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(231,201,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(231,210,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(231,230,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(231,232,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(232,203,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(232,206,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(232,207,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(232,230,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(233,202,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(233,207,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(233,229,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(234,219,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(234,220,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(234,235,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(235,194,'prerequisite','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(235,197,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(235,206,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(235,207,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(235,210,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(235,221,'related','2026-11-18 00:00:00','2026-11-18 00:00:00'),
+(235,234,'related','2026-11-18 00:00:00','2026-11-18 00:00:00');
+SET FOREIGN_KEY_CHECKS=1;
+-- END QA Knowledge Hub seed snapshot

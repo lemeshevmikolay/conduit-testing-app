@@ -47,7 +47,7 @@ function assertContract(response, data, expectedStatus = 200) {
   assert.match(response.headers.get("content-type") || "", /^application\/json\b/i);
   const requestId = response.headers.get("x-request-id");
   assert.match(requestId || "", requestIdPattern);
-  assert.equal(response.headers.get("access-control-expose-headers"), "X-Request-Id");
+  assert.equal(response.headers.get("access-control-expose-headers"), "X-Request-Id, X-System-Code");
   assert.equal(data.requestId, requestId);
 }
 

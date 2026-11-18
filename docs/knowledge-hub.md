@@ -3,6 +3,9 @@
 The Hub reads published records from `KnowledgeItems` and their normalized citations from `KnowledgeSources`.
 Its seed package contains 135 interview questions, 50 Architecture & Networking articles, and 50 Tools & Technologies articles.
 The seed validates unique slugs and package sizes before writing records in one transaction.
+The portable MySQL snapshot includes the same knowledge records. Regenerate that section after changing the seed package with `npm run db:snapshot:knowledge`.
+
+The portable database imports `db-snapshot/snapshot.sql` only when its data volume is first created. Existing volumes are preserved across image updates; the API startup seed refreshes the knowledge package in place without deleting user data.
 
 ## Database setup
 

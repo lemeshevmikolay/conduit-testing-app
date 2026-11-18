@@ -21,6 +21,7 @@
     "dev:web": "npm run dev -w frontend",
     "db:up": "docker compose up -d --wait db",
     "db:down": "docker compose stop db",
+    "db:snapshot:knowledge": "node scripts/generate-knowledge-snapshot.js",
     "observability:up": "docker compose up -d --wait elasticsearch kibana && node scripts/setup-kibana.js",
     "observability:down": "docker compose stop kibana elasticsearch",
     "db:seed": "npm run seed -w backend",

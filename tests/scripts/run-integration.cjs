@@ -5,6 +5,9 @@ const fs = require("node:fs");
 const root = path.resolve(__dirname, "../..");
 const storage = path.join(root, ".tmp", "conduit-integration.sqlite");
 fs.mkdirSync(path.dirname(storage), { recursive: true });
+for (const suffix of ["", "-wal", "-shm"]) {
+  fs.rmSync(`${storage}${suffix}`, { force: true });
+}
 const env = {
   ...process.env,
   NODE_ENV: "test",

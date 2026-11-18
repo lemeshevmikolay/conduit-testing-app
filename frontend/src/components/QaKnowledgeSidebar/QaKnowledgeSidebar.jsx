@@ -12,8 +12,8 @@ const savedKey = "conduit.qa-knowledge.bookmarks";
 const viewedKey = "conduit.qa-knowledge.viewed";
 const readList = (key) => { try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; } };
 
-function QuestionCard({ item, expanded, onToggle, viewed, bookmarked, onBookmark }) {
-  return <article className="hub-card hub-question">
+function QuestionCard({ item, expanded, onToggle, viewed, bookmarked, onBookmark, cardRef, randomlySelected }) {
+  return <article ref={cardRef} className={`hub-card hub-question${randomlySelected ? " is-random-choice" : ""}`}>
     <div className="hub-card__meta"><span>{item.category}</span><span className="hub-level">{item.difficulty === "strong-junior" ? "Strong Junior" : "Middle"}</span>{viewed && <span className="hub-viewed"><Check size={12} /> Переглянуто</span>}</div>
     <h3>{item.question}</h3>
     <div className="hub-card__actions">
@@ -54,9 +54,13 @@ function QaKnowledgeSidebar() {
   const [viewed, setViewed] = useState(() => readList(viewedKey));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [randomPick, setRandomPick] = useState(null);
+  const [randomAnnouncement, setRandomAnnouncement] = useState("");
   const triggerRef = useRef(null);
   const closeRef = useRef(null);
   const dialogRef = useRef(null);
+  const questionRefs = useRef(new Map());
+  const randomPickCounter = useRef(0);
 
   useEffect(() => {
     let mounted = true;
@@ -108,6 +112,21 @@ function QaKnowledgeSidebar() {
     if (category && !categories.includes(category)) setCategory("");
   }, [categories, category]);
 
+  useEffect(() => {
+    if (!randomPick) return;
+    const questionCard = questionRefs.current.get(randomPick.slug);
+    if (!questionCard) return;
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+    questionCard.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+  }, [randomPick, allResults]);
+
+  function registerQuestionCard(slug) {
+    return (node) => {
+      if (node) questionRefs.current.set(slug, node);
+      else questionRefs.current.delete(slug);
+    };
+  }
+
   function toggleBookmark(slug) {
     setBookmarks((previous) => {
       const next = previous.includes(slug) ? previous.filter((value) => value !== slug) : [...previous, slug];
@@ -122,10 +141,24 @@ function QaKnowledgeSidebar() {
   }
   function changeTab(id) { setActiveTab(id); setCategory(""); setDifficulty(""); setQuery(""); setActiveSlug(null); setExpanded({}); }
   function pickRandom() {
+    if (loading) {
+      setRandomAnnouncement("Питання ще завантажуються. Спробуйте ще раз за мить.");
+      return;
+    }
+    if (error) {
+      setRandomAnnouncement("Не вдалося завантажити питання. Спробуйте оновити матеріали.");
+      return;
+    }
     const questions = items.filter((item) => item.section === "interview");
-    if (!questions.length) return;
+    if (!questions.length) {
+      setRandomAnnouncement("Питань для випадкового вибору поки немає.");
+      return;
+    }
     const choice = questions[Math.floor(Math.random() * questions.length)];
-    setActiveTab("interview"); setCategory(""); setDifficulty(""); setQuery(""); setExpanded({ [choice.slug]: true }); markViewed(choice.slug);
+    setActiveTab("interview"); setCategory(""); setDifficulty(""); setQuery(""); setActiveSlug(null);
+    setExpanded({ [choice.slug]: true }); markViewed(choice.slug);
+    setRandomPick({ slug: choice.slug, id: ++randomPickCounter.current });
+    setRandomAnnouncement(`Випадкове питання: ${choice.question}`);
   }
 
   return <>
@@ -137,15 +170,15 @@ function QaKnowledgeSidebar() {
         <div className="hub-toolbar"><label className="hub-search"><Search size={17} aria-hidden="true" /><span className="sr-only">Пошук по базі знань</span><input value={query} onChange={(event) => { setQuery(event.target.value); setActiveSlug(null); }} placeholder="Шукати питання, тему або технологію…" /></label>
           <label className="hub-filter"><span className="sr-only">Фільтр категорії</span><select value={category} onChange={(event) => setCategory(event.target.value)}><option value="">Усі категорії</option>{categories.map((value) => <option key={value}>{value}</option>)}</select></label>
           {activeTab === "interview" && <label className="hub-filter"><span className="sr-only">Фільтр складності</span><select value={difficulty} onChange={(event) => setDifficulty(event.target.value)}><option value="">Усі рівні</option><option value="strong-junior">Strong Junior</option><option value="middle">Middle</option></select></label>}
-          {activeTab === "interview" && <button className="hub-random" type="button" onClick={pickRandom}><Shuffle size={15} /><span>Випадкове питання</span></button>}
+          {activeTab === "interview" && <><button className="hub-random" type="button" onClick={pickRandom}><Shuffle size={15} /><span>Випадкове питання</span></button>{randomAnnouncement && !randomAnnouncement.startsWith("Випадкове питання:") && <span className="hub-random-status" aria-hidden="true">{randomAnnouncement}</span>}<span className="sr-only" aria-live="polite" aria-atomic="true">{randomAnnouncement}</span></>}
         </div>
         <main id="hub-panel" className="hub-content" role="tabpanel" aria-labelledby={`hub-tab-${activeTab}`}>
           <div className="hub-content__intro"><div><h2>{currentTab?.label}</h2><p>{currentTab?.description}</p></div><span className="hub-count">{allResults.length} матеріалів</span></div>
           {loading ? <div className="hub-state"><LoaderCircle className="hub-spinner" size={22} />Завантажуємо матеріали з бази знань…</div>
             : error ? <div className="hub-state hub-state--error"><h3>Не вдалося завантажити матеріали</h3><p>Перевірте з’єднання та спробуйте ще раз.</p><button type="button" onClick={() => { setLoading(true); setError(false); getKnowledgeItems().then(setItems).catch(() => setError(true)).finally(() => setLoading(false)); }}>Спробувати знову</button></div>
             : !allResults.length ? <div className="hub-state"><Search size={23} /><h3>Нічого не знайдено</h3><p>Змініть пошуковий запит або фільтри.</p></div>
-            : isSearching ? <div className="hub-search-results">{allResults.map((item) => item.section === "interview" ? <QuestionCard key={item.slug} item={item} expanded={Boolean(expanded[item.slug])} viewed={viewed.includes(item.slug)} bookmarked={bookmarks.includes(item.slug)} onBookmark={toggleBookmark} onToggle={() => { setExpanded((previous) => ({ ...previous, [item.slug]: !previous[item.slug] })); if (!expanded[item.slug]) markViewed(item.slug); }} /> : <button key={item.slug} className="hub-search-result" type="button" onClick={() => { setActiveTab(item.section); setCategory(""); setDifficulty(""); setQuery(""); setActiveSlug(item.slug); markViewed(item.slug); }}><span>{item.section === "architecture" ? "Architecture & Networking" : "Tools & Technologies"} · {item.category}</span><strong>{item.title}</strong><small>{item.summary}</small></button>)}</div>
-            : activeTab === "interview" ? <div className="hub-question-list">{allResults.map((item) => <QuestionCard key={item.slug} item={item} expanded={Boolean(expanded[item.slug])} viewed={viewed.includes(item.slug)} bookmarked={bookmarks.includes(item.slug)} onBookmark={toggleBookmark} onToggle={() => { setExpanded((previous) => ({ ...previous, [item.slug]: !previous[item.slug] })); if (!expanded[item.slug]) markViewed(item.slug); }} />)}</div>
+            : isSearching ? <div className="hub-search-results">{allResults.map((item) => item.section === "interview" ? <QuestionCard key={item.slug} item={item} cardRef={registerQuestionCard(item.slug)} randomlySelected={randomPick?.slug === item.slug} expanded={Boolean(expanded[item.slug])} viewed={viewed.includes(item.slug)} bookmarked={bookmarks.includes(item.slug)} onBookmark={toggleBookmark} onToggle={() => { setExpanded((previous) => ({ ...previous, [item.slug]: !previous[item.slug] })); if (!expanded[item.slug]) markViewed(item.slug); }} /> : <button key={item.slug} className="hub-search-result" type="button" onClick={() => { setActiveTab(item.section); setCategory(""); setDifficulty(""); setQuery(""); setActiveSlug(item.slug); markViewed(item.slug); }}><span>{item.section === "architecture" ? "Architecture & Networking" : "Tools & Technologies"} · {item.category}</span><strong>{item.title}</strong><small>{item.summary}</small></button>)}</div>
+            : activeTab === "interview" ? <div className="hub-question-list">{allResults.map((item) => <QuestionCard key={item.slug} item={item} cardRef={registerQuestionCard(item.slug)} randomlySelected={randomPick?.slug === item.slug} expanded={Boolean(expanded[item.slug])} viewed={viewed.includes(item.slug)} bookmarked={bookmarks.includes(item.slug)} onBookmark={toggleBookmark} onToggle={() => { setExpanded((previous) => ({ ...previous, [item.slug]: !previous[item.slug] })); if (!expanded[item.slug]) markViewed(item.slug); }} />)}</div>
             : <div className="hub-library"><nav className="hub-library__nav" aria-label={`${currentTab?.label} articles`}>{allResults.map((item, index) => <button key={item.slug} type="button" className={`hub-library__item ${activeArticle?.slug === item.slug ? "is-active" : ""}`} onClick={() => { setActiveSlug(item.slug); markViewed(item.slug); }}><span>{String(index + 1).padStart(2, "0")} · {item.category}</span><strong>{item.title}</strong><small>{item.summary}</small><em>{item.difficulty === "middle" ? "Middle+" : item.difficulty} · {item.estimatedReadingTime || "—"} хв</em><FileText size={15} /></button>)}</nav>{activeArticle ? <ArticleDetail item={activeArticle} bookmarked={bookmarks.includes(activeArticle.slug)} onBookmark={toggleBookmark} onNavigate={(slug) => { setActiveSlug(slug); markViewed(slug); }} /> : <div className="hub-state">Оберіть статтю зі списку.</div>}</div>}
         </main>
         <footer className="hub-footer"><span><Bookmark size={14} /> {bookmarks.length} закладок</span><span>{viewed.length} переглянутих матеріалів</span><span>Вміст завантажено з бази даних</span></footer>
