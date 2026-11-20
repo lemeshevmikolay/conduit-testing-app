@@ -4,6 +4,8 @@ const api = axios.create();
 
 api.interceptors.request.use((config) => {
   config.headers.set("X-Request-Id", crypto.randomUUID());
+  config.headers.set("X-Flow-Id", crypto.randomUUID());
+  config.headers.set("X-Systemcode", "front");
   config.headers.set("X-System-Code", "front");
   return config;
 });

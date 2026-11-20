@@ -1,15 +1,25 @@
-const service = "conduit-api";
 const endpoint = process.env.ELASTICSEARCH_URL;
 const queue = [];
+const flowTimestamps = new Map();
 let timer;
 
 function write(level, event, fields = {}) {
+  const application = fields.application
+    || (event.startsWith("front.") ? "front" : event.startsWith("db.") ? "db" : "back");
+  const flowId = fields.flow_id ?? fields["x-flow-id"];
+  const now = Date.now();
+  const timestamp = flowId ? Math.max(now, (flowTimestamps.get(flowId) || 0) + 1) : now;
+  if (flowId) {
+    flowTimestamps.delete(flowId);
+    flowTimestamps.set(flowId, timestamp);
+    if (flowTimestamps.size > 5000) flowTimestamps.delete(flowTimestamps.keys().next().value);
+  }
   const record = {
-    "@timestamp": new Date().toISOString(),
-    "service.name": service,
-    log: { level },
-    event: { action: event },
-    ...fields,
+    "@timestamp": new Date(timestamp).toISOString(),
+    message: fields.message ?? event,
+    application,
+    ...(flowId ? { flow_id: flowId } : {}),
+    level,
   };
   process.stdout.write(`${JSON.stringify(record)}\n`);
   if (endpoint) {
@@ -24,7 +34,7 @@ async function flush() {
   if (!endpoint || queue.length === 0) return;
   const batch = queue.splice(0, 250);
   const body = batch.flatMap((record) => [
-    JSON.stringify({ index: { _index: `conduit-logs-${record["@timestamp"].slice(0, 10)}` } }),
+    JSON.stringify({ index: { _index: `conduit-logs-v2-${record["@timestamp"].slice(0, 10)}` } }),
     JSON.stringify(record),
   ]).join("\n") + "\n";
   try {

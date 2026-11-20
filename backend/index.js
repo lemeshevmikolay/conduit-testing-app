@@ -23,9 +23,9 @@ const tagsRoutes = require("./routes/tags");
 const knowledgeRoutes = require("./routes/knowledge");
 
 const app = express();
-app.use(requestLogger(ApiAuditLog));
 app.use(cors());
 app.use(express.json());
+app.use(requestLogger(ApiAuditLog));
 
 const openApiPath = path.resolve(__dirname, "../docs/api/openapi.yaml");
 const openApiDocument = YAML.parse(fs.readFileSync(openApiPath, "utf8"));
@@ -61,7 +61,6 @@ async function start() {
         type: DataTypes.STRING(100), allowNull: false, defaultValue: "front",
       });
     }
-    require("./observability/dbAudit")(sequelize);
     if (env === "development" && process.env.SEED_DEMO_DATA !== "false") {
       await seedDemoData();
     }

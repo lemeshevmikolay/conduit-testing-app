@@ -46,9 +46,12 @@ function assertContract(response, data, expectedStatus = 200) {
   assert.equal(response.status, expectedStatus);
   assert.match(response.headers.get("content-type") || "", /^application\/json\b/i);
   const requestId = response.headers.get("x-request-id");
+  const flowId = response.headers.get("x-flow-id");
   assert.match(requestId || "", requestIdPattern);
-  assert.equal(response.headers.get("access-control-expose-headers"), "X-Request-Id, X-System-Code");
+  assert.match(flowId || "", requestIdPattern);
+  assert.equal(response.headers.get("access-control-expose-headers"), "X-Request-Id, X-Flow-Id, X-System-Code, X-Systemcode");
   assert.equal(data.requestId, requestId);
+  assert.equal(data.flowId, flowId);
 }
 
 test("positive API contract and database lifecycle", async (t) => {

@@ -4,7 +4,7 @@ const dataView = {
   data_view: {
     id: dataViewId,
     name: "Conduit API logs",
-    title: "conduit-logs-*",
+    title: "conduit-logs-v2-*",
     timeFieldName: "@timestamp",
   },
 };

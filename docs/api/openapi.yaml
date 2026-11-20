@@ -2,8 +2,9 @@ openapi: 3.0.3
 info:
   title: Conduit API
   version: 1.0.0
-  description: "REST API Conduit. All JSON responses include requestId. X-Request-Id accepts a UUID correlation
-    ID (invalid values are replaced); X-System-Code is optional and defaults to front. Protected routes
+  description: "REST API Conduit. All JSON responses include requestId and flowId. X-Flow-Id accepts a UUID
+    correlation ID (invalid values are replaced); X-Request-Id accepts a UUID request ID (invalid values are
+    replaced); X-System-Code is optional and defaults to front. Protected routes
     require Authorization: Token <JWT>. Unknown JSON and query fields are rejected where validation is
     applied."
   contact:
